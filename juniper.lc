@@ -1,4 +1,5 @@
-# FILE BEGIN juniper.lc -- DO NOT MODIFY
+#! /usr/bin/env lc.py
+# FILE BEGIN juniper.lc
 
 # --- Standard Terms ---
 I,  IDENTITY := λx      .x
@@ -207,14 +208,21 @@ VERIFY_MP := \p1.\p2.\target. \
 RULE_AXIOM := ZERO
 RULE_MP    := SUCC ZERO
 
+####CHECK_STEP := \step.\axioms.\history. \
+####  \rule. \payload. \target. \params. \
+####  (rule = RULE_AXIOM) \
+####    (IS_AXIOM target axioms) \
+####    ((rule = RULE_MP) \
+####      (VERIFY_MP (FIRST params) (SECOND params) target) \
+####      FALSE)
+#### Corrected Single Step Checker
 ###CHECK_STEP := \step.\axioms.\history. \
-###  \rule. \payload. \target. \params. \
-###  (rule = RULE_AXIOM) \
-###    (IS_AXIOM target axioms) \
-###    ((rule = RULE_MP) \
-###      (VERIFY_MP (FIRST params) (SECOND params) target) \
+###  \rule.\payload. \
+###  IF (EQ_NUM rule RULE_AXIOM) \
+###    (IS_AXIOM (FIRST payload) axioms) \
+###    (IF (EQ_NUM rule RULE_MP) \
+###      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
 ###      FALSE)
-### Corrected Single Step Checker
 ##CHECK_STEP := \step.\axioms.\history. \
 ##  \rule.\payload. \
 ##  IF (EQ_NUM rule RULE_AXIOM) \
@@ -223,26 +231,60 @@ RULE_MP    := SUCC ZERO
 ##      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
 ##      FALSE)
 #CHECK_STEP := \step.\axioms.\history. \
-#  \rule.\payload. \
-#  IF (EQ_NUM rule RULE_AXIOM) \
-#    (IS_AXIOM (FIRST payload) axioms) \
-#    (IF (EQ_NUM rule RULE_MP) \
-#      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
-#      FALSE)
-CHECK_STEP := \step.\axioms.\history. \
-  step (\rule.\payload. \
-    IF (EQ_NUM rule RULE_AXIOM) \
-      (IS_AXIOM (FIRST payload) axioms) \
-      (IF (EQ_NUM rule RULE_MP) \
-        (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
-        FALSE))
+#  step (\rule.\payload. \
+#    IF (EQ_NUM rule RULE_AXIOM) \
+#      (IS_AXIOM (FIRST payload) axioms) \
+#      (IF (EQ_NUM rule RULE_MP) \
+#        (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
+#        FALSE))
+#
+## --- Proof List Verifier ---
+## Iterates through a list of steps, verifying each against axioms and prior history
+#VERIFY_PROOF := \axioms.\proof. \
+#  proof (\step.\acc_result. \
+#    AND acc_result (CHECK_STEP step axioms NIL) \
+#  ) TRUE
+# --- 1. List Operations ---
+# Checks if a formula exists in a list (replacing IS_AXIOM)
+IN_LIST := \formula. \lst. \
+  lst (\h. \acc. OR (IS_SAME_FORMULA formula h) acc) FALSE
 
-# --- Proof List Verifier ---
-# Iterates through a list of steps, verifying each against axioms and prior history
-VERIFY_PROOF := \axioms.\proof. \
-  proof (\step.\acc_result. \
-    AND acc_result (CHECK_STEP step axioms NIL) \
-  ) TRUE
+# Left fold for Church lists: FOLDL f init [a, b, c] -> f (f (f init a) b) c
+FOLDL := \f. \init. \lst. \
+  lst (\elem. \acc_func. \curr_acc. \
+    acc_func (f curr_acc elem) \
+  ) IDENTITY init
+
+# --- 2. Step Validator ---
+# Now requires 'history' to prove premises exist before applying them.
+CHECK_STEP := \step. \history. \
+  step (\rule. \payload. \
+    payload (\target. \params. \
+      IF (EQ_NUM rule RULE_AXIOM) \
+        (IN_LIST target history) \
+        (IF (EQ_NUM rule RULE_MP) \
+          (AND (IN_LIST (FIRST params) history) \
+               (AND (IN_LIST (SECOND params) history) \
+                    (VERIFY_MP (FIRST params) (SECOND params) target))) \
+          FALSE)))
+
+GET_STEP_FORMULA := \step. FIRST (SECOND step)
+
+# --- 3. Stateful Step Processor ---
+# Takes the threaded state (PAIR is_valid history) and the current step.
+# If valid, it adds the step's conclusion to the history. If invalid, it short-circuits.
+PROCESS_STEP := \state. \step. \
+  state (\is_valid. \history. \
+    IF is_valid \
+      (IF (CHECK_STEP step history) \
+        (PAIR TRUE (CONS (GET_STEP_FORMULA step) history)) \
+        (PAIR FALSE history)) \
+      (PAIR FALSE history))
+
+# --- 4. The Multi-Step Proof Verifier ---
+# Initializes state with (TRUE, axioms) and extracts the final boolean flag.
+VERIFY_PROOF := \axioms. \proof. \
+  FIRST (FOLDL PROCESS_STEP (PAIR TRUE axioms) proof)
 
 
 
@@ -329,10 +371,9 @@ ASSERT (IS_SAME_FORMULA TEST_SUBST_RES EXPECTED_RES)
 ## --- Verification of Reflexivity Provability ---
 #ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
 #
-## FILE END juniper.lc
 # --- Theorem Extraction from Proof Steps ---
 # Extracts the target formula proven by a single proof step
-GET_STEP_FORMULA := \step. FIRST (SECOND step)
+#GET_STEP_FORMULA := \step. FIRST (SECOND step)
 
 # Corrected LAST_STEP for Church-encoded lists using a right fold accumulator
 LAST_STEP := \l. l (\h. \acc. IF (IS_NIL acc) h acc) NIL
@@ -348,3 +389,54 @@ IS_PROVABLE := \formula. \axioms. \proof. \
 
 # --- Verification of Reflexivity Provability ---
 ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
+
+
+
+
+
+## --- Multi-Step Proof Example ---
+#
+## Suppose we have an implication axiom or theorem:
+#THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
+#
+## Step 1: Assert an axiom or prerequisite theorem
+#STEP_1 := PAIR RULE_AXIOM (PAIR AXIOM_REFLEXIVE NIL)
+#
+## Step 2: Apply Modus Ponens or chain steps using CONS
+#PROOF_MULTI := CONS STEP_1 (CONS STEP_2 NIL)
+#
+## Verify the multi-step proof against the axiom set
+#MAIN_MULTI := VERIFY_PROOF AXIOM_SET PROOF_MULTI
+#ASSERT MAIN_MULTI
+# --- Valid Multi-Step Proof Example ---
+
+# Define an implication to serve as a test theorem: (x=x) -> (x=x)
+THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
+
+# We inject the implication into our testing axioms
+MY_AXIOMS := CONS THEOREM_IMP (CONS AXIOM_REFLEXIVE NIL)
+
+# Step 1: Cite the Reflexivity Axiom (x = x)
+STEP_1 := PAIR RULE_AXIOM (PAIR AXIOM_REFLEXIVE NIL)
+
+# Step 2: Cite the Implication Axiom (x = x -> x = x)
+STEP_2 := PAIR RULE_AXIOM (PAIR THEOREM_IMP NIL)
+
+# Step 3: Modus Ponens (Premise 1: STEP_1, Premise 2: STEP_2, Target: x = x)
+STEP_3 := PAIR RULE_MP (PAIR AXIOM_REFLEXIVE (PAIR AXIOM_REFLEXIVE THEOREM_IMP))
+
+# Construct the sequential proof
+PROOF_MULTI := CONS STEP_1 (CONS STEP_2 (CONS STEP_3 NIL))
+
+# Verify
+MAIN_MULTI := VERIFY_PROOF MY_AXIOMS PROOF_MULTI
+ASSERT MAIN_MULTI
+
+
+
+
+
+
+
+
+## FILE END juniper.lc
