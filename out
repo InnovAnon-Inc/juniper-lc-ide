@@ -1,3 +1,17 @@
+=== Evaluating: juniper.lc ===
+✓ ASSERTION PASSED (Line 28)
+✓ ASSERTION PASSED (Line 29)
+✓ ASSERTION PASSED (Line 30)
+✓ ASSERTION PASSED (Line 31)
+✓ ASSERTION PASSED (Line 32)
+✓ ASSERTION PASSED (Line 33)
+✓ ASSERTION PASSED (Line 34)
+✓ ASSERTION PASSED (Line 35)
+✓ ASSERTION PASSED (Line 36)
+✓ ASSERTION PASSED (Line 37)
+✓ ASSERT_EQ PASSED (Line 59)
+✓ ASSERT_EQ PASSED (Line 61)
+✓ ASSERT_EQ PASSED (Line 63)
 I, IDENTITY := \a.a
 S := \a b c.a c (b c)
 K := \a b.a
@@ -79,3 +93,177 @@ THEOREM_REFLEXIVE := AXIOM_REFLEXIVE
 STEP_1 := PAIR ⊥ (PAIR AXIOM_REFLEXIVE ⊥)
 PROOF_1 := CONS STEP_1 ⊥
 MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
+Traceback (most recent call last):
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 595, in <module>
+    execute_program(path, f.read(), global_env, global_declared)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 532, in execute_program
+    evaluated = normalize(db_term)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 263, in normalize
+    body_norm = normalize(curr.body, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 263, in normalize
+    body_norm = normalize(curr.body, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 268, in normalize
+    fun_norm = normalize(curr.fun, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 269, in normalize
+    arg_norm = normalize(curr.arg, max_steps)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 259, in normalize
+    curr, reduced = beta_reduce_step(curr)
+                    ~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 248, in beta_reduce_step
+    reduced = db_substitute(term.fun.body, term.arg, 0)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 242, in db_substitute
+    return DBApp(db_substitute(term.fun, value, index), db_substitute(term.arg, value, index))
+                 ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 242, in db_substitute
+    return DBApp(db_substitute(term.fun, value, index), db_substitute(term.arg, value, index))
+                                                        ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 235, in db_substitute
+    return shift(value, index, 0)
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 229, in shift
+    return DBApp(shift(term.fun, d, cutoff), shift(term.arg, d, cutoff))
+                 ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 229, in shift
+    return DBApp(shift(term.fun, d, cutoff), shift(term.arg, d, cutoff))
+                                             ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 229, in shift
+    return DBApp(shift(term.fun, d, cutoff), shift(term.arg, d, cutoff))
+                                             ~~~~~^^^^^^^^^^^^^^^^^^^^^
+  [Previous line repeated 20 more times]
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 227, in shift
+    return DBAbs(shift(term.body, d, cutoff + 1))
+                 ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 229, in shift
+    return DBApp(shift(term.fun, d, cutoff), shift(term.arg, d, cutoff))
+  File "/home/frederick/juniper/human/juniper-lc-ide/./lc.py", line 92, in __init__
+    def __init__(self, fun: DBTerm, arg: DBTerm):
+    
+KeyboardInterrupt

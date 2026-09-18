@@ -207,14 +207,21 @@ VERIFY_MP := \p1.\p2.\target. \
 RULE_AXIOM := ZERO
 RULE_MP    := SUCC ZERO
 
+###CHECK_STEP := \step.\axioms.\history. \
+###  \rule. \payload. \target. \params. \
+###  (rule = RULE_AXIOM) \
+###    (IS_AXIOM target axioms) \
+###    ((rule = RULE_MP) \
+###      (VERIFY_MP (FIRST params) (SECOND params) target) \
+###      FALSE)
+### Corrected Single Step Checker
 ##CHECK_STEP := \step.\axioms.\history. \
-##  \rule. \payload. \target. \params. \
-##  (rule = RULE_AXIOM) \
-##    (IS_AXIOM target axioms) \
-##    ((rule = RULE_MP) \
-##      (VERIFY_MP (FIRST params) (SECOND params) target) \
+##  \rule.\payload. \
+##  IF (EQ_NUM rule RULE_AXIOM) \
+##    (IS_AXIOM (FIRST payload) axioms) \
+##    (IF (EQ_NUM rule RULE_MP) \
+##      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
 ##      FALSE)
-## Corrected Single Step Checker
 #CHECK_STEP := \step.\axioms.\history. \
 #  \rule.\payload. \
 #  IF (EQ_NUM rule RULE_AXIOM) \
@@ -223,12 +230,12 @@ RULE_MP    := SUCC ZERO
 #      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
 #      FALSE)
 CHECK_STEP := \step.\axioms.\history. \
-  \rule.\payload. \
-  IF (EQ_NUM rule RULE_AXIOM) \
-    (IS_AXIOM (FIRST payload) axioms) \
-    (IF (EQ_NUM rule RULE_MP) \
-      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
-      FALSE)
+  step (\rule.\payload. \
+    IF (EQ_NUM rule RULE_AXIOM) \
+      (IS_AXIOM (FIRST payload) axioms) \
+      (IF (EQ_NUM rule RULE_MP) \
+        (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
+        FALSE))
 
 # --- Proof List Verifier ---
 # Iterates through a list of steps, verifying each against axioms and prior history
@@ -253,5 +260,8 @@ PROOF_1 := CONS STEP_1 NIL
 # --- FINAL EVALUATION ---
 # Running this term reduces down purely to TRUE (\x.\y.x)
 MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
+
+MAIN
+ASSERT MAIN
 
 # FILE END juniper.lc

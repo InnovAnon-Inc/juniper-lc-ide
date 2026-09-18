@@ -183,9 +183,7 @@ ANON_DEMO</textarea>
 
     function astToString(ast, parentType = null) {
         if (!ast) return '';
-        // Sort declared terms by string length descending (longest/most specific first) to avoid false matches
-        const sortedDecls = Object.entries(globalDeclared).sort((a, b) => b[0].length - a[0].length);
-        for (let [name, decl] of sortedDecls) {
+        for (let [name, decl] of Object.entries(globalDeclared)) {
             if (astEqual(ast, decl)) return name;
         }
         let num = tryDecodeChurch(ast);
@@ -436,8 +434,7 @@ ANON_DEMO</textarea>
                     const h = h2 > 0 ? Math.sqrt(h2) : 0;
                     const midX = A.x + a * dx / d;
                     const midY = A.y + a * dy / d;
-                    // Clockwise normal vector orientation
-                    const nx = dy / d, ny = -dx / d;
+                    const nx = -dy / d, ny = dx / d;
                     
                     let cmX = 0, cmY = 0;
                     for (let sp of L.spine) { cmX += sp.x; cmY += sp.y; }
