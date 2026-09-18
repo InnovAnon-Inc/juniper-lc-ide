@@ -1,0 +1,26 @@
+use lc.py as a reference for the dialect we use. update the web app to use that dialect (note the resugaring).
+
+
+when the gui auto steps, it should be at 60 bpm -- every second, on the second.
+
+
+the bubbles are currently a bit far apart. in the reference for bubble notation, their circles are touching. overlapping a little, actually. it looks like they use some radius r for spacing the circles, and r+offset for drawing them.
+
+
+the gui looks nice. it's really close.
+
+
+we can strip out those presets. we'll be bringing our own code.
+
+
+we wanna be able to print our bubble notation programs. we need two sizes:
+
+- one size renders the expressions as 1 inch radius circular diagrams
+
+- another size renders the expressions large enough that the smallest bubbles are 1 inch. that is, the bubbles representing the variables to be substituted are large enough that the first size can be overlayed into it, physically performing the substitution
+
+
+need to be able to select the number of copies of each expression, and per size (i.e., need multiple copies of an expression to plug it into, e.g., \x.x x)
+
+
+for very complex expressions, it doesn't make sense to draw many nested layers of circles, until we're drawing little dots that nobody can read. our resugaring is fairly good. for example, when I draw these bubble diagrams by hand, I don't draw \x.\y.y. I draw \x.I, same as when I'm writing the algebraic notation by hand. that is, I've got a circle for the \x with another circle inside that has the letter I in it. it's simpler to write and simpler to draw. basically we need resugaring for our visual lambda expressions, so it will be feasible to print complex expressions within the specified physical dimensions (1 inch reference radius) 

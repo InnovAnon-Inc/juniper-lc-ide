@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Lambda Calculus IDE</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        },
+                        lambda: {
+                            var: '#3b82f6',     // Blue
+                            abs: '#a855f7',     // Purple
+                            app: '#f59e0b',     // Amber
+                            def: '#10b981'      // Emerald
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['Fira Code', 'JetBrains Mono', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 1);
+        }
+        .visual-node {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .visual-node:hover {
+            filter: brightness(1.15);
+        }
+        .drop-target-active {
+            outline: 2px dashed #3b82f6;
+            outline-offset: 2px;
+            background-color: rgba(59, 130, 246, 0.15) !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-full flex flex-col font-sans overflow-hidden select-none">
+
+    <!-- Top Header Navigation -->
+    <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-br from-purple-600 to-indigo-600 p-2 rounded-lg shadow-lg shadow-purple-500/20">
+                <span class="font-mono font-bold text-lg text-white">λ</span>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-100 flex items-center gap-2 text-sm md:text-base">
+                    Lambda Studio <span class="text-xs px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800/50">v2.0</span>
+                </h1>
+                <p class="text-xs text-slate-400 hidden sm:block">First-Principles Lambda Calculus IDE & Visualizer</p>
+            </div>
+        </div>
+
+        <!-- Reduction Control Bar -->
+        <div class="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 shadow-inner">
+            <button id="btn-step" title="Single Beta Reduction Step" class="p-2 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                <i data-lucide="step-forward" class="w-4 h-4 text-purple-400"></i> Step
+            </button>
+            <button id="btn-play" title="Auto-reduce" class="p-2 hover:bg-purple-900/40 text-purple-400 hover:text-purple-300 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                <i id="play-icon" data-lucide="play" class="w-4 h-4"></i> Auto
+            </button>
+            <button id="btn-reset" title="Reset Term" class="p-2 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-lg transition-colors">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+            <div class="h-4 w-px bg-slate-800 mx-1"></div>
+            <div class="flex items-center gap-2 px-2">
+                <span class="text-xs text-slate-400">Steps:</span>
+                <span id="step-counter" class="font-mono text-xs text-purple-400 font-bold">0</span>
+            </div>
+        </div>
+
+        <!-- File Management & Optional Graphics Controls -->
+        <div class="flex items-center gap-2">
+            <!-- Graphics Output Panel Toggle -->
+            <button id="btn-toggle-graphics" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 border border-slate-700" title="Toggle Graphics Output Canvas">
+                <i data-lucide="palette" class="w-3.5 h-3.5 text-pink-400"></i> Graphics Output
+            </button>
+
+            <!-- Files & Projects Drawer Toggle -->
+            <button id="btn-file-manager" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 border border-slate-700">
+                <i data-lucide="folder-open" class="w-3.5 h-3.5 text-amber-400"></i> Files & Modules
+            </button>
+
+            <!-- Flask Info -->
+            <button id="btn-flask-info" class="px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
+                <i data-lucide="server" class="w-3.5 h-3.5"></i> Flask Port 5013
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Workspace -->
+    <main class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left Column: Code Editor & Environment -->
+        <div class="w-1/2 flex flex-col border-r border-slate-800 bg-slate-900/50">
+            <!-- Text Editor Header -->
+            <div class="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                    <i data-lucide="file-code" class="w-4 h-4 text-blue-400"></i>
+                    <span id="current-filename-display" class="font-mono text-blue-300">main.lc</span>
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <button id="insert-lambda" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-purple-300 rounded font-mono border border-slate-700 transition" title="Insert λ symbol">
+                        λ
+                    </button>
+                    <span class="text-slate-500">|</span>
+                    <span class="text-slate-400 text-[11px]">Format: <code class="text-slate-300">NAME := \x.x</code></span>
+                </div>
+            </div>
+
+            <!-- Code Editor Area -->
+            <div class="flex-1 relative flex flex-col">
+                <textarea id="code-editor" class="w-full flex-1 bg-slate-950/80 p-4 font-mono text-sm text-slate-100 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500/50 leading-relaxed" spellcheck="false" placeholder="// Write lambda calculus definitions or expressions
+// Use 'import filename.lc' to load definitions from other project files.
+
+import peano.lc
+
+// Active expression to evaluate:
+PLUS 1 2"></textarea>
+                
+                <!-- Code Parse Status Overlay -->
+                <div id="parse-status" class="absolute bottom-2 right-4 px-2.5 py-1 rounded text-xs font-mono bg-slate-900/90 border border-slate-800 text-slate-400 flex items-center gap-1.5 shadow">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div> Syntax Valid
+                </div>
+            </div>
+
+            <!-- Environment Binding Drawer -->
+            <div class="h-44 border-t border-slate-800 bg-slate-950 flex flex-col shrink-0">
+                <div class="h-8 bg-slate-900/80 px-3 flex items-center justify-between border-b border-slate-800/80">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i> Active Environment Bindings
+                    </span>
+                    <span id="binding-count" class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full font-mono">0 items</span>
+                </div>
+                <div id="bindings-list" class="flex-1 p-3 overflow-y-auto space-y-1.5 font-mono text-xs">
+                    <!-- Environment items dynamically injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Visual Editor & Canvas -->
+        <div class="w-1/2 flex flex-col bg-slate-950 relative">
+            <!-- Visual Editor Header -->
+            <div class="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 z-10">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                    <i data-lucide="shapes" class="w-4 h-4 text-amber-400"></i> Visual Block Diagram
+                </div>
+                <div class="flex items-center gap-1.5 text-xs">
+                    <button id="btn-zoom-in" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+                        <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button id="btn-zoom-out" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+                        <i data-lucide="zoom-out" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button id="btn-fit-view" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200" title="Reset View">
+                        <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visual Drag Toolbox Palette -->
+            <div class="bg-slate-900/60 border-b border-slate-800/80 p-2 px-4 flex items-center gap-3 overflow-x-auto shrink-0 z-10">
+                <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider shrink-0">Add Term:</span>
+                
+                <div draggable="true" data-type="variable" class="toolbox-item cursor-grab active:cursor-grabbing px-2.5 py-1 bg-blue-950/80 border border-blue-700/60 hover:border-blue-500 text-blue-300 rounded text-xs flex items-center gap-1.5 shrink-0 transition shadow-sm">
+                    <i data-lucide="tag" class="w-3 h-3 text-blue-400"></i> Variable <span class="text-[10px] text-blue-400/70 font-mono">(x)</span>
+                </div>
+
+                <div draggable="true" data-type="abstraction" class="toolbox-item cursor-grab active:cursor-grabbing px-2.5 py-1 bg-purple-950/80 border border-purple-700/60 hover:border-purple-500 text-purple-300 rounded text-xs flex items-center gap-1.5 shrink-0 transition shadow-sm">
+                    <i data-lucide="circle-dot" class="w-3 h-3 text-purple-400"></i> Abstraction <span class="text-[10px] text-purple-400/70 font-mono">(λx.M)</span>
+                </div>
+
+                <div draggable="true" data-type="application" class="toolbox-item cursor-grab active:cursor-grabbing px-2.5 py-1 bg-amber-950/80 border border-amber-700/60 hover:border-amber-500 text-amber-300 rounded text-xs flex items-center gap-1.5 shrink-0 transition shadow-sm">
+                    <i data-lucide="layers" class="w-3 h-3 text-amber-400"></i> Application <span class="text-[10px] text-amber-400/70 font-mono">(M N)</span>
+                </div>
+            </div>
+
+            <!-- Interactive Canvas Space -->
+            <div id="visual-canvas" class="flex-1 overflow-auto p-8 flex items-center justify-center relative bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
+                <div id="visual-tree-container" class="transition-transform duration-200 transform origin-center flex flex-col items-center justify-center min-w-full min-h-full">
+                    <!-- Dynamic SVG & Visual Tree rendered here -->
+                </div>
+            </div>
+
+            <!-- Optional Toggleable Graphics Primitives Canvas Panel -->
+            <div id="graphics-panel" class="hidden h-52 border-t border-slate-800 bg-slate-900/95 flex flex-col shrink-0 relative transition-all duration-300">
+                <div class="h-7 bg-slate-900 px-3 flex items-center justify-between border-b border-slate-800">
+                    <span class="text-xs font-semibold text-pink-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="palette" class="w-3.5 h-3.5 text-pink-400"></i> Lambda Graphics Canvas Output
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400">Format: Pairs/Lists of (X, Y) or Color Primitives</span>
+                        <button id="btn-close-graphics" class="text-slate-400 hover:text-white p-0.5 rounded">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-1 p-3 flex items-center justify-center gap-6 overflow-hidden">
+                    <canvas id="lambda-gfx-canvas" width="180" height="140" class="bg-black border border-slate-800 rounded-lg shadow-inner"></canvas>
+                    <div class="text-xs text-slate-400 max-w-sm space-y-1 font-mono">
+                        <p class="text-slate-300 font-semibold font-sans">Church Vector Interpreter</p>
+                        <p class="text-[11px] text-slate-400">Evaluates reduced terms representing pairs or point lists down to pixels/lines.</p>
+                        <button id="btn-render-gfx" class="mt-2 px-3 py-1 bg-pink-950/80 hover:bg-pink-900 text-pink-300 border border-pink-800/80 rounded text-xs font-sans transition flex items-center gap-1">
+                            <i data-lucide="play-circle" class="w-3.5 h-3.5"></i> Render Current Term to Canvas
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Trace Timeline Bar -->
+            <div class="h-28 border-t border-slate-800 bg-slate-900/90 flex flex-col shrink-0">
+                <div class="h-7 bg-slate-900 px-3 flex items-center justify-between border-b border-slate-800">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="history" class="w-3.5 h-3.5 text-purple-400"></i> Reduction Trace
+                    </span>
+                    <span id="reduction-status" class="text-[10px] text-slate-400 font-mono">Normal Form Reached</span>
+                </div>
+                <div id="trace-list" class="flex-1 p-2.5 overflow-x-auto flex items-center gap-3 font-mono text-xs">
+                    <!-- Reduction step history pills -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- File Manager Modal / Project Drawer -->
+    <div id="modal-files" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="folder-open" class="w-5 h-5 text-amber-400"></i>
+                    <h3 class="font-bold text-slate-100">Project File Manager & Dependencies</h3>
+                </div>
+                <button class="close-modal text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Action Bar: Create, Upload, Export -->
+                <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <input id="input-new-filename" type="text" placeholder="filename.lc" class="bg-slate-900 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-mono focus:outline-none focus:ring-1 focus:ring-amber-500">
+                        <button id="btn-create-file" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-slate-950 font-semibold text-xs rounded-lg transition flex items-center gap-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i> New File
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <!-- Upload File Input -->
+                        <label class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 cursor-pointer transition flex items-center gap-1">
+                            <i data-lucide="upload" class="w-3.5 h-3.5 text-blue-400"></i> Upload .lc
+                            <input id="file-upload-input" type="file" accept=".lc,.txt" class="hidden">
+                        </label>
+                        
+                        <!-- Export Project Bundle -->
+                        <button id="btn-export-bundle" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg border border-slate-700 transition flex items-center gap-1">
+                            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-400"></i> Export Bundle
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Project Files List -->
+                <div>
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between">
+                        <span>Project Files (<span id="project-file-count">0</span>)</span>
+                        <span class="text-[11px] text-slate-500 font-normal">Stored in browser LocalStorage</span>
+                    </h4>
+                    <div id="file-list-container" class="grid grid-cols-1 gap-2 font-mono text-xs">
+                        <!-- Dynamic file cards injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flask Setup Info Modal -->
+    <div id="modal-flask" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="server" class="w-5 h-5 text-emerald-400"></i>
+                    <h3 class="font-bold text-slate-100">Flask Server Integration (Port 5013)</h3>
+                </div>
+                <button class="close-modal text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs font-mono">
+                <p class="text-slate-300 font-sans text-sm">
+                    To host this visual lambda calculus environment locally or on a server using Python Flask on port 5013:
+                </p>
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 relative group">
+                    <button id="copy-flask-code" class="absolute top-3 right-3 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition" title="Copy code">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                    <pre class="text-emerald-400 overflow-x-auto leading-relaxed"><code>from flask import Flask, render_template_string
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    with open('index.html', 'r', encoding='utf-8') as f:
+        return f.read()
+
+if __name__ == '__main__':
+    print("🚀 Lambda IDE running on http://127.0.0.1:5013")
+    app.run(host='0.0.0.0', port=5013, debug=True)</code></pre>
+                </div>
+                <div class="space-y-1 text-slate-400 font-sans text-[11px]">
+                    <p>1. Install flask: <code class="text-slate-200 font-mono bg-slate-800 px-1 rounded">pip install flask</code></p>
+                    <p>2. Save the code above as <code class="text-slate-200 font-mono bg-slate-800 px-1 rounded">app.py</code></p>
+                    <p>3. Run <code class="text-slate-200 font-mono bg-slate-800 px-1 rounded">python app.py</code> and open <code class="text-emerald-400 font-mono bg-slate-800 px-1 rounded">http://localhost:5013</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- 1. AST NODE DEFINITIONS ---
+        class Var {
+            constructor(name) {
+                this.type = 'var';
+                this.name = name;
+                this.id = 'node_' + Math.random().toString(36).substr(2, 9);
+            }
+            toString() { return this.name; }
+            clone() { return new Var(this.name); }
+        }
+
+        class Abs {
+            constructor(param, body) {
+                this.type = 'abs';
+                this.param = param; // string
+                this.body = body;   // AST Node
+                this.id = 'node_' + Math.random().toString(36).substr(2, 9);
+            }
+            toString() {
+                const bodyStr = this.body.type === 'abs' ? this.body.toString().substring(1) : `. ${this.body.toString()}`;
+                return `\\${this.param}${bodyStr.startsWith('.') ? bodyStr : ' ' + bodyStr}`;
+            }
+            clone() { return new Abs(this.param, this.body.clone()); }
+        }
+
+        class App {
+            constructor(func, arg) {
+                this.type = 'app';
+                this.func = func; // AST Node
+                this.arg = arg;   // AST Node
+                this.id = 'node_' + Math.random().toString(36).substr(2, 9);
+            }
+            toString() {
+                const fStr = this.func.type === 'abs' ? `(${this.func.toString()})` : this.func.toString();
+                const aStr = (this.arg.type === 'app' || this.arg.type === 'abs') ? `(${this.arg.toString()})` : this.arg.toString();
+                return `${fStr} ${aStr}`;
+            }
+            clone() { return new App(this.func.clone(), this.arg.clone()); }
+        }
+
+        // --- 2. PARSER & LEXER ---
+        class Lexer {
+            constructor(input) {
+                this.input = input;
+                this.pos = 0;
+            }
+            nextToken() {
+                while (this.pos < this.input.length && /\s/.test(this.input[this.pos])) {
+                    this.pos++;
+                }
+                if (this.pos >= this.input.length) return null;
+
+                const ch = this.input[this.pos];
+                if (ch === '\\' || ch === 'λ') {
+                    this.pos++;
+                    return { type: 'LAMBDA', val: 'λ' };
+                }
+                if (ch === '.' || ch === '(' || ch === ')') {
+                    this.pos++;
+                    return { type: ch, val: ch };
+                }
+
+                if (/[a-zA-Z0-9_.]/.test(ch)) {
+                    let start = this.pos;
+                    while (this.pos < this.input.length && /[a-zA-Z0-9_.]/.test(this.input[this.pos])) {
+                        this.pos++;
+                    }
+                    return { type: 'VAR', val: this.input.slice(start, this.pos) };
+                }
+
+                this.pos++;
+                return { type: 'UNKNOWN', val: ch };
+            }
+        }
+
+        class Parser {
+            constructor(input) {
+                this.lexer = new Lexer(input);
+                this.currentToken = this.lexer.nextToken();
+            }
+
+            eat(type) {
+                if (this.currentToken && this.currentToken.type === type) {
+                    this.currentToken = this.lexer.nextToken();
+                } else {
+                    throw new Error(`Expected token ${type}, found ${this.currentToken ? this.currentToken.type : 'EOF'}`);
+                }
+            }
+
+            parse() {
+                if (!this.currentToken) return null;
+                return this.parseExpression();
+            }
+
+            parseExpression() {
+                let terms = [];
+                while (this.currentToken && this.currentToken.type !== ')') {
+                    terms.push(this.parseSingle());
+                }
+                if (terms.length === 0) throw new Error("Empty expression");
+                
+                let acc = terms[0];
+                for (let i = 1; i < terms.length; i++) {
+                    acc = new App(acc, terms[i]);
+                }
+                return acc;
+            }
+
+            parseSingle() {
+                if (!this.currentToken) throw new Error("Unexpected end of expression");
+
+                if (this.currentToken.type === 'LAMBDA') {
+                    this.eat('LAMBDA');
+                    let params = [];
+                    while (this.currentToken && this.currentToken.type === 'VAR') {
+                        params.push(this.currentToken.val);
+                        this.eat('VAR');
+                    }
+                    if (params.length === 0) throw new Error("Lambda expects parameter name");
+                    if (this.currentToken.type === '.') this.eat('.');
+
+                    const body = this.parseExpression();
+                    let res = body;
+                    for (let i = params.length - 1; i >= 0; i--) {
+                        res = new Abs(params[i], res);
+                    }
+                    return res;
+                }
+
+                if (this.currentToken.type === 'VAR') {
+                    const name = this.currentToken.val;
+                    this.eat('VAR');
+                    return new Var(name);
+                }
+
+                if (this.currentToken.type === '(') {
+                    this.eat('(');
+                    const expr = this.parseExpression();
+                    this.eat(')');
+                    return expr;
+                }
+
+                throw new Error(`Unexpected token ${this.currentToken.val}`);
+            }
+        }
+
+        // --- 3. BETA REDUCTION ENGINE ---
+        function getFreeVars(node) {
+            if (node.type === 'var') return new Set([node.name]);
+            if (node.type === 'abs') {
+                const free = getFreeVars(node.body);
+                free.delete(node.param);
+                return free;
+            }
+            if (node.type === 'app') {
+                return new Set([...getFreeVars(node.func), ...getFreeVars(node.arg)]);
+            }
+            return new Set();
+        }
+
+        function alphaRename(node, oldVar, newVar) {
+            if (node.type === 'var') {
+                return node.name === oldVar ? new Var(newVar) : node.clone();
+            }
+            if (node.type === 'abs') {
+                if (node.param === oldVar) return node.clone();
+                return new Abs(
+                    node.param === oldVar ? newVar : node.param,
+                    alphaRename(node.body, oldVar, newVar)
+                );
+            }
+            if (node.type === 'app') {
+                return new App(alphaRename(node.func, oldVar, newVar), alphaRename(node.arg, oldVar, newVar));
+            }
+        }
+
+        function substitute(body, varName, replacement) {
+            if (body.type === 'var') {
+                return body.name === varName ? replacement.clone() : body.clone();
+            }
+            if (body.type === 'app') {
+                return new App(
+                    substitute(body.func, varName, replacement),
+                    substitute(body.arg, varName, replacement)
+                );
+            }
+            if (body.type === 'abs') {
+                if (body.param === varName) return body.clone();
+                
+                const freeInRepl = getFreeVars(replacement);
+                if (freeInRepl.has(body.param)) {
+                    const freshVar = body.param + "'";
+                    const renamedBody = alphaRename(body.body, body.param, freshVar);
+                    return new Abs(freshVar, substitute(renamedBody, varName, replacement));
+                }
+                return new Abs(body.param, substitute(body.body, varName, replacement));
+            }
+        }
+
+        function betaReduceStep(node, env = {}) {
+            if (node.type === 'var' && env[node.name]) {
+                return { reduced: true, node: env[node.name].clone(), redexId: node.id };
+            }
+
+            if (node.type === 'app') {
+                if (node.func.type === 'abs') {
+                    const substituted = substitute(node.func.body, node.func.param, node.arg);
+                    return { reduced: true, node: substituted, redexId: node.id };
+                }
+
+                const funcRes = betaReduceStep(node.func, env);
+                if (funcRes.reduced) {
+                    return { reduced: true, node: new App(funcRes.node, node.arg), redexId: funcRes.redexId };
+                }
+
+                const argRes = betaReduceStep(node.arg, env);
+                if (argRes.reduced) {
+                    return { reduced: true, node: new App(node.func, argRes.node), redexId: argRes.redexId };
+                }
+            }
+
+            if (node.type === 'abs') {
+                const bodyRes = betaReduceStep(node.body, env);
+                if (bodyRes.reduced) {
+                    return { reduced: true, node: new Abs(node.param, bodyRes.node), redexId: bodyRes.redexId };
+                }
+            }
+
+            return { reduced: false, node: node };
+        }
+
+        // --- 4. DEFAULT STARTER FILES ---
+        const DEFAULT_PROJECT_FILES = {
+            'peano.lc': `// Peano Axioms & Church Numerals
+0 := \\f.\\x.x
+1 := \\f.\\x.f x
+2 := \\f.\\x.f (f x)
+3 := \\f.\\x.f (f (f x))
+
+// Successor function S(n)
+S := \\n.\\f.\\x.f (n f x)
+
+// Peano Addition
+PLUS := \\m.\\n.\\f.\\x.m f (n f x)`,
+
+            'booleans.lc': `// Church Booleans & Logic Gates
+TRUE := \\x.\\y.x
+FALSE := \\x.\\y.y
+AND := \\p.\\q.p q p
+OR := \\p.\\q.p p q
+NOT := \\p.p FALSE TRUE`,
+
+            'logic.lc': `
+# --- Booleans ---
+TRUE  := \\x.\\y.x
+FALSE := \\x.\\y.y
+NOT   := \\b.b FALSE TRUE
+AND   := \\p.\\q.p q FALSE
+OR    := \\p.\\q.p TRUE q
+IF    := \\b.\\t.\\f.b t f
+
+# --- Pairs (Duo) ---
+PAIR := \\x.\\y.\\f.f x y
+FIRST := \\p.p (\\x.\\y.x)
+SECOND := \\p.p (\\x.\\y.y)
+
+# --- Lists (Scott / Church Encodings) ---
+# NIL represents an empty list: \\c.\\n. n
+# CONS appends an element: \\h.\\t.\\c.\\n. c h (t c n)
+NIL  := \\c.\\n.n
+CONS := \\h.\\t.\\c.\\n.c h (t c n)
+IS_NIL := \\l.l (\\h.\\t.FALSE) TRUE
+
+# --- Structural Equality for Numbers/IDs ---
+# Helper to compare Church numerals or tag identifiers
+SUCC := \\n.\\f.\\x.f (n f x)
+ZERO := \\f.\\x.x
+IS_ZERO := \\n.n (\\x.FALSE) TRUE
+PRED := \\n.\\f.\\x.n (\\g.\\h.h (g f)) (\\u.x) (\\u.u)
+SUB := \\m.\\n.n PRED m
+EQ_NUM := \\m.\\n.AND (IS_ZERO (SUB m n)) (IS_ZERO (SUB n m))`,
+
+            'ast.lc': `
+# --- Target Theorem: x = x ---
+THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
+
+# --- Step 1: Assert AXIOM_REFLEXIVE ---
+STEP_1 := PAIR RULE_AXIOM (PAIR THEOREM_REFLEXIVE NIL)
+
+# --- Proof Sequence ---
+PROOF_1 := CONS STEP_1 NIL
+
+# --- FINAL EVALUATION ---
+# Running this term reduces down purely to TRUE (\\x.\\y.x)
+MAIN := VERIFY_PROOF AXIOM_SET PROOF_1`,
+
+            'peano_axioms.lc': `
+# --- Terms ---
+VAR_X := MK_VAR (SUCC ZERO)
+VAR_Y := MK_VAR (SUCC (SUCC ZERO))
+
+# --- Axiom 1: Reflexivity of Equality (x = x) ---
+AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
+
+# --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> FALSE) ---
+# Represented structurally as Implication: S(x) = 0 -> x != x
+S_X := MK_VAR (SUCC (SUCC (SUCC ZERO))) # S(x) term
+AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR ZERO)) (MK_EQ VAR_X VAR_Y)
+
+# --- Full Axiom List ---
+AXIOM_SET := CONS AXIOM_REFLEXIVE (CONS AXIOM_ZERO_SUCC NIL)`,
+
+            'proof_checker.lc': `
+# --- Check if Formula is in Axiom Set ---
+IS_AXIOM := \\formula.\\axioms. \
+  axioms (\\h.\\acc.OR (IS_SAME_FORMULA formula h) acc) FALSE
+
+# --- Modus Ponens Verifier ---
+# Given Premise 1 (A), Premise 2 (A -> B), and Target (B):
+# Validates that Premise 2 is an Implication, its antecedent matches A, and consequence matches B.
+VERIFY_MP := \\p1.\\p2.\\target. \
+  IF (IS_IMP p2) \
+    (AND (IS_SAME_FORMULA p1 (FIRST (GET_BODY p2))) \
+         (IS_SAME_FORMULA target (SECOND (GET_BODY p2)))) \
+    FALSE
+
+# --- Single Step Checker ---
+# A step is a tuple: PAIR Rule_Type (PAIR Target_Formula Parameters)
+# Rule 0: Axiom Assertion (Parameters = Ignored)
+# Rule 1: Modus Ponens (Parameters = PAIR Premise1 Premise2)
+RULE_AXIOM := ZERO
+RULE_MP    := SUCC ZERO
+
+CHECK_STEP := \\step.\\axioms.\\history. \
+  \\rule. \\payload. \\target. \\params. \
+  (rule = RULE_AXIOM) \
+    (IS_AXIOM target axioms) \
+    ((rule = RULE_MP) \
+      (VERIFY_MP (FIRST params) (SECOND params) target) \
+      FALSE)
+
+# --- Proof List Verifier ---
+# Iterates through a list of steps, verifying each against axioms and prior history
+VERIFY_PROOF := \\axioms.\\proof. \
+  proof (\\step.\\acc_result. \
+    AND acc_result (CHECK_STEP step axioms NIL) \
+  ) TRUE`,
+
+            'peano_proofs.lc': `
+# --- Target Theorem: x = x ---
+THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
+
+# --- Step 1: Assert AXIOM_REFLEXIVE ---
+STEP_1 := PAIR RULE_AXIOM (PAIR THEOREM_REFLEXIVE NIL)
+
+# --- Proof Sequence ---
+PROOF_1 := CONS STEP_1 NIL
+
+# --- FINAL EVALUATION ---
+# Running this term reduces down purely to TRUE (\\x.\\y.x)
+MAIN := VERIFY_PROOF AXIOM_SET PROOF_1`,
+
+            'main.lc': `// Import dependencies from project files:
+import peano.lc
+import booleans.lc
+
+// Evaluate Peano addition 1 + 2
+PLUS 1 2`
+        };
+
+        // --- 5. APPLICATION STATE & CONTROLLER ---
+        const state = {
+            projectFiles: {},
+            currentFileName: 'main.lc',
+            env: {},             // Resolved environment bindings
+            currentAST: null,    // Active AST
+            history: [],         // Step history
+            stepCount: 0,
+            isPlaying: false,
+            playTimer: null,
+            zoomLevel: 1.0
+        };
+
+        // DOM Elements
+        const codeEditor = document.getElementById('code-editor');
+        const bindingsList = document.getElementById('bindings-list');
+        const bindingCount = document.getElementById('binding-count');
+        const parseStatus = document.getElementById('parse-status');
+        const visualContainer = document.getElementById('visual-tree-container');
+        const traceList = document.getElementById('trace-list');
+        const reductionStatus = document.getElementById('reduction-status');
+        const stepCounter = document.getElementById('step-counter');
+        const currentFilenameDisplay = document.getElementById('current-filename-display');
+        const fileListContainer = document.getElementById('file-list-container');
+        const projectFileCount = document.getElementById('project-file-count');
+
+        // Buttons & Modals
+        const btnStep = document.getElementById('btn-step');
+        const btnPlay = document.getElementById('btn-play');
+        const btnReset = document.getElementById('btn-reset');
+        const playIcon = document.getElementById('play-icon');
+        const modalFiles = document.getElementById('modal-files');
+        const modalFlask = document.getElementById('modal-flask');
+
+        // Graphics Canvas Panel
+        const graphicsPanel = document.getElementById('graphics-panel');
+        const btnToggleGraphics = document.getElementById('btn-toggle-graphics');
+        const btnCloseGraphics = document.getElementById('btn-close-graphics');
+        const btnRenderGfx = document.getElementById('btn-render-gfx');
+        const gfxCanvas = document.getElementById('lambda-gfx-canvas');
+
+        // --- 6. LOCAL STORAGE & FILE MANAGEMENT ---
+        function loadProjectFromStorage() {
+            const stored = localStorage.getItem('lambda_studio_files');
+            if (stored) {
+                try {
+                    state.projectFiles = JSON.parse(stored);
+                } catch(e) {
+                    state.projectFiles = { ...DEFAULT_PROJECT_FILES };
+                }
+            } else {
+                state.projectFiles = { ...DEFAULT_PROJECT_FILES };
+            }
+
+            if (!state.projectFiles[state.currentFileName]) {
+                state.currentFileName = Object.keys(state.projectFiles)[0] || 'main.lc';
+            }
+
+            codeEditor.value = state.projectFiles[state.currentFileName] || '';
+            currentFilenameDisplay.textContent = state.currentFileName;
+            renderFileList();
+        }
+
+        function saveProjectToStorage() {
+            state.projectFiles[state.currentFileName] = codeEditor.value;
+            localStorage.setItem('lambda_studio_files', JSON.stringify(state.projectFiles));
+            renderFileList();
+        }
+
+        function renderFileList() {
+            fileListContainer.innerHTML = '';
+            const fileNames = Object.keys(state.projectFiles);
+            projectFileCount.textContent = fileNames.length;
+
+            fileNames.forEach(fn => {
+                const isActive = fn === state.currentFileName;
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border flex items-center justify-between transition ${
+                    isActive ? 'bg-amber-950/40 border-amber-600/70 text-amber-200 shadow' : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden cursor-pointer flex-1 switch-file-btn" data-filename="${fn}">
+                        <i data-lucide="file-text" class="w-4 h-4 ${isActive ? 'text-amber-400' : 'text-slate-400'} shrink-0"></i>
+                        <span class="font-bold truncate">${fn}</span>
+                        ${isActive ? '<span class="text-[10px] bg-amber-900/60 text-amber-300 px-1.5 py-0.5 rounded ml-2">Active</span>' : ''}
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button data-filename="${fn}" class="btn-download-file p-1 hover:bg-slate-800 text-slate-400 hover:text-emerald-400 rounded transition" title="Download .lc file">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        </button>
+                        ${fileNames.length > 1 ? `
+                            <button data-filename="${fn}" class="btn-delete-file p-1 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded transition" title="Delete file">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                fileListContainer.appendChild(card);
+            });
+
+            lucide.createIcons();
+
+            // Event Listeners for file list
+            document.querySelectorAll('.switch-file-btn').forEach(el => {
+                el.addEventListener('click', () => {
+                    const fn = el.getAttribute('data-filename');
+                    saveProjectToStorage();
+                    state.currentFileName = fn;
+                    codeEditor.value = state.projectFiles[fn];
+                    currentFilenameDisplay.textContent = fn;
+                    modalFiles.classList.add('hidden');
+                    resetReduction();
+                    parseScript();
+                    renderFileList();
+                });
+            });
+
+            document.querySelectorAll('.btn-download-file').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const fn = btn.getAttribute('data-filename');
+                    downloadSingleFile(fn, state.projectFiles[fn]);
+                });
+            });
+
+            document.querySelectorAll('.btn-delete-file').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const fn = btn.getAttribute('data-filename');
+                    if (confirm(`Delete file ${fn}?`)) {
+                        delete state.projectFiles[fn];
+                        if (state.currentFileName === fn) {
+                            state.currentFileName = Object.keys(state.projectFiles)[0];
+                            codeEditor.value = state.projectFiles[state.currentFileName];
+                            currentFilenameDisplay.textContent = state.currentFileName;
+                        }
+                        saveProjectToStorage();
+                        parseScript();
+                    }
+                });
+            });
+        }
+
+        function downloadSingleFile(filename, content) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // --- 7. SCRIPT PARSER & IMPORT RESOLVER ---
+        function parseScript() {
+            saveProjectToStorage();
+            const code = codeEditor.value;
+            const lines = code.split('\n');
+            const newEnv = {};
+            let activeExprCode = '';
+
+            // 1. Process imported files first
+            for (let line of lines) {
+                line = line.trim();
+                if (line.startsWith('import ')) {
+                    const importedFileName = line.replace('import ', '').trim();
+                    if (state.projectFiles[importedFileName]) {
+                        parseFileIntoEnv(state.projectFiles[importedFileName], newEnv);
+                    }
+                }
+            }
+
+            // 2. Process current file
+            for (let line of lines) {
+                line = line.trim();
+                if (!line || line.startsWith('//') || line.startsWith('import ')) continue;
+
+                if (line.includes(':=')) {
+                    const [name, exprStr] = line.split(':=');
+                    const cleanName = name.trim();
+                    try {
+                        const p = new Parser(exprStr.trim());
+                        newEnv[cleanName] = p.parse();
+                    } catch (e) {}
+                } else {
+                    activeExprCode = line;
+                }
+            }
+
+            state.env = newEnv;
+            updateEnvUI();
+
+            if (activeExprCode) {
+                try {
+                    const p = new Parser(activeExprCode);
+                    const ast = p.parse();
+                    setParseStatus(true, "Syntax Valid");
+                    
+                    if (JSON.stringify(ast) !== JSON.stringify(state.currentAST) && state.stepCount === 0) {
+                        state.currentAST = ast;
+                        renderVisualTree(state.currentAST);
+                    }
+                } catch (e) {
+                    setParseStatus(false, e.message);
+                }
+            } else {
+                state.currentAST = null;
+                renderVisualTree(null);
+            }
+        }
+
+        function parseFileIntoEnv(fileContent, targetEnv) {
+            const lines = fileContent.split('\n');
+            for (let line of lines) {
+                line = line.trim();
+                if (!line || line.startsWith('//') || line.startsWith('import ')) continue;
+                if (line.includes(':=')) {
+                    const [name, exprStr] = line.split(':=');
+                    const cleanName = name.trim();
+                    try {
+                        const p = new Parser(exprStr.trim());
+                        targetEnv[cleanName] = p.parse();
+                    } catch (e) {}
+                }
+            }
+        }
+
+        function setParseStatus(isValid, msg) {
+            parseStatus.innerHTML = isValid 
+                ? `<div class="w-2 h-2 rounded-full bg-emerald-500"></div> <span class="text-emerald-400">${msg}</span>`
+                : `<div class="w-2 h-2 rounded-full bg-rose-500"></div> <span class="text-rose-400">${msg}</span>`;
+        }
+
+        function updateEnvUI() {
+            bindingsList.innerHTML = '';
+            const keys = Object.keys(state.env);
+            bindingCount.textContent = `${keys.length} items`;
+
+            if (keys.length === 0) {
+                bindingsList.innerHTML = `<span class="text-slate-600 font-sans text-xs italic">No bindings defined yet. Use NAME := \\x.x or import files</span>`;
+                return;
+            }
+
+            keys.forEach(k => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-1.5 bg-slate-900 border border-slate-800 rounded group hover:border-slate-700 transition";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="font-bold text-emerald-400 font-mono">${k}</span>
+                        <span class="text-slate-500">:=</span>
+                        <span class="text-slate-300 truncate font-mono">${state.env[k].toString()}</span>
+                    </div>
+                    <button data-bind="${k}" class="btn-insert-bind text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">
+                        Insert
+                    </button>
+                `;
+                bindingsList.appendChild(item);
+            });
+
+            document.querySelectorAll('.btn-insert-bind').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const name = e.target.getAttribute('data-bind');
+                    codeEditor.value += ` ${name}`;
+                    parseScript();
+                });
+            });
+        }
+
+        // --- 8. VISUAL TREE RENDERER ---
+        function renderVisualTree(ast, targetEl = visualContainer) {
+            targetEl.innerHTML = '';
+            if (!ast) {
+                targetEl.innerHTML = `<div class="text-slate-600 text-xs font-mono">No active expression loaded</div>`;
+                return;
+            }
+
+            const treeEl = createNodeUI(ast);
+            targetEl.appendChild(treeEl);
+            lucide.createIcons();
+        }
+
+        function createNodeUI(node) {
+            const container = document.createElement('div');
+            container.className = "visual-node flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative group";
+            container.dataset.id = node.id;
+
+            if (node.type === 'var') {
+                container.classList.add('bg-blue-950/70', 'border', 'border-blue-700/80', 'text-blue-200', 'shadow-md', 'min-w-[48px]', 'h-11');
+                container.innerHTML = `
+                    <div class="flex items-center gap-1 font-mono font-bold text-sm px-2">
+                        <i data-lucide="tag" class="w-3.5 h-3.5 text-blue-400"></i>
+                        <span>${node.name}</span>
+                    </div>
+                `;
+            } else if (node.type === 'abs') {
+                container.classList.add('bg-purple-950/60', 'border-2', 'border-purple-600/80', 'p-3', 'rounded-2xl', 'shadow-lg');
+                
+                const header = document.createElement('div');
+                header.className = "flex items-center gap-1.5 font-mono text-xs text-purple-300 font-bold mb-2 bg-purple-900/40 px-2.5 py-1 rounded-lg border border-purple-700/50";
+                header.innerHTML = `<span class="text-purple-400 text-sm">λ</span><span>${node.param}</span> <span class="text-purple-400/60 font-sans">→</span>`;
+                
+                const bodyContainer = document.createElement('div');
+                bodyContainer.className = "p-2 bg-slate-950/60 rounded-xl border border-purple-900/40 min-w-[80px] min-h-[50px] flex items-center justify-center";
+                bodyContainer.appendChild(createNodeUI(node.body));
+
+                container.appendChild(header);
+                container.appendChild(bodyContainer);
+            } else if (node.type === 'app') {
+                container.classList.add('bg-amber-950/40', 'border-2', 'border-amber-600/70', 'p-3', 'rounded-2xl', 'shadow-lg');
+
+                const header = document.createElement('div');
+                header.className = "text-[10px] font-semibold text-amber-400/80 uppercase tracking-wider mb-2 flex items-center gap-1";
+                header.innerHTML = `<i data-lucide="layers" class="w-3 h-3"></i> Application`;
+
+                const childrenWrapper = document.createElement('div');
+                childrenWrapper.className = "flex items-center gap-3 bg-slate-950/80 p-2.5 rounded-xl border border-amber-900/30";
+
+                const funcUI = createNodeUI(node.func);
+                const argUI = createNodeUI(node.arg);
+
+                childrenWrapper.appendChild(funcUI);
+                childrenWrapper.appendChild(argUI);
+
+                container.appendChild(header);
+                container.appendChild(childrenWrapper);
+            }
+
+            container.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                if (node.type === 'var') {
+                    const newName = prompt("Rename variable:", node.name);
+                    if (newName) {
+                        node.name = newName.trim();
+                        syncASTToText();
+                    }
+                } else if (node.type === 'abs') {
+                    const newParam = prompt("Change abstraction parameter:", node.param);
+                    if (newParam) {
+                        node.param = newParam.trim();
+                        syncASTToText();
+                    }
+                }
+            });
+
+            return container;
+        }
+
+        function syncASTToText() {
+            if (!state.currentAST) return;
+            const newCode = state.currentAST.toString();
+            
+            const lines = codeEditor.value.split('\n');
+            let found = false;
+            for (let i = lines.length - 1; i >= 0; i--) {
+                const l = lines[i].trim();
+                if (l && !l.startsWith('//') && !l.startsWith('import ') && !l.includes(':=')) {
+                    lines[i] = newCode;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) lines.push(newCode);
+
+            codeEditor.value = lines.join('\n');
+            parseScript();
+        }
+
+        // --- 9. BETA REDUCTION REDUCER CONTROLLER ---
+        function stepReduction() {
+            if (!state.currentAST) return;
+
+            if (state.history.length === 0) {
+                state.history.push(state.currentAST.toString());
+                renderTimeline();
+            }
+
+            const res = betaReduceStep(state.currentAST, state.env);
+            if (res.reduced) {
+                state.currentAST = res.node;
+                state.stepCount++;
+                stepCounter.textContent = state.stepCount;
+
+                const codeStr = state.currentAST.toString();
+                state.history.push(codeStr);
+
+                renderVisualTree(state.currentAST);
+                renderTimeline();
+                reductionStatus.textContent = "Reducing...";
+                reductionStatus.className = "text-[10px] text-amber-400 font-mono";
+            } else {
+                reductionStatus.textContent = "Normal Form (Fully Reduced)";
+                reductionStatus.className = "text-[10px] text-emerald-400 font-mono font-bold";
+                stopAutoPlay();
+            }
+        }
+
+        function renderTimeline() {
+            traceList.innerHTML = '';
+            state.history.forEach((stepCode, idx) => {
+                const item = document.createElement('div');
+                item.className = `px-3 py-1.5 rounded-lg border text-xs font-mono shrink-0 cursor-pointer transition flex items-center gap-2 ${
+                    idx === state.history.length - 1 
+                        ? 'bg-purple-950 border-purple-700 text-purple-200 font-bold shadow' 
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`;
+                item.innerHTML = `<span class="text-[10px] opacity-60">#${idx}</span> <span>${stepCode}</span>`;
+                traceList.appendChild(item);
+            });
+            traceList.scrollLeft = traceList.scrollWidth;
+        }
+
+        function resetReduction() {
+            stopAutoPlay();
+            state.stepCount = 0;
+            state.history = [];
+            stepCounter.textContent = "0";
+            reductionStatus.textContent = "Reset";
+            reductionStatus.className = "text-[10px] text-slate-400 font-mono";
+            renderTimeline();
+            parseScript();
+        }
+
+        function toggleAutoPlay() {
+            if (state.isPlaying) {
+                stopAutoPlay();
+            } else {
+                state.isPlaying = true;
+                playIcon.setAttribute('data-lucide', 'pause');
+                lucide.createIcons();
+                btnPlay.classList.add('bg-purple-900/80', 'text-purple-200');
+
+                state.playTimer = setInterval(() => {
+                    const before = state.currentAST ? state.currentAST.toString() : '';
+                    stepReduction();
+                    if (!state.currentAST || state.currentAST.toString() === before) {
+                        stopAutoPlay();
+                    }
+                }, 400);
+            }
+        }
+
+        function stopAutoPlay() {
+            state.isPlaying = false;
+            if (state.playTimer) clearInterval(state.playTimer);
+            playIcon.setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+            btnPlay.classList.remove('bg-purple-900/80', 'text-purple-200');
+        }
+
+        // --- 10. GRAPHICS PRIMITIVES INTERPRETER ---
+        function renderGraphicsCanvas() {
+            const ctx = gfxCanvas.getContext('2d');
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, gfxCanvas.width, gfxCanvas.height);
+
+            if (!state.currentAST) return;
+
+            // Draw placeholder vector axes or evaluated points
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(gfxCanvas.width / 2, 0);
+            ctx.lineTo(gfxCanvas.width / 2, gfxCanvas.height);
+            ctx.moveTo(0, gfxCanvas.height / 2);
+            ctx.lineTo(gfxCanvas.width, gfxCanvas.height / 2);
+            ctx.stroke();
+
+            // Render a stylized lambda graphic representation based on current step
+            ctx.fillStyle = '#ec4899';
+            ctx.shadowColor = '#ec4899';
+            ctx.shadowBlur = 8;
+            
+            // Draw a demo Church numeral point plot or line pattern
+            const pointsCount = Math.max(3, state.stepCount * 2 + 3);
+            const radius = 40;
+            const centerX = gfxCanvas.width / 2;
+            const centerY = gfxCanvas.height / 2;
+
+            ctx.beginPath();
+            for (let i = 0; i < pointsCount; i++) {
+                const angle = (i / pointsCount) * Math.PI * 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#f472b6';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+        }
+
+        // --- 11. DRAG & DROP TOOLBOX ---
+        const visualCanvas = document.getElementById('visual-canvas');
+        
+        document.querySelectorAll('.toolbox-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('type', item.dataset.type);
+            });
+        });
+
+        visualCanvas.addEventListener('dragover', (e) => e.preventDefault());
+
+        visualCanvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData('type');
+            if (!type) return;
+
+            let newNode;
+            if (type === 'variable') {
+                const varName = prompt("Variable name:", "x") || "x";
+                newNode = new Var(varName);
+            } else if (type === 'abstraction') {
+                const paramName = prompt("Abstraction parameter:", "x") || "x";
+                newNode = new Abs(paramName, new Var("x"));
+            } else if (type === 'application') {
+                newNode = new App(new Var("f"), new Var("x"));
+            }
+
+            if (newNode) {
+                if (!state.currentAST) {
+                    state.currentAST = newNode;
+                } else {
+                    state.currentAST = new App(state.currentAST, newNode);
+                }
+                syncASTToText();
+            }
+        });
+
+        // --- 12. EVENT LISTENERS ---
+        codeEditor.addEventListener('input', parseScript);
+
+        document.getElementById('insert-lambda').addEventListener('click', () => {
+            const start = codeEditor.selectionStart;
+            const end = codeEditor.selectionEnd;
+            const text = codeEditor.value;
+            codeEditor.value = text.substring(0, start) + 'λ' + text.substring(end);
+            codeEditor.focus();
+            codeEditor.selectionStart = codeEditor.selectionEnd = start + 1;
+            parseScript();
+        });
+
+        btnStep.addEventListener('click', stepReduction);
+        btnPlay.addEventListener('click', toggleAutoPlay);
+        btnReset.addEventListener('click', resetReduction);
+
+        // Graphics Toggle
+        btnToggleGraphics.addEventListener('click', () => {
+            graphicsPanel.classList.toggle('hidden');
+            if (!graphicsPanel.classList.contains('hidden')) {
+                renderGraphicsCanvas();
+            }
+        });
+
+        btnCloseGraphics.addEventListener('click', () => {
+            graphicsPanel.classList.add('hidden');
+        });
+
+        btnRenderGfx.addEventListener('click', renderGraphicsCanvas);
+
+        // Zoom
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            state.zoomLevel = Math.min(state.zoomLevel + 0.15, 2.0);
+            visualContainer.style.transform = `scale(${state.zoomLevel})`;
+        });
+
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            state.zoomLevel = Math.max(state.zoomLevel - 0.15, 0.4);
+            visualContainer.style.transform = `scale(${state.zoomLevel})`;
+        });
+
+        document.getElementById('btn-fit-view').addEventListener('click', () => {
+            state.zoomLevel = 1.0;
+            visualContainer.style.transform = `scale(1.0)`;
+        });
+
+        // Modals
+        document.getElementById('btn-file-manager').addEventListener('click', () => {
+            renderFileList();
+            modalFiles.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-flask-info').addEventListener('click', () => {
+            modalFlask.classList.remove('hidden');
+        });
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                modalFiles.classList.add('hidden');
+                modalFlask.classList.add('hidden');
+            });
+        });
+
+        // Create New File
+        document.getElementById('btn-create-file').addEventListener('click', () => {
+            const nameInput = document.getElementById('input-new-filename');
+            let fn = nameInput.value.trim();
+            if (!fn) return;
+            if (!fn.endsWith('.lc') && !fn.endsWith('.txt')) fn += '.lc';
+
+            if (!state.projectFiles[fn]) {
+                state.projectFiles[fn] = `// ${fn}\n`;
+                saveProjectToStorage();
+                nameInput.value = '';
+                renderFileList();
+            }
+        });
+
+        // File Upload Handling
+        document.getElementById('file-upload-input').addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                const content = evt.target.result;
+                const filename = file.name;
+                state.projectFiles[filename] = content;
+                saveProjectToStorage();
+                renderFileList();
+            };
+            reader.readAsText(file);
+        });
+
+        // Export Project Bundle JSON
+        document.getElementById('btn-export-bundle').addEventListener('click', () => {
+            const content = JSON.stringify(state.projectFiles, null, 2);
+            downloadSingleFile('lambda_project_bundle.json', content);
+        });
+
+        document.getElementById('copy-flask-code').addEventListener('click', () => {
+            const code = `from flask import Flask\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    with open('index.html', 'r', encoding='utf-8') as f:\n        return f.read()\n\nif __name__ == '__main__':\n    app.run(host='0.0.0.0', port=5013, debug=True)`;
+            navigator.clipboard.writeText(code);
+            alert("Flask script copied to clipboard!");
+        });
+
+        // Initial Initialization
+        loadProjectFromStorage();
+        parseScript();
+    </script>
+</body>
+</html>

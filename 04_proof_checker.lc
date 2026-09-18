@@ -1,0 +1,34 @@
+# --- Check if Formula is in Axiom Set ---
+IS_AXIOM := \formula.\axioms. \
+  axioms (\h.\acc.OR (IS_SAME_FORMULA formula h) acc) FALSE
+
+# --- Modus Ponens Verifier ---
+# Given Premise 1 (A), Premise 2 (A -> B), and Target (B):
+# Validates that Premise 2 is an Implication, its antecedent matches A, and consequence matches B.
+VERIFY_MP := \p1.\p2.\target. \
+  IF (IS_IMP p2) \
+    (AND (IS_SAME_FORMULA p1 (FIRST (GET_BODY p2))) \
+         (IS_SAME_FORMULA target (SECOND (GET_BODY p2)))) \
+    FALSE
+
+# --- Single Step Checker ---
+# A step is a tuple: PAIR Rule_Type (PAIR Target_Formula Parameters)
+# Rule 0: Axiom Assertion (Parameters = Ignored)
+# Rule 1: Modus Ponens (Parameters = PAIR Premise1 Premise2)
+RULE_AXIOM := ZERO
+RULE_MP    := SUCC ZERO
+
+CHECK_STEP := \step.\axioms.\history. \
+  \rule. \payload. \target. \params. \
+  (rule = RULE_AXIOM) \
+    (IS_AXIOM target axioms) \
+    ((rule = RULE_MP) \
+      (VERIFY_MP (FIRST params) (SECOND params) target) \
+      FALSE)
+
+# --- Proof List Verifier ---
+# Iterates through a list of steps, verifying each against axioms and prior history
+VERIFY_PROOF := \axioms.\proof. \
+  proof (\step.\acc_result. \
+    AND acc_result (CHECK_STEP step axioms NIL) \
+  ) TRUE

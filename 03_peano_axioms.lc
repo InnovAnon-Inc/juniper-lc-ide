@@ -1,0 +1,14 @@
+# --- Terms ---
+VAR_X := MK_VAR (SUCC ZERO)
+VAR_Y := MK_VAR (SUCC (SUCC ZERO))
+
+# --- Axiom 1: Reflexivity of Equality (x = x) ---
+AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
+
+# --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> FALSE) ---
+# Represented structurally as Implication: S(x) = 0 -> x != x
+S_X := MK_VAR (SUCC (SUCC (SUCC ZERO))) # S(x) term
+AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR ZERO)) (MK_EQ VAR_X VAR_Y)
+
+# --- Full Axiom List ---
+AXIOM_SET := CONS AXIOM_REFLEXIVE (CONS AXIOM_ZERO_SUCC NIL)

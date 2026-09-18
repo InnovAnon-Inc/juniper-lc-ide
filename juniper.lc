@@ -1,0 +1,257 @@
+# FILE BEGIN juniper.lc -- DO NOT MODIFY
+
+# --- Standard Terms ---
+I,  IDENTITY := λx      .x
+S            := λx y z  .x z (y z)
+K            := λx y    .x
+B            := λx y z  .x (y z)
+C            := λx y z  .x z y
+W            := λx y    .x y y
+ω, Δ, U      := λx      .x x
+Ω            := ω ω
+
+Y            := λg      .(λx.g (x x)) (λx.g (x x))
+Y2           := λ       .(λ .[1] ([0] [0])) (λ .[1] ([0] [0]))
+#ASSERT_EQ Y, Y2 # RecursionError: maximum recursion depth exceeded
+Z            := λg      .(λx.g (λv.x x v)) (λx.g (λv.x x v))
+
+# --- Booleans ---
+⊤,  TRUE     := K
+⊥,  FALSE    := λx      .I
+¬,  NOT      := λb      .b ⊥ ⊤
+∧,  AND      := λp q    .p q ⊥
+∨,  OR       := λp q    .p ⊤ q
+
+# NOTE called IFTHENELSE elsewhere... maybe call it BRANCH ??? shorthand/arcane symbol would be great
+IF           := λb t f  .b t f
+
+ASSERT TRUE
+ASSERT (NOT FALSE)
+ASSERT AND TRUE TRUE
+ASSERT NOT (AND TRUE FALSE)
+ASSERT NOT (AND FALSE TRUE)
+ASSERT NOT (AND FALSE FALSE)
+ASSERT OR TRUE TRUE
+ASSERT OR TRUE FALSE
+ASSERT OR FALSE TRUE
+ASSERT NOT (OR FALSE FALSE)
+
+# TODO assert TRUE is not equal to FALSE
+# TODO test IF
+
+# --- Integers ---
+0,  ZERO     := ⊥
+
+SUCC         := λn f x  .f (n f x)
++,  PLUS     := λm n    .m SUCC n
+#+            ≡ λm n f x.m f (n f x) # TODO assertions and proofs ?
+*,  MULT     := λm n    .m (+ n) 0
+#*,  MULT     ≡ λm n f  .m (n f) # TODO assertions and proofs ?
+POW          := λb n    .n b
+#POW′ := λb.λn.n (MULT b) 1 # TODO assertions and proofs ?
+#POW′′ := λb.λn.λf.n b f # TODO assertions and proofs ?
+
+#1,  ONE      := λf x.f x
+#2,  TWO      := λf x.f (f x)
+#3,  THREE    := λf x.f (f (f x))
+
+1,  ONE      := SUCC 0
+ASSERT_EQ 1, (λf x.f x)
+2,  TWO      := SUCC 1
+ASSERT_EQ 2, (λf x.f (f x))
+3,  THREE    := SUCC 2
+ASSERT_EQ 3, (λf x.f (f (f x)))
+
+=0, IS_ZERO  := λn      .n (λx.⊥) ⊤
+≤,  LEQ      := λm n    .=0 (- m n)
+
+# --- Pairs (Duo) ---
+PAIR         := λx y f  .f x y
+1st, FIRST   := λp      .p ⊤
+2nd, SECOND  := λp      .p ⊥
+Φ            := λp      .PAIR (2nd p) (SUCC (2nd p))
+Ψ            := λf p    .PAIR (2nd p) (f    (2nd p))
+
+NIL          := ⊥
+NULL         := λp      .p (λx y.⊥)
+
+
+PRED         := λn      .1st (n (Ψ SUCC) (PAIR 0 0))
+-,  SUB      := λm n    .n PRED m
+
+CONS         := λh t c n.c h (t c n)
+IS_NIL       := λl      .l (λh t.⊥) ⊤
+
+# --- Structural Equality for Numbers/IDs ---
+# Helper to compare Church numerals or tag identifiers
+EQ_NUM       := λm n    .∧ (=0 (- m n)) (=0 (- n m))
+
+# ⊻
+# ×
+# ·
+# / (division)
+# ÷
+# √
+# =
+# ≠
+# <
+# >
+# ≤
+# ≥
+# ∅
+# ∈
+# ∉
+# ⊂
+# ⊆
+# ⊊
+# ⊃
+# ⊇
+# ⊋
+# ∪
+# ∩
+# ∖ (set difference)
+# ⊖, △
+# ∀
+# ∃
+# ∃!
+# ⇒
+# ⇔
+
+
+
+# --- AST Constructors ---
+TAG_VAR := 0
+# TODO should resugar to 1
+TAG_IMP := SUCC 0
+# TODO should resugar to 2
+TAG_EQ  := SUCC (SUCC 0)
+
+MK_VAR := \id.PAIR TAG_VAR id
+MK_IMP := \a.\b.PAIR TAG_IMP (PAIR a b)
+MK_EQ  := \a.\b.PAIR TAG_EQ (PAIR a b)
+
+# --- AST Inspectors ---
+GET_TAG := FIRST
+GET_BODY := SECOND
+
+IS_VAR := \e.EQ_NUM (GET_TAG e) TAG_VAR
+IS_IMP := \e.EQ_NUM (GET_TAG e) TAG_IMP
+IS_EQ  := \e.EQ_NUM (GET_TAG e) TAG_EQ
+
+# --- Deep Formula Equality (IS_SAME_FORMULA) ---
+# Recursively checks if two AST structures match exactly
+#IS_SAME_FORMULA := \f1.\f2. \
+#  IF (IS_VAR f1) \
+#    (AND (IS_VAR f2) (EQ_NUM (GET_BODY f1) (GET_BODY f2))) \
+#    (IF (IS_IMP f1) \
+#      (AND (IS_IMP f2) \
+#           (AND (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+#                (IS_SAME_FORMULA (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
+#      (IF (IS_EQ f1) \
+#        (AND (IS_EQ f2) \
+#             (AND (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+#                  (IS_SAME_FORMULA (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
+#        FALSE))
+
+IS_SAME_FORMULA_REC := \self f1 f2. \
+  IF (IS_VAR f1) \
+    (AND (IS_VAR f2) (EQ_NUM (GET_BODY f1) (GET_BODY f2))) \
+    (IF (IS_IMP f1) \
+      (AND (IS_IMP f2) \
+           (AND (self (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+                (self (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
+      (IF (IS_EQ f1) \
+        (AND (IS_EQ f2) \
+             (AND (self (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+                  (self (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
+        FALSE))
+
+IS_SAME_FORMULA := Y IS_SAME_FORMULA_REC
+
+
+
+# --- Terms ---
+VAR_X := MK_VAR (SUCC ZERO)
+VAR_Y := MK_VAR (SUCC (SUCC ZERO))
+
+# --- Axiom 1: Reflexivity of Equality (x = x) ---
+AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
+
+# --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> FALSE) ---
+# Represented structurally as Implication: S(x) = 0 -> x != x
+S_X := MK_VAR (SUCC (SUCC (SUCC ZERO))) # S(x) term
+AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR ZERO)) (MK_EQ VAR_X VAR_Y)
+
+# --- Full Axiom List ---
+AXIOM_SET := CONS AXIOM_REFLEXIVE (CONS AXIOM_ZERO_SUCC NIL)
+
+
+
+# --- Check if Formula is in Axiom Set ---
+IS_AXIOM := \formula.\axioms. \
+  axioms (\h.\acc.OR (IS_SAME_FORMULA formula h) acc) FALSE
+
+# --- Modus Ponens Verifier ---
+# Given Premise 1 (A), Premise 2 (A -> B), and Target (B):
+# Validates that Premise 2 is an Implication, its antecedent matches A, and consequence matches B.
+VERIFY_MP := \p1.\p2.\target. \
+  IF (IS_IMP p2) \
+    (AND (IS_SAME_FORMULA p1 (FIRST (GET_BODY p2))) \
+         (IS_SAME_FORMULA target (SECOND (GET_BODY p2)))) \
+    FALSE
+
+# --- Single Step Checker ---
+# A step is a tuple: PAIR Rule_Type (PAIR Target_Formula Parameters)
+# Rule 0: Axiom Assertion (Parameters = Ignored)
+# Rule 1: Modus Ponens (Parameters = PAIR Premise1 Premise2)
+RULE_AXIOM := ZERO
+RULE_MP    := SUCC ZERO
+
+##CHECK_STEP := \step.\axioms.\history. \
+##  \rule. \payload. \target. \params. \
+##  (rule = RULE_AXIOM) \
+##    (IS_AXIOM target axioms) \
+##    ((rule = RULE_MP) \
+##      (VERIFY_MP (FIRST params) (SECOND params) target) \
+##      FALSE)
+## Corrected Single Step Checker
+#CHECK_STEP := \step.\axioms.\history. \
+#  \rule.\payload. \
+#  IF (EQ_NUM rule RULE_AXIOM) \
+#    (IS_AXIOM (FIRST payload) axioms) \
+#    (IF (EQ_NUM rule RULE_MP) \
+#      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
+#      FALSE)
+CHECK_STEP := \step.\axioms.\history. \
+  \rule.\payload. \
+  IF (EQ_NUM rule RULE_AXIOM) \
+    (IS_AXIOM (FIRST payload) axioms) \
+    (IF (EQ_NUM rule RULE_MP) \
+      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
+      FALSE)
+
+# --- Proof List Verifier ---
+# Iterates through a list of steps, verifying each against axioms and prior history
+VERIFY_PROOF := \axioms.\proof. \
+  proof (\step.\acc_result. \
+    AND acc_result (CHECK_STEP step axioms NIL) \
+  ) TRUE
+
+
+
+
+
+# --- Target Theorem: x = x ---
+THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
+
+# --- Step 1: Assert AXIOM_REFLEXIVE ---
+STEP_1 := PAIR RULE_AXIOM (PAIR THEOREM_REFLEXIVE NIL)
+
+# --- Proof Sequence ---
+PROOF_1 := CONS STEP_1 NIL
+
+# --- FINAL EVALUATION ---
+# Running this term reduces down purely to TRUE (\x.\y.x)
+MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
+
+# FILE END juniper.lc

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visual Lambda - Bubble Notation</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; overflow: hidden; background: #1e1e1e; color: #fff; }
+        .toolbar { background: #2d2d2d; border-bottom: 1px solid #444; padding: 10px 20px; display: flex; gap: 10px; align-items: center; }
+        .toolbar select, .toolbar button { background: #444; color: #fff; border: 1px solid #555; padding: 6px 12px; font-size: 14px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
+        .toolbar button:hover { background: #555; }
+        .toolbar button.primary { background: #007acc; border-color: #007acc; }
+        .toolbar button.primary:hover { background: #0098ff; }
+        .main { display: flex; flex: 1; overflow: hidden; }
+        .editor-pane { width: 40%; display: flex; flex-direction: column; border-right: 1px solid #444; }
+        .editor-pane textarea { flex: 1; background: #1e1e1e; color: #d4d4d4; font-family: 'Consolas', monospace; font-size: 16px; padding: 15px; border: none; resize: none; outline: none; line-height: 1.5; }
+        .canvas-pane { flex: 1; position: relative; background: #f5f5f5; }
+        canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+        canvas:active { cursor: grabbing; }
+        .status-bar { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); color: #fff; padding: 10px 15px; border-radius: 6px; font-family: 'Consolas', monospace; font-size: 16px; pointer-events: none; max-width: calc(100% - 40px); word-wrap: break-word; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .overlay-controls { position: absolute; top: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .overlay-controls button { background: rgba(255,255,255,0.9); color: #333; border: 1px solid #ccc; border-radius: 4px; width: 40px; height: 40px; font-size: 20px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .overlay-controls button:hover { background: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="toolbar">
+    <select id="presetSelect">
+        <option value="peano">Peano Arithmetic (1 + 1)</option>
+        <option value="ycomb">Y Combinator</option>
+        <option value="logic">Boolean Logic</option>
+    </select>
+    <button onclick="loadPreset()">Load Preset</button>
+    <div style="width: 20px;"></div>
+    <button class="primary" onclick="compile()">Compile & Render</button>
+    <button onclick="stepReduction()">Step (β-Reduce)</button>
+    <button id="playBtn" onclick="togglePlay()">Play Auto-Step</button>
+</div>
+
+<div class="main">
+    <div class="editor-pane">
+        <textarea id="codeEditor"></textarea>
+    </div>
+    <div class="canvas-pane">
+        <canvas id="vizCanvas"></canvas>
+        <div class="overlay-controls">
+            <button onclick="zoom(1.2)">+</button>
+            <button onclick="zoom(1/1.2)">-</button>
+            <button onclick="resetView()">⌂</button>
+        </div>
+        <div class="status-bar" id="statusBar">Ready. Click 'Compile & Render'.</div>
+    </div>
+</div>
+
+<script>
+    // --- 1. Parser & Environment ---
+    const PRESETS = {
+        'peano': `TRUE := \\x.\\y.x\nFALSE := \\x.\\y.y\nZERO := \\f.\\x.x\nSUCC := \\n.\\f.\\x.f (n f x)\nONE := SUCC ZERO\nTWO := SUCC ONE\nPLUS := \\m.\\n.m SUCC n\n\n# Evaluate 1 + 1\nPLUS ONE ONE`,
+        'ycomb': `Y := \\f.(\\x.f (x x)) (\\x.f (x x))\n\n# Apply Y to Identity\nY (\\x.x)`,
+        'logic': `TRUE := \\x.\\y.x\nFALSE := \\x.\\y.y\nAND := \\p.\\q.p q FALSE\nNOT := \\b.b FALSE TRUE\n\n# NOT (AND TRUE FALSE)\nNOT (AND TRUE FALSE)`
+    };
+
+    function tokenize(code) {
+        const tokens = [];
+        let i = 0;
+        while (i < code.length) {
+            let char = code[i];
+            if (/\s/.test(char)) { i++; continue; }
+            if (char === '#') { while (i < code.length && code[i] !== '\n') i++; continue; }
+            if (['(', ')', '\\', 'λ', '.'].includes(char)) {
+                tokens.push({ type: 'punct', value: char === 'λ' ? '\\' : char });
+                i++; continue;
+            }
+            if (code.slice(i, i+2) === ':=') {
+                tokens.push({ type: 'def', value: ':=' });
+                i += 2; continue;
+            }
+            let match = code.slice(i).match(/^[a-zA-Z0-9_]+/);
+            if (match) {
+                tokens.push({ type: 'id', value: match[0] });
+                i += match[0].length; continue;
+            }
+            i++;
+        }
+        return tokens;
+    }
+
+    function parseTokens(tokens) {
+        let pos = 0;
+        function parseExpr() {
+            let exprs = [];
+            while (pos < tokens.length && tokens[pos].value !== ')') {
+                if (tokens[pos].value === '\\') {
+                    pos++;
+                    if (pos >= tokens.length || tokens[pos].type !== 'id') throw new Error("Expected param");
+                    let param = tokens[pos].value;
+                    pos++;
+                    if (pos < tokens.length && tokens[pos].value === '.') pos++;
+                    exprs.push({ type: 'abs', param, body: parseExpr() });
+                } else if (tokens[pos].value === '(') {
+                    pos++;
+                    let inner = parseExpr();
+                    if (pos < tokens.length && tokens[pos].value === ')') pos++;
+                    if (inner) exprs.push(inner);
+                } else if (tokens[pos].type === 'id') {
+                    exprs.push({ type: 'var', name: tokens[pos].value });
+                    pos++;
+                } else break;
+            }
+            if (exprs.length === 0) return null;
+            let res = exprs[0];
+            for (let i = 1; i < exprs.length; i++) res = { type: 'app', left: res, right: exprs[i] };
+            return res;
+        }
+        return parseExpr();
+    }
+
+    let globalEnv = {};
+    let currentAST = null;
+
+    function compile() {
+        const code = document.getElementById('codeEditor').value;
+        const lines = code.split('\n');
+        globalEnv = {};
+        let mainAST = null;
+
+        for (let line of lines) {
+            let t = tokenize(line);
+            if (t.length === 0) continue;
+            if (t.length >= 3 && t[0].type === 'id' && t[1].type === 'def') {
+                globalEnv[t[0].value] = parseTokens(t.slice(2));
+            } else {
+                mainAST = parseTokens(t);
+            }
+        }
+
+        function expand(ast) {
+            if (!ast) return ast;
+            if (ast.type === 'var') return globalEnv[ast.name] ? expand(globalEnv[ast.name]) : ast;
+            if (ast.type === 'abs') return { type: 'abs', param: ast.param, body: expand(ast.body) };
+            if (ast.type === 'app') return { type: 'app', left: expand(ast.left), right: expand(ast.right) };
+        }
+
+        currentAST = expand(mainAST);
+        updateView();
+    }
+
+    // --- 2. Beta Reduction Engine (with Capture Avoidance) ---
+    function hasFreeVar(node, v) {
+        if (!node) return false;
+        if (node.type === 'var') return node.name === v;
+        if (node.type === 'abs') return node.param !== v && hasFreeVar(node.body, v);
+        if (node.type === 'app') return hasFreeVar(node.left, v) || hasFreeVar(node.right, v);
+        return false;
+    }
+
+    function newVar(baseName, ast1, ast2) {
+        let suffix = 1;
+        while (true) {
+            let tryName = baseName + suffix;
+            if (!hasFreeVar(ast1, tryName) && !hasFreeVar(ast2, tryName)) return tryName;
+            suffix++;
+        }
+    }
+
+    function substitute(node, v, val) {
+        if (node.type === 'var') return node.name === v ? val : node;
+        if (node.type === 'abs') {
+            if (node.param === v) return node;
+            if (hasFreeVar(val, node.param) && hasFreeVar(node.body, v)) {
+                let fresh = newVar(node.param, node.body, val);
+                let renamedBody = substitute(node.body, node.param, {type: 'var', name: fresh});
+                return { type: 'abs', param: fresh, body: substitute(renamedBody, v, val) };
+            }
+            return { type: 'abs', param: node.param, body: substitute(node.body, v, val) };
+        }
+        if (node.type === 'app') return { type: 'app', left: substitute(node.left, v, val), right: substitute(node.right, v, val) };
+    }
+
+    function step(node) {
+        let reduced = false;
+        function _step(n) {
+            if (reduced || !n) return n;
+            if (n.type === 'app') {
+                if (n.left.type === 'abs') {
+                    reduced = true;
+                    return substitute(n.left.body, n.left.param, n.right);
+                }
+                let l = _step(n.left);
+                if (reduced) return { type: 'app', left: l, right: n.right };
+                let r = _step(n.right);
+                if (reduced) return { type: 'app', left: n.left, right: r };
+                return n;
+            }
+            if (n.type === 'abs') {
+                let b = _step(n.body);
+                if (reduced) return { type: 'abs', param: n.param, body: b };
+            }
+            return n;
+        }
+        return { ast: _step(node), reduced };
+    }
+
+    function stepReduction() {
+        if (!currentAST) return;
+        const res = step(currentAST);
+        if (res.reduced) {
+            currentAST = res.ast;
+            updateView();
+        } else {
+            document.getElementById('statusBar').innerText = "Normal Form Reached! " + astToString(currentAST);
+            if (playInterval) togglePlay();
+        }
+    }
+
+    let playInterval = null;
+    function togglePlay() {
+        const btn = document.getElementById('playBtn');
+        if (playInterval) {
+            clearInterval(playInterval);
+            playInterval = null;
+            btn.innerText = 'Play Auto-Step';
+        } else {
+            playInterval = setInterval(stepReduction, 600);
+            btn.innerText = 'Pause';
+        }
+    }
+
+    function astToString(ast, isRightSide = false) {
+        if (!ast) return '';
+        if (ast.type === 'var') return ast.name;
+        if (ast.type === 'abs') {
+            let s = `λ${ast.param}.${astToString(ast.body)}`;
+            return isRightSide ? `(${s})` : s;
+        }
+        if (ast.type === 'app') {
+            let l = astToString(ast.left);
+            if (ast.left.type === 'abs') l = `(${l})`;
+            let r = astToString(ast.right, true);
+            if (ast.right.type === 'app') r = `(${r})`;
+            let s = `${l} ${r}`;
+            return isRightSide ? `(${s})` : s;
+        }
+    }
+
+    // --- 3. Flower of Life Layout Engine ---
+    const PADDING = 14;
+    const VAR_RADIUS = 18;
+
+    function getStringColor(str, isRing=false) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        const hue = Math.abs(hash) % 360;
+        return isRing ? `hsla(${hue}, 65%, 60%, 0.35)` : `hsl(${hue}, 75%, 50%)`;
+    }
+    function getStringStroke(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        const hue = Math.abs(hash) % 360;
+        return `hsl(${hue}, 80%, 30%)`;
+    }
+
+    function layoutAST(ast) {
+        if (!ast) return { boundingCircle: {x:0, y:0, r:0}, circles: [], spine: [] };
+
+        if (ast.type === 'var') {
+            const r = VAR_RADIUS;
+            const fill = getStringColor(ast.name, false);
+            const stroke = getStringStroke(ast.name);
+            const circle = { type: 'disc', x: 0, y: 0, r, fill, stroke, label: ast.name };
+            return { boundingCircle: { x: 0, y: 0, r }, circles: [circle], spine: [{ x: 0, y: 0, r }] };
+        }
+        
+        if (ast.type === 'abs') {
+            const bodyLayout = layoutAST(ast.body);
+            const bc = bodyLayout.boundingCircle;
+            const r = bc.r + PADDING * 1.5;
+            const fill = getStringColor(ast.param, true);
+            const stroke = getStringStroke(ast.param);
+            const ring = { type: 'ring', x: bc.x, y: bc.y, r, fill, stroke, label: ast.param };
+            
+            return {
+                boundingCircle: { x: bc.x, y: bc.y, r },
+                circles: [ring, ...bodyLayout.circles],
+                spine: [{ x: bc.x, y: bc.y, r }]
+            };
+        }
+        
+        if (ast.type === 'app') {
+            const L = layoutAST(ast.left);
+            const R = layoutAST(ast.right);
+            
+            let newRx, newRy;
+            const clast = L.spine[L.spine.length - 1];
+            const cprev = L.spine.length > 1 ? L.spine[L.spine.length - 2] : null;
+            const R_r = R.boundingCircle.r;
+            const targetDist = clast.r + R_r + PADDING;
+            
+            if (!cprev) {
+                // Dock to the right
+                newRx = clast.x + targetDist;
+                newRy = clast.y;
+            } else {
+                // Dock tangentially to the last two spine components (Flower of Life Hex Packing)
+                const A = cprev, B = clast;
+                const dA = A.r + R_r + PADDING, dB = B.r + R_r + PADDING;
+                const dx = B.x - A.x, dy = B.y - A.y;
+                const d = Math.sqrt(dx*dx + dy*dy);
+                
+                if (d === 0 || d > dA + dB) {
+                    newRx = clast.x + targetDist; newRy = clast.y;
+                } else {
+                    const a = (dA*dA - dB*dB + d*d) / (2*d);
+                    const h2 = dA*dA - a*a;
+                    const h = h2 > 0 ? Math.sqrt(h2) : 0;
+                    const midX = A.x + a * dx / d;
+                    const midY = A.y + a * dy / d;
+                    
+                    // Two possible normal vectors
+                    const nx = -dy / d, ny = dx / d;
+                    
+                    // Outward growth logic: pick the point furthest from the current Center of Mass
+                    let cmX = 0, cmY = 0;
+                    for (let sp of L.spine) { cmX += sp.x; cmY += sp.y; }
+                    cmX /= L.spine.length; cmY /= L.spine.length;
+                    
+                    const P1x = midX + h * nx, P1y = midY + h * ny;
+                    const P2x = midX - h * nx, P2y = midY - h * ny;
+                    
+                    if ((P1x - cmX)**2 + (P1y - cmY)**2 > (P2x - cmX)**2 + (P2y - cmY)**2) {
+                        newRx = P1x; newRy = P1y;
+                    } else {
+                        newRx = P2x; newRy = P2y;
+                    }
+                }
+            }
+            
+            const dx = newRx - R.boundingCircle.x;
+            const dy = newRy - R.boundingCircle.y;
+            const shiftedRCircles = R.circles.map(c => ({...c, x: c.x + dx, y: c.y + dy}));
+            const shiftedRBC = { x: newRx, y: newRy, r: R_r };
+            
+            const newSpine = [...L.spine, shiftedRBC];
+            
+            // Recompute bounding circle for application group
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const sp of newSpine) {
+                minX = Math.min(minX, sp.x - sp.r); maxX = Math.max(maxX, sp.x + sp.r);
+                minY = Math.min(minY, sp.y - sp.r); maxY = Math.max(maxY, sp.y + sp.r);
+            }
+            const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+            let br = 0;
+            for (const sp of newSpine) {
+                br = Math.max(br, Math.sqrt((sp.x - cx)**2 + (sp.y - cy)**2) + sp.r);
+            }
+            
+            return {
+                boundingCircle: { x: cx, y: cy, r: br },
+                circles: [...L.circles, ...shiftedRCircles],
+                spine: newSpine
+            };
+        }
+    }
+
+    // --- 4. Rendering & Canvas Controls ---
+    const canvas = document.getElementById('vizCanvas');
+    const ctx = canvas.getContext('2d');
+    let viewX = 0, viewY = 0, viewScale = 1;
+    let currentLayout = null;
+
+    function resize() {
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+        render();
+    }
+    window.addEventListener('resize', resize);
+
+    function updateView() {
+        currentLayout = layoutAST(currentAST);
+        document.getElementById('statusBar').innerText = astToString(currentAST);
+        render();
+    }
+
+    function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (!currentLayout) return;
+
+        const bc = currentLayout.boundingCircle;
+        ctx.save();
+        ctx.translate(canvas.width/2 + viewX, canvas.height/2 + viewY);
+        ctx.scale(viewScale, viewScale);
+        ctx.translate(-bc.x, -bc.y);
+
+        // Draw abstractions (rings) back-to-front
+        for (const c of currentLayout.circles) {
+            if (c.type === 'ring') {
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                ctx.fillStyle = c.fill;
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = c.stroke;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#444';
+                ctx.font = 'bold 16px Consolas';
+                ctx.textAlign = 'center';
+                ctx.fillText('λ'+c.label, c.x, c.y - c.r + 20);
+            }
+        }
+        // Draw variables (discs) front
+        for (const c of currentLayout.circles) {
+            if (c.type === 'disc') {
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+                ctx.fillStyle = c.fill;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = c.stroke;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Consolas';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(c.label, c.x, c.y);
+            }
+        }
+        ctx.restore();
+    }
+
+    // Pan & Zoom
+    let isDragging = false;
+    let lastX, lastY;
+    canvas.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mousemove', e => {
+        if (isDragging) {
+            viewX += e.clientX - lastX; viewY += e.clientY - lastY;
+            lastX = e.clientX; lastY = e.clientY;
+            render();
+        }
+    });
+    canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        zoom(Math.exp(-e.deltaY * 0.002));
+    });
+
+    function zoom(factor) { viewScale *= factor; render(); }
+    function resetView() { viewX = 0; viewY = 0; viewScale = 1; render(); }
+
+    function loadPreset() {
+        const key = document.getElementById('presetSelect').value;
+        document.getElementById('codeEditor').value = PRESETS[key];
+        compile();
+        resetView();
+    }
+
+    // Init
+    loadPreset();
+    resize();
+</script>
+</body>
+</html>

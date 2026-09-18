@@ -1,0 +1,31 @@
+# --- AST Constructors ---
+TAG_VAR := ZERO
+TAG_IMP := SUCC ZERO
+TAG_EQ  := SUCC (SUCC ZERO)
+
+MK_VAR := \id.PAIR TAG_VAR id
+MK_IMP := \a.\b.PAIR TAG_IMP (PAIR a b)
+MK_EQ  := \a.\b.PAIR TAG_EQ (PAIR a b)
+
+# --- AST Inspectors ---
+GET_TAG := FIRST
+GET_BODY := SECOND
+
+IS_VAR := \e.EQ_NUM (GET_TAG e) TAG_VAR
+IS_IMP := \e.EQ_NUM (GET_TAG e) TAG_IMP
+IS_EQ  := \e.EQ_NUM (GET_TAG e) TAG_EQ
+
+# --- Deep Formula Equality (IS_SAME_FORMULA) ---
+# Recursively checks if two AST structures match exactly
+IS_SAME_FORMULA := \f1.\f2. \
+  IF (IS_VAR f1) \
+    (AND (IS_VAR f2) (EQ_NUM (GET_BODY f1) (GET_BODY f2))) \
+    (IF (IS_IMP f1) \
+      (AND (IS_IMP f2) \
+           (AND (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+                (IS_SAME_FORMULA (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
+      (IF (IS_EQ f1) \
+        (AND (IS_EQ f2) \
+             (AND (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+                  (IS_SAME_FORMULA (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
+        FALSE))

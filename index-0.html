@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Lambda Calculus IDE</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            900: '#14532d',
+                        },
+                        lambda: {
+                            var: '#3b82f6',     // Blue
+                            abs: '#a855f7',     // Purple
+                            app: '#f59e0b',     // Amber
+                            def: '#10b981'      // Emerald
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['Fira Code', 'JetBrains Mono', 'Consolas', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbar styling for editors */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(71, 85, 105, 1);
+        }
+        .visual-node {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .visual-node:hover {
+            filter: brightness(1.15);
+        }
+        .drop-target-active {
+            outline: 2px dashed #3b82f6;
+            outline-offset: 2px;
+            background-color: rgba(59, 130, 246, 0.15) !important;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-full flex flex-col font-sans overflow-hidden select-none">
+
+    <!-- Top Header Navigation -->
+    <header class="h-14 border-b border-slate-800 bg-slate-900/90 backdrop-blur px-4 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-br from-purple-600 to-indigo-600 p-2 rounded-lg shadow-lg shadow-purple-500/20">
+                <span class="font-mono font-bold text-lg text-white">λ</span>
+            </div>
+            <div>
+                <h1 class="font-bold text-slate-100 flex items-center gap-2 text-sm md:text-base">
+                    Lambda Studio <span class="text-xs px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800/50">v1.0</span>
+                </h1>
+                <p class="text-xs text-slate-400 hidden sm:block">First-Principles Lambda Calculus IDE & Visualizer</p>
+            </div>
+        </div>
+
+        <!-- Reduction Control Bar -->
+        <div class="flex items-center gap-2 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800 shadow-inner">
+            <button id="btn-step" title="Single Beta Reduction Step" class="p-2 hover:bg-slate-800 text-slate-300 hover:text-white rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                <i data-lucide="step-forward" class="w-4 h-4 text-purple-400"></i> Step
+            </button>
+            <button id="btn-play" title="Auto-reduce" class="p-2 hover:bg-purple-900/40 text-purple-400 hover:text-purple-300 rounded-lg transition-colors flex items-center gap-1 text-xs font-semibold">
+                <i id="play-icon" data-lucide="play" class="w-4 h-4"></i> Auto
+            </button>
+            <button id="btn-reset" title="Reset Term" class="p-2 hover:bg-slate-800 text-slate-400 hover:text-slate-200 rounded-lg transition-colors">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+            <div class="h-4 w-px bg-slate-800 mx-1"></div>
+            <div class="flex items-center gap-2 px-2">
+                <span class="text-xs text-slate-400">Steps:</span>
+                <span id="step-counter" class="font-mono text-xs text-purple-400 font-bold">0</span>
+            </div>
+        </div>
+
+        <!-- Actions & Config -->
+        <div class="flex items-center gap-2">
+            <button id="btn-presets" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 border border-slate-700">
+                <i data-lucide="book-open" class="w-3.5 h-3.5 text-indigo-400"></i> Presets
+            </button>
+            <button id="btn-flask-info" class="px-3 py-1.5 bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-800/60 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5">
+                <i data-lucide="server" class="w-3.5 h-3.5"></i> Flask Port 5013
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Workspace -->
+    <main class="flex-1 flex overflow-hidden relative">
+
+        <!-- Left Column: Code Editor & Environment -->
+        <div class="w-1/2 flex flex-col border-r border-slate-800 bg-slate-900/50">
+            <!-- Text Editor Header -->
+            <div class="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                    <i data-lucide="code-2" class="w-4 h-4 text-blue-400"></i> Lambda Syntax Editor
+                </div>
+                <div class="flex items-center gap-2 text-xs">
+                    <button id="insert-lambda" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 text-purple-300 rounded font-mono border border-slate-700 transition" title="Insert λ symbol">
+                        λ
+                    </button>
+                    <span class="text-slate-500">|</span>
+                    <span class="text-slate-400 text-[11px]">Format: <code class="text-slate-300">NAME := \x.x</code></span>
+                </div>
+            </div>
+
+            <!-- Code Editor Area -->
+            <div class="flex-1 relative flex flex-col">
+                <textarea id="code-editor" class="w-full flex-1 bg-slate-950/80 p-4 font-mono text-sm text-slate-100 resize-none focus:outline-none focus:ring-1 focus:ring-purple-500/50 leading-relaxed" spellcheck="false" placeholder="// Define custom functions or construct expressions
+I := \x.x
+K := \x.\y.x
+S := \x.\y.\z.x z (y z)
+
+// Active expression to reduce/visualize:
+S K K (\a.a)"></textarea>
+                
+                <!-- Code Parse Status Overlay -->
+                <div id="parse-status" class="absolute bottom-2 right-4 px-2.5 py-1 rounded text-xs font-mono bg-slate-900/90 border border-slate-800 text-slate-400 flex items-center gap-1.5 shadow">
+                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div> Syntax Valid
+                </div>
+            </div>
+
+            <!-- Environment Binding Drawer -->
+            <div class="h-44 border-t border-slate-800 bg-slate-950 flex flex-col shrink-0">
+                <div class="h-8 bg-slate-900/80 px-3 flex items-center justify-between border-b border-slate-800/80">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="database" class="w-3.5 h-3.5 text-emerald-400"></i> Active Bindings
+                    </span>
+                    <span id="binding-count" class="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-full font-mono">0 items</span>
+                </div>
+                <div id="bindings-list" class="flex-1 p-3 overflow-y-auto space-y-1.5 font-mono text-xs">
+                    <!-- Environment items dynamically injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Visual Editor & Canvas -->
+        <div class="w-1/2 flex flex-col bg-slate-950 relative">
+            <!-- Visual Editor Header -->
+            <div class="h-10 bg-slate-900 border-b border-slate-800 px-4 flex items-center justify-between shrink-0 z-10">
+                <div class="flex items-center gap-2 text-xs font-semibold text-slate-300">
+                    <i data-lucide="shapes" class="w-4 h-4 text-amber-400"></i> Visual Block Diagram
+                </div>
+                <div class="flex items-center gap-1.5 text-xs">
+                    <button id="btn-zoom-in" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+                        <i data-lucide="zoom-in" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button id="btn-zoom-out" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200">
+                        <i data-lucide="zoom-out" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button id="btn-fit-view" class="p-1 hover:bg-slate-800 rounded text-slate-400 hover:text-slate-200" title="Reset View">
+                        <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visual Drag Toolbox Palette -->
+            <div class="bg-slate-900/60 border-b border-slate-800/80 p-2 px-4 flex items-center gap-3 overflow-x-auto shrink-0 z-10">
+                <span class="text-[11px] text-slate-400 font-semibold uppercase tracking-wider shrink-0">Add Term:</span>
+                
+                <div draggable="true" data-type="variable" class="toolbox-item cursor-grab active:cursor-grabbing px-2.5 py-1 bg-blue-950/80 border border-blue-700/60 hover:border-blue-500 text-blue-300 rounded text-xs flex items-center gap-1.5 shrink-0 transition shadow-sm">
+                    <i data-lucide="tag" class="w-3 h-3 text-blue-400"></i> Variable <span class="text-[10px] text-blue-400/70 font-mono">(x)</span>
+                </div>
+
+                <div draggable="true" data-type="abstraction" class="toolbox-item cursor-grab active:cursor-grabbing px-2.5 py-1 bg-purple-950/80 border border-purple-700/60 hover:border-purple-500 text-purple-300 rounded text-xs flex items-center gap-1.5 shrink-0 transition shadow-sm">
+                    <i data-lucide="circle-dot" class="w-3 h-3 text-purple-400"></i> Abstraction <span class="text-[10px] text-purple-400/70 font-mono">(λx.M)</span>
+                </div>
+
+                <div draggable="true" data-type="application" class="toolbox-item cursor-grab active:cursor-grabbing px-2.5 py-1 bg-amber-950/80 border border-amber-700/60 hover:border-amber-500 text-amber-300 rounded text-xs flex items-center gap-1.5 shrink-0 transition shadow-sm">
+                    <i data-lucide="layers" class="w-3 h-3 text-amber-400"></i> Application <span class="text-[10px] text-amber-400/70 font-mono">(M N)</span>
+                </div>
+            </div>
+
+            <!-- Interactive Canvas Space -->
+            <div id="visual-canvas" class="flex-1 overflow-auto p-8 flex items-center justify-center relative bg-[radial-gradient(#1e293b_1px,transparent_1px)] [background-size:16px_16px]">
+                <div id="visual-tree-container" class="transition-transform duration-200 transform origin-center flex flex-col items-center justify-center min-w-full min-h-full">
+                    <!-- Dynamic SVG & Visual Tree rendered here -->
+                </div>
+            </div>
+
+            <!-- Step Trace Timeline Bar -->
+            <div class="h-28 border-t border-slate-800 bg-slate-900/90 flex flex-col shrink-0">
+                <div class="h-7 bg-slate-900 px-3 flex items-center justify-between border-b border-slate-800">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="history" class="w-3.5 h-3.5 text-purple-400"></i> Reduction Trace
+                    </span>
+                    <span id="reduction-status" class="text-[10px] text-slate-400 font-mono">Normal Form Reached</span>
+                </div>
+                <div id="trace-list" class="flex-1 p-2.5 overflow-x-auto flex items-center gap-3 font-mono text-xs">
+                    <!-- Reduction step history pills -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Presets Modal -->
+    <div id="modal-presets" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="library" class="w-5 h-5 text-purple-400"></i>
+                    <h3 class="font-bold text-slate-100">Lambda Calculus & Peano Axioms Library</h3>
+                </div>
+                <button class="close-modal text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Peano Axioms & Church Arithmetic -->
+                <div>
+                    <h4 class="text-xs font-semibold text-purple-400 uppercase tracking-wider mb-3">1. Peano Arithmetic Foundations</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button data-preset="peano" class="preset-card text-left p-3 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 transition flex flex-col justify-between group">
+                            <div>
+                                <div class="font-bold text-slate-200 text-sm group-hover:text-purple-300">Church Numerals & Successor</div>
+                                <div class="text-xs text-slate-400 mt-1">Defines 0, 1, 2, 3 and Successor function S := λn.λf.λx.f (n f x)</div>
+                            </div>
+                            <span class="mt-3 text-[11px] text-purple-400 font-mono flex items-center gap-1">Load Preset <i data-lucide="arrow-right" class="w-3 h-3"></i></span>
+                        </button>
+                        <button data-preset="addition" class="preset-card text-left p-3 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 transition flex flex-col justify-between group">
+                            <div>
+                                <div class="font-bold text-slate-200 text-sm group-hover:text-purple-300">Peano Addition (1 + 2)</div>
+                                <div class="text-xs text-slate-400 mt-1">Evaluates PLUS 1 2 using Church encoded arithmetic</div>
+                            </div>
+                            <span class="mt-3 text-[11px] text-purple-400 font-mono flex items-center gap-1">Load Preset <i data-lucide="arrow-right" class="w-3 h-3"></i></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Combinators & Logic -->
+                <div>
+                    <h4 class="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-3">2. Core Logic & Combinators</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button data-preset="logic" class="preset-card text-left p-3 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 transition flex flex-col justify-between group">
+                            <div>
+                                <div class="font-bold text-slate-200 text-sm group-hover:text-blue-300">Church Booleans & AND Gate</div>
+                                <div class="text-xs text-slate-400 mt-1">TRUE, FALSE, AND, OR, NOT combinators with test expression</div>
+                            </div>
+                            <span class="mt-3 text-[11px] text-blue-400 font-mono flex items-center gap-1">Load Preset <i data-lucide="arrow-right" class="w-3 h-3"></i></span>
+                        </button>
+                        <button data-preset="ski" class="preset-card text-left p-3 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 transition flex flex-col justify-between group">
+                            <div>
+                                <div class="font-bold text-slate-200 text-sm group-hover:text-blue-300">SKI Combinator Calculus</div>
+                                <div class="text-xs text-slate-400 mt-1">S, K, I combinators demonstrating (S K K a) ≡ I a ≡ a</div>
+                            </div>
+                            <span class="mt-3 text-[11px] text-blue-400 font-mono flex items-center gap-1">Load Preset <i data-lucide="arrow-right" class="w-3 h-3"></i></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recursion -->
+                <div>
+                    <h4 class="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-3">3. Fixed Point & Recursion</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button data-preset="y-combinator" class="preset-card text-left p-3 rounded-xl bg-slate-950 hover:bg-slate-800/80 border border-slate-800 transition flex flex-col justify-between group">
+                            <div>
+                                <div class="font-bold text-slate-200 text-sm group-hover:text-amber-300">Y Combinator</div>
+                                <div class="text-xs text-slate-400 mt-1">Y := λf.(λx.f (x x)) (λx.f (x x)) enables recursion without named functions</div>
+                            </div>
+                            <span class="mt-3 text-[11px] text-amber-400 font-mono flex items-center gap-1">Load Preset <i data-lucide="arrow-right" class="w-3 h-3"></i></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flask Setup Info Modal -->
+    <div id="modal-flask" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="server" class="w-5 h-5 text-emerald-400"></i>
+                    <h3 class="font-bold text-slate-100">Flask Server Integration (Port 5013)</h3>
+                </div>
+                <button class="close-modal text-slate-400 hover:text-white p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4 text-xs font-mono">
+                <p class="text-slate-300 font-sans text-sm">
+                    To host this visual lambda calculus environment locally or on a server using Python Flask on port 5013:
+                </p>
+                <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 relative group">
+                    <button id="copy-flask-code" class="absolute top-3 right-3 p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded transition" title="Copy code">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                    </button>
+                    <pre class="text-emerald-400 overflow-x-auto leading-relaxed"><code>from flask import Flask, render_template_string
+
+app = Flask(__name__)
+
+# Save this HTML file as index.html in the same directory or render directly:
+@app.route('/')
+def home():
+    with open('index.html', 'r', encoding='utf-8') as f:
+        return f.read()
+
+if __name__ == '__main__':
+    print("🚀 Lambda IDE running on http://127.0.0.1:5013")
+    app.run(host='0.0.0.0', port=5013, debug=True)</code></pre>
+                </div>
+                <div class="space-y-1 text-slate-400 font-sans text-[11px]">
+                    <p>1. Install flask: <code class="text-slate-200 font-mono bg-slate-800 px-1 rounded">pip install flask</code></p>
+                    <p>2. Save the code above as <code class="text-slate-200 font-mono bg-slate-800 px-1 rounded">app.py</code></p>
+                    <p>3. Run <code class="text-slate-200 font-mono bg-slate-800 px-1 rounded">python app.py</code> and open <code class="text-emerald-400 font-mono bg-slate-800 px-1 rounded">http://localhost:5013</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // --- 1. AST NODE DEFINITIONS ---
+        // Types: 'var', 'abs', 'app'
+        class Var {
+            constructor(name) {
+                this.type = 'var';
+                this.name = name;
+                this.id = 'node_' + Math.random().toString(36).substr(2, 9);
+            }
+            toString() { return this.name; }
+            clone() { return new Var(this.name); }
+        }
+
+        class Abs {
+            constructor(param, body) {
+                this.type = 'abs';
+                this.param = param; // string
+                this.body = body;   // AST Node
+                this.id = 'node_' + Math.random().toString(36).substr(2, 9);
+            }
+            toString() {
+                const bodyStr = this.body.type === 'abs' ? this.body.toString().substring(1) : `. ${this.body.toString()}`;
+                return `\\${this.param}${bodyStr.startsWith('.') ? bodyStr : ' ' + bodyStr}`;
+            }
+            clone() { return new Abs(this.param, this.body.clone()); }
+        }
+
+        class App {
+            constructor(func, arg) {
+                this.type = 'app';
+                this.func = func; // AST Node
+                this.arg = arg;   // AST Node
+                this.id = 'node_' + Math.random().toString(36).substr(2, 9);
+            }
+            toString() {
+                const fStr = this.func.type === 'abs' ? `(${this.func.toString()})` : this.func.toString();
+                const aStr = (this.arg.type === 'app' || this.arg.type === 'abs') ? `(${this.arg.toString()})` : this.arg.toString();
+                return `${fStr} ${aStr}`;
+            }
+            clone() { return new App(this.func.clone(), this.arg.clone()); }
+        }
+
+        // --- 2. PARSER & LEXER ---
+        class Lexer {
+            constructor(input) {
+                this.input = input;
+                this.pos = 0;
+            }
+            nextToken() {
+                while (this.pos < this.input.length && /\s/.test(this.input[this.pos])) {
+                    this.pos++;
+                }
+                if (this.pos >= this.input.length) return null;
+
+                const ch = this.input[this.pos];
+                if (ch === '\\' || ch === 'λ') {
+                    this.pos++;
+                    return { type: 'LAMBDA', val: 'λ' };
+                }
+                if (ch === '.' || ch === '(' || ch === ')') {
+                    this.pos++;
+                    return { type: ch, val: ch };
+                }
+
+                // Identifiers
+                if (/[a-zA-Z0-9_]/.test(ch)) {
+                    let start = this.pos;
+                    while (this.pos < this.input.length && /[a-zA-Z0-9_]/.test(this.input[this.pos])) {
+                        this.pos++;
+                    }
+                    return { type: 'VAR', val: this.input.slice(start, this.pos) };
+                }
+
+                this.pos++;
+                return { type: 'UNKNOWN', val: ch };
+            }
+        }
+
+        class Parser {
+            constructor(input) {
+                this.lexer = new Lexer(input);
+                this.currentToken = this.lexer.nextToken();
+            }
+
+            eat(type) {
+                if (this.currentToken && this.currentToken.type === type) {
+                    this.currentToken = this.lexer.nextToken();
+                } else {
+                    throw new Error(`Expected token ${type}, found ${this.currentToken ? this.currentToken.type : 'EOF'}`);
+                }
+            }
+
+            parse() {
+                if (!this.currentToken) return null;
+                const expr = this.parseExpression();
+                return expr;
+            }
+
+            parseExpression() {
+                let terms = [];
+                while (this.currentToken && this.currentToken.type !== ')') {
+                    terms.push(this.parseSingle());
+                }
+                if (terms.length === 0) throw new Error("Empty expression");
+                
+                // Left-associative application: M N P -> ((M N) P)
+                let acc = terms[0];
+                for (let i = 1; i < terms.length; i++) {
+                    acc = new App(acc, terms[i]);
+                }
+                return acc;
+            }
+
+            parseSingle() {
+                if (!this.currentToken) throw new Error("Unexpected end of expression");
+
+                if (this.currentToken.type === 'LAMBDA') {
+                    this.eat('LAMBDA');
+                    let params = [];
+                    while (this.currentToken && this.currentToken.type === 'VAR') {
+                        params.push(this.currentToken.val);
+                        this.eat('VAR');
+                    }
+                    if (params.length === 0) throw new Error("Lambda expects parameter name");
+                    if (this.currentToken.type === '.') this.eat('.');
+
+                    const body = this.parseExpression();
+                    // Nested abstractions for multi-params: \x y. M -> \x.\y.M
+                    let res = body;
+                    for (let i = params.length - 1; i >= 0; i--) {
+                        res = new Abs(params[i], res);
+                    }
+                    return res;
+                }
+
+                if (this.currentToken.type === 'VAR') {
+                    const name = this.currentToken.val;
+                    this.eat('VAR');
+                    return new Var(name);
+                }
+
+                if (this.currentToken.type === '(') {
+                    this.eat('(');
+                    const expr = this.parseExpression();
+                    this.eat(')');
+                    return expr;
+                }
+
+                throw new Error(`Unexpected token ${this.currentToken.val}`);
+            }
+        }
+
+        // --- 3. BETA REDUCTION ENGINE ---
+        function getFreeVars(node) {
+            if (node.type === 'var') return new Set([node.name]);
+            if (node.type === 'abs') {
+                const free = getFreeVars(node.body);
+                free.delete(node.param);
+                return free;
+            }
+            if (node.type === 'app') {
+                return new Set([...getFreeVars(node.func), ...getFreeVars(node.arg)]);
+            }
+            return new Set();
+        }
+
+        function alphaRename(node, oldVar, newVar) {
+            if (node.type === 'var') {
+                return node.name === oldVar ? new Var(newVar) : node.clone();
+            }
+            if (node.type === 'abs') {
+                if (node.param === oldVar) return node.clone();
+                return new Abs(
+                    node.param === oldVar ? newVar : node.param,
+                    alphaRename(node.body, oldVar, newVar)
+                );
+            }
+            if (node.type === 'app') {
+                return new App(alphaRename(node.func, oldVar, newVar), alphaRename(node.arg, oldVar, newVar));
+            }
+        }
+
+        function substitute(body, varName, replacement) {
+            if (body.type === 'var') {
+                return body.name === varName ? replacement.clone() : body.clone();
+            }
+            if (body.type === 'app') {
+                return new App(
+                    substitute(body.func, varName, replacement),
+                    substitute(body.arg, varName, replacement)
+                );
+            }
+            if (body.type === 'abs') {
+                if (body.param === varName) return body.clone();
+                
+                // Avoid variable capture via alpha reduction if needed
+                const freeInRepl = getFreeVars(replacement);
+                if (freeInRepl.has(body.param)) {
+                    const freshVar = body.param + "'";
+                    const renamedBody = alphaRename(body.body, body.param, freshVar);
+                    return new Abs(freshVar, substitute(renamedBody, varName, replacement));
+                }
+                return new Abs(body.param, substitute(body.body, varName, replacement));
+            }
+        }
+
+        // Single step applicative / normal order beta reduction
+        function betaReduceStep(node, env = {}) {
+            // Expand environment bindings first if applicable
+            if (node.type === 'var' && env[node.name]) {
+                return { reduced: true, node: env[node.name].clone(), redexId: node.id };
+            }
+
+            if (node.type === 'app') {
+                // Check if this app node is a direct Redex: (\x. M) N
+                if (node.func.type === 'abs') {
+                    const substituted = substitute(node.func.body, node.func.param, node.arg);
+                    return { reduced: true, node: substituted, redexId: node.id };
+                }
+
+                // Try reducing function side first (normal order)
+                const funcRes = betaReduceStep(node.func, env);
+                if (funcRes.reduced) {
+                    return { reduced: true, node: new App(funcRes.node, node.arg), redexId: funcRes.redexId };
+                }
+
+                // Try reducing argument side
+                const argRes = betaReduceStep(node.arg, env);
+                if (argRes.reduced) {
+                    return { reduced: true, node: new App(node.func, argRes.node), redexId: argRes.redexId };
+                }
+            }
+
+            if (node.type === 'abs') {
+                const bodyRes = betaReduceStep(node.body, env);
+                if (bodyRes.reduced) {
+                    return { reduced: true, node: new Abs(node.param, bodyRes.node), redexId: bodyRes.redexId };
+                }
+            }
+
+            return { reduced: false, node: node };
+        }
+
+        // --- 4. STATE & APP CONTROLLER ---
+        const state = {
+            env: {},             // Named bindings: { I: AST, K: AST }
+            currentAST: null,    // Active AST expression
+            history: [],         // Step trace history
+            stepCount: 0,
+            isPlaying: false,
+            playTimer: null,
+            zoomLevel: 1.0
+        };
+
+        // DOM Element Refs
+        const codeEditor = document.getElementById('code-editor');
+        const bindingsList = document.getElementById('bindings-list');
+        const bindingCount = document.getElementById('binding-count');
+        const parseStatus = document.getElementById('parse-status');
+        const visualContainer = document.getElementById('visual-tree-container');
+        const traceList = document.getElementById('trace-list');
+        const reductionStatus = document.getElementById('reduction-status');
+        const stepCounter = document.getElementById('step-counter');
+
+        // Buttons
+        const btnStep = document.getElementById('btn-step');
+        const btnPlay = document.getElementById('btn-play');
+        const btnReset = document.getElementById('btn-reset');
+        const playIcon = document.getElementById('play-icon');
+
+        function parseScript() {
+            const code = codeEditor.value;
+            const lines = code.split('\n');
+            const newEnv = {};
+            let activeExprCode = '';
+
+            for (let line of lines) {
+                line = line.trim();
+                if (!line || line.startsWith('//')) continue;
+
+                if (line.includes(':=')) {
+                    const [name, exprStr] = line.split(':=');
+                    const cleanName = name.trim();
+                    try {
+                        const p = new Parser(exprStr.trim());
+                        newEnv[cleanName] = p.parse();
+                    } catch (e) {
+                        // Ignore partial binding parsing errors while typing
+                    }
+                } else {
+                    activeExprCode = line;
+                }
+            }
+
+            state.env = newEnv;
+            updateEnvUI();
+
+            if (activeExprCode) {
+                try {
+                    const p = new Parser(activeExprCode);
+                    const ast = p.parse();
+                    setParseStatus(true, "Syntax Valid");
+                    
+                    if (JSON.stringify(ast) !== JSON.stringify(state.currentAST) && state.stepCount === 0) {
+                        state.currentAST = ast;
+                        renderVisualTree(state.currentAST);
+                    }
+                } catch (e) {
+                    setParseStatus(false, e.message);
+                }
+            } else {
+                state.currentAST = null;
+                renderVisualTree(null);
+            }
+        }
+
+        function setParseStatus(isValid, msg) {
+            parseStatus.innerHTML = isValid 
+                ? `<div class="w-2 h-2 rounded-full bg-emerald-500"></div> <span class="text-emerald-400">${msg}</span>`
+                : `<div class="w-2 h-2 rounded-full bg-rose-500"></div> <span class="text-rose-400">${msg}</span>`;
+        }
+
+        function updateEnvUI() {
+            bindingsList.innerHTML = '';
+            const keys = Object.keys(state.env);
+            bindingCount.textContent = `${keys.length} items`;
+
+            if (keys.length === 0) {
+                bindingsList.innerHTML = `<span class="text-slate-600 font-sans text-xs italic">No bindings defined yet. Use NAME := \\x.x</span>`;
+                return;
+            }
+
+            keys.forEach(k => {
+                const item = document.createElement('div');
+                item.className = "flex items-center justify-between p-1.5 bg-slate-900 border border-slate-800 rounded group hover:border-slate-700 transition";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="font-bold text-emerald-400 font-mono">${k}</span>
+                        <span class="text-slate-500">:=</span>
+                        <span class="text-slate-300 truncate font-mono">${state.env[k].toString()}</span>
+                    </div>
+                    <button data-bind="${k}" class="btn-insert-bind text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">
+                        Insert
+                    </button>
+                `;
+                bindingsList.appendChild(item);
+            });
+
+            document.querySelectorAll('.btn-insert-bind').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const name = e.target.getAttribute('data-bind');
+                    codeEditor.value += ` ${name}`;
+                    parseScript();
+                });
+            });
+        }
+
+        function renderVisualTree(ast, targetEl = visualContainer) {
+            targetEl.innerHTML = '';
+            if (!ast) {
+                targetEl.innerHTML = `<div class="text-slate-600 text-xs font-mono">No expression loaded</div>`;
+                return;
+            }
+
+            const treeEl = createNodeUI(ast);
+            targetEl.appendChild(treeEl);
+            lucide.createIcons();
+        }
+
+        function createNodeUI(node) {
+            const container = document.createElement('div');
+            container.className = "visual-node flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 relative group";
+            container.dataset.id = node.id;
+
+            if (node.type === 'var') {
+                container.classList.add('bg-blue-950/70', 'border', 'border-blue-700/80', 'text-blue-200', 'shadow-md', 'min-w-[48px]', 'h-11');
+                container.innerHTML = `
+                    <div class="flex items-center gap-1 font-mono font-bold text-sm px-2">
+                        <i data-lucide="tag" class="w-3.5 h-3.5 text-blue-400"></i>
+                        <span>${node.name}</span>
+                    </div>
+                `;
+            } else if (node.type === 'abs') {
+                container.classList.add('bg-purple-950/60', 'border-2', 'border-purple-600/80', 'p-3', 'rounded-2xl', 'shadow-lg');
+                
+                // Abstraction Header
+                const header = document.createElement('div');
+                header.className = "flex items-center gap-1.5 font-mono text-xs text-purple-300 font-bold mb-2 bg-purple-900/40 px-2.5 py-1 rounded-lg border border-purple-700/50";
+                header.innerHTML = `<span class="text-purple-400 text-sm">λ</span><span>${node.param}</span> <span class="text-purple-400/60 font-sans">→</span>`;
+                
+                // Abstraction Body Container
+                const bodyContainer = document.createElement('div');
+                bodyContainer.className = "p-2 bg-slate-950/60 rounded-xl border border-purple-900/40 min-w-[80px] min-h-[50px] flex items-center justify-center";
+                bodyContainer.appendChild(createNodeUI(node.body));
+
+                container.appendChild(header);
+                container.appendChild(bodyContainer);
+            } else if (node.type === 'app') {
+                container.classList.add('bg-amber-950/40', 'border-2', 'border-amber-600/70', 'p-3', 'rounded-2xl', 'shadow-lg');
+
+                const header = document.createElement('div');
+                header.className = "text-[10px] font-semibold text-amber-400/80 uppercase tracking-wider mb-2 flex items-center gap-1";
+                header.innerHTML = `<i data-lucide="layers" class="w-3 h-3"></i> Application`;
+
+                const childrenWrapper = document.createElement('div');
+                childrenWrapper.className = "flex items-center gap-3 bg-slate-950/80 p-2.5 rounded-xl border border-amber-900/30";
+
+                const funcUI = createNodeUI(node.func);
+                const argUI = createNodeUI(node.arg);
+
+                childrenWrapper.appendChild(funcUI);
+                childrenWrapper.appendChild(argUI);
+
+                container.appendChild(header);
+                container.appendChild(childrenWrapper);
+            }
+
+            // Inline interactive edit on click
+            container.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                if (node.type === 'var') {
+                    const newName = prompt("Rename variable:", node.name);
+                    if (newName) {
+                        node.name = newName.trim();
+                        syncASTToText();
+                    }
+                } else if (node.type === 'abs') {
+                    const newParam = prompt("Change abstraction parameter:", node.param);
+                    if (newParam) {
+                        node.param = newParam.trim();
+                        syncASTToText();
+                    }
+                }
+            });
+
+            return container;
+        }
+
+        function syncASTToText() {
+            if (!state.currentAST) return;
+            const newCode = state.currentAST.toString();
+            
+            // Replace the active line or append
+            const lines = codeEditor.value.split('\n');
+            let found = false;
+            for (let i = lines.length - 1; i >= 0; i--) {
+                const l = lines[i].trim();
+                if (l && !l.startsWith('//') && !l.includes(':=')) {
+                    lines[i] = newCode;
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) lines.push(newCode);
+
+            codeEditor.value = lines.join('\n');
+            parseScript();
+        }
+
+        function stepReduction() {
+            if (!state.currentAST) return;
+
+            // Push state to timeline history
+            if (state.history.length === 0) {
+                state.history.push(state.currentAST.toString());
+                renderTimeline();
+            }
+
+            const res = betaReduceStep(state.currentAST, state.env);
+            if (res.reduced) {
+                state.currentAST = res.node;
+                state.stepCount++;
+                stepCounter.textContent = state.stepCount;
+
+                const codeStr = state.currentAST.toString();
+                state.history.push(codeStr);
+
+                renderVisualTree(state.currentAST);
+                renderTimeline();
+                reductionStatus.textContent = "Reducing...";
+                reductionStatus.className = "text-[10px] text-amber-400 font-mono";
+            } else {
+                reductionStatus.textContent = "Normal Form (Fully Reduced)";
+                reductionStatus.className = "text-[10px] text-emerald-400 font-mono font-bold";
+                stopAutoPlay();
+            }
+        }
+
+        function renderTimeline() {
+            traceList.innerHTML = '';
+            state.history.forEach((stepCode, idx) => {
+                const item = document.createElement('div');
+                item.className = `px-3 py-1.5 rounded-lg border text-xs font-mono shrink-0 cursor-pointer transition flex items-center gap-2 ${
+                    idx === state.history.length - 1 
+                        ? 'bg-purple-950 border-purple-700 text-purple-200 font-bold shadow' 
+                        : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                }`;
+                item.innerHTML = `<span class="text-[10px] opacity-60">#${idx}</span> <span>${stepCode}</span>`;
+                traceList.appendChild(item);
+            });
+            traceList.scrollLeft = traceList.scrollWidth;
+        }
+
+        function resetReduction() {
+            stopAutoPlay();
+            state.stepCount = 0;
+            state.history = [];
+            stepCounter.textContent = "0";
+            reductionStatus.textContent = "Reset";
+            reductionStatus.className = "text-[10px] text-slate-400 font-mono";
+            renderTimeline();
+            parseScript();
+        }
+
+        function toggleAutoPlay() {
+            if (state.isPlaying) {
+                stopAutoPlay();
+            } else {
+                state.isPlaying = true;
+                playIcon.setAttribute('data-lucide', 'pause');
+                lucide.createIcons();
+                btnPlay.classList.add('bg-purple-900/80', 'text-purple-200');
+
+                state.playTimer = setInterval(() => {
+                    const before = state.currentAST ? state.currentAST.toString() : '';
+                    stepReduction();
+                    if (!state.currentAST || state.currentAST.toString() === before) {
+                        stopAutoPlay();
+                    }
+                }, 500);
+            }
+        }
+
+        function stopAutoPlay() {
+            state.isPlaying = false;
+            if (state.playTimer) clearInterval(state.playTimer);
+            playIcon.setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+            btnPlay.classList.remove('bg-purple-900/80', 'text-purple-200');
+        }
+
+        const visualCanvas = document.getElementById('visual-canvas');
+        
+        document.querySelectorAll('.toolbox-item').forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('type', item.dataset.type);
+            });
+        });
+
+        visualCanvas.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        visualCanvas.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const type = e.dataTransfer.getData('type');
+            if (!type) return;
+
+            let newNode;
+            if (type === 'variable') {
+                const varName = prompt("Variable name:", "x") || "x";
+                newNode = new Var(varName);
+            } else if (type === 'abstraction') {
+                const paramName = prompt("Abstraction parameter:", "x") || "x";
+                newNode = new Abs(paramName, new Var("x"));
+            } else if (type === 'application') {
+                newNode = new App(new Var("f"), new Var("x"));
+            }
+
+            if (newNode) {
+                if (!state.currentAST) {
+                    state.currentAST = newNode;
+                } else {
+                    // Wrap existing term into an application with new term
+                    state.currentAST = new App(state.currentAST, newNode);
+                }
+                syncASTToText();
+            }
+        });
+
+        const PRESETS = {
+            peano: `// Peano Axioms & Church Numerals
+0 := \\f.\\x.x
+1 := \\f.\\x.f x
+2 := \\f.\\x.f (f x)
+3 := \\f.\\x.f (f (f x))
+
+// Successor function S(n)
+S := \\n.\\f.\\x.f (n f x)
+
+// Test Successor on 2 -> 3
+S 2`,
+
+            addition: `// Church Arithmetic Addition
+1 := \\f.\\x.f x
+2 := \\f.\\x.f (f x)
+PLUS := \\m.\\n.\\f.\\x.m f (n f x)
+
+// Evaluate 1 + 2
+PLUS 1 2`,
+
+            logic: `// Church Booleans & Logic Gates
+TRUE := \\x.\\y.x
+FALSE := \\x.\\y.y
+AND := \\p.\\q.p q p
+OR := \\p.\\q.p p q
+NOT := \\p.p FALSE TRUE
+
+// Test AND TRUE FALSE
+AND TRUE FALSE`,
+
+            ski: `// SKI Combinator Calculus
+I := \\x.x
+K := \\x.\\y.x
+S := \\x.\\y.\\z.x z (y z)
+
+// Prove S K K x == I x == x
+S K K a`,
+
+            'y-combinator': `// Fixed-Point Y Combinator
+Y := \\f.(\\x.f (x x)) (\\x.f (x x))
+
+// Application template
+Y F`
+        };
+
+        codeEditor.addEventListener('input', parseScript);
+
+        document.getElementById('insert-lambda').addEventListener('click', () => {
+            const start = codeEditor.selectionStart;
+            const end = codeEditor.selectionEnd;
+            const text = codeEditor.value;
+            codeEditor.value = text.substring(0, start) + 'λ' + text.substring(end);
+            codeEditor.focus();
+            codeEditor.selectionStart = codeEditor.selectionEnd = start + 1;
+            parseScript();
+        });
+
+        btnStep.addEventListener('click', stepReduction);
+        btnPlay.addEventListener('click', toggleAutoPlay);
+        btnReset.addEventListener('click', resetReduction);
+
+        // Zoom controls
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            state.zoomLevel = Math.min(state.zoomLevel + 0.15, 2.0);
+            visualContainer.style.transform = `scale(${state.zoomLevel})`;
+        });
+
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            state.zoomLevel = Math.max(state.zoomLevel - 0.15, 0.4);
+            visualContainer.style.transform = `scale(${state.zoomLevel})`;
+        });
+
+        document.getElementById('btn-fit-view').addEventListener('click', () => {
+            state.zoomLevel = 1.0;
+            visualContainer.style.transform = `scale(1.0)`;
+        });
+
+        // Modals
+        const modalPresets = document.getElementById('modal-presets');
+        const modalFlask = document.getElementById('modal-flask');
+
+        document.getElementById('btn-presets').addEventListener('click', () => {
+            modalPresets.classList.remove('hidden');
+        });
+
+        document.getElementById('btn-flask-info').addEventListener('click', () => {
+            modalFlask.classList.remove('hidden');
+        });
+
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', () => {
+                modalPresets.classList.add('hidden');
+                modalFlask.classList.add('hidden');
+            });
+        });
+
+        document.querySelectorAll('.preset-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const key = card.dataset.preset;
+                if (PRESETS[key]) {
+                    codeEditor.value = PRESETS[key];
+                    modalPresets.classList.add('hidden');
+                    resetReduction();
+                }
+            });
+        });
+
+        document.getElementById('copy-flask-code').addEventListener('click', () => {
+            const code = `from flask import Flask\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    with open('index.html', 'r') as f:\n        return f.read()\n\nif __name__ == '__main__':\n    app.run(host='0.0.0.0', port=5013, debug=True)`;
+            navigator.clipboard.writeText(code);
+            alert("Flask python script copied to clipboard!");
+        });
+
+        // Initial launch parse
+        parseScript();
+    </script>
+</body>
+</html>

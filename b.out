@@ -1,0 +1,13 @@
+=== Evaluating: juniper.lc ===
+
+❌ UNIT IDEMPOTENCY PARSE ERROR at juniper.lc:13
+   Resugared String: '\a.(\b.a (b b)) (\b.a (b b))'
+   Error: maximum recursion depth exceeded
+I, IDENTITY := \a.a
+S := \a.\b.\c.a c (b c)
+K := \a.\b.a
+B := \a.\b.\c.a (b c)
+C := \a.\b.\c.a c b
+W := \a.\b.a b b
+ω, Δ, U := \a.a a
+Ω := ω ω

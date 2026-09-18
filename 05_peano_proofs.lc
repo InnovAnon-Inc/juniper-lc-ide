@@ -1,0 +1,12 @@
+# --- Target Theorem: x = x ---
+THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
+
+# --- Step 1: Assert AXIOM_REFLEXIVE ---
+STEP_1 := PAIR RULE_AXIOM (PAIR THEOREM_REFLEXIVE NIL)
+
+# --- Proof Sequence ---
+PROOF_1 := CONS STEP_1 NIL
+
+# --- FINAL EVALUATION ---
+# Running this term reduces down purely to TRUE (\x.\y.x)
+MAIN := VERIFY_PROOF AXIOM_SET PROOF_1

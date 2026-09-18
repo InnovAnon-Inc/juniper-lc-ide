@@ -1,0 +1,81 @@
+I, IDENTITY := \a.a
+S := \a b c.a c (b c)
+K := \a b.a
+B := \a b c.a (b c)
+C := \a b c.a c b
+W := \a b.a b b
+ω, Δ, U := \a.a a
+Ω := ω ω
+Y := \a.(\b.a (b b)) (\b.a (b b))
+Y2 := Y
+Z := \a.(\b.a (\c.b b c)) (\b.a (\c.b b c))
+⊤, TRUE := K
+⊥, FALSE := \a b.b
+¬, NOT := \a.a ⊥ K
+∧, AND := \a b.a b ⊥
+∨, OR := \a b.a K b
+IF := \a b c.a b c
+ASSERT K
+ASSERT ¬ ⊥
+ASSERT ∧ K K
+ASSERT ¬ (∧ K ⊥)
+ASSERT ¬ (∧ ⊥ K)
+ASSERT ¬ (∧ ⊥ ⊥)
+ASSERT ∨ K K
+ASSERT ∨ K ⊥
+ASSERT ∨ ⊥ K
+ASSERT ¬ (∨ ⊥ ⊥)
+0, ZERO := ⊥
+SUCC := \a b c.b (a b c)
++, PLUS := \a b.a SUCC b
+*, MULT := \a b.a (+ b) ⊥
+POW := \a b.b a
+1, ONE := SUCC ⊥
+ASSERT_EQ 1, 1
+2, TWO := SUCC 1
+ASSERT_EQ 2, 2
+3, THREE := SUCC 2
+ASSERT_EQ 3, 3
+=0, IS_ZERO := \a.a (\b c d.d) K
+≤, LEQ := \a b.=0 (- a b)
+PAIR := \a b c.c a b
+1st, FIRST := \a.a K
+2nd, SECOND := \a.a ⊥
+Φ := \a.PAIR (2nd a) (SUCC (2nd a))
+Ψ := \a b.PAIR (2nd b) (a (2nd b))
+NIL := ⊥
+NULL := \a.a (\b c d e.e)
+PRED := \a.1st (a (Ψ SUCC) (PAIR ⊥ ⊥))
+-, SUB := \a b.b PRED a
+CONS := \a b c d.c a (b c d)
+IS_NIL := \a.a (\b c d e.e) K
+EQ_NUM := \a b.∧ (=0 (- a b)) (=0 (- b a))
+TAG_VAR := ⊥
+TAG_IMP := 1
+TAG_EQ := 2
+MK_VAR := \a.PAIR ⊥ a
+MK_IMP := \a b.PAIR 1 (PAIR a b)
+MK_EQ := \a b.PAIR 2 (PAIR a b)
+GET_TAG := 1st
+GET_BODY := 2nd
+IS_VAR := \a.EQ_NUM (1st a) ⊥
+IS_IMP := \a.EQ_NUM (1st a) 1
+IS_EQ := \a.EQ_NUM (1st a) 2
+IS_SAME_FORMULA_REC := \a b c.IF (IS_VAR b) (∧ (IS_VAR c) (EQ_NUM (2nd b) (2nd c))) (IF (IS_IMP b) (∧ (IS_IMP c) (∧ (a (1st (2nd b)) (1st (2nd c))) (a (2nd (2nd b)) (2nd (2nd c))))) (IF (IS_EQ b) (∧ (IS_EQ c) (∧ (a (1st (2nd b)) (1st (2nd c))) (a (2nd (2nd b)) (2nd (2nd c))))) ⊥))
+IS_SAME_FORMULA := Y IS_SAME_FORMULA_REC
+VAR_X := MK_VAR 1
+VAR_Y := MK_VAR 2
+AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
+S_X := MK_VAR 3
+AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR ⊥)) (MK_EQ VAR_X VAR_Y)
+AXIOM_SET := CONS AXIOM_REFLEXIVE (CONS AXIOM_ZERO_SUCC ⊥)
+IS_AXIOM := \a b.b (\c d.∨ (IS_SAME_FORMULA a c) d) ⊥
+VERIFY_MP := \a b c.IF (IS_IMP b) (∧ (IS_SAME_FORMULA a (1st (2nd b))) (IS_SAME_FORMULA c (2nd (2nd b)))) ⊥
+RULE_AXIOM := ⊥
+RULE_MP := 1
+CHECK_STEP := \a b c d e.IF (EQ_NUM d ⊥) (IS_AXIOM (1st e) b) (IF (EQ_NUM d 1) (VERIFY_MP (1st (2nd e)) (2nd (2nd e)) (1st e)) ⊥)
+VERIFY_PROOF := \a b.b (\c d.∧ d (CHECK_STEP c a ⊥)) K
+THEOREM_REFLEXIVE := AXIOM_REFLEXIVE
+STEP_1 := PAIR ⊥ (PAIR AXIOM_REFLEXIVE ⊥)
+PROOF_1 := CONS STEP_1 ⊥
+MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
