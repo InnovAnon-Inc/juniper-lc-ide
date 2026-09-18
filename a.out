@@ -1,6 +1,0 @@
-=== Evaluating: juniper.lc ===
-
-💥 CRASH: Unexpected Error at juniper.lc:20: Unit Idempotency Error: Semantics changed after resugaring!
-  Original DB: (λ.(λ.[0]))
-  Pretty Str:  '0'
-  Reparsed DB: [1000]
