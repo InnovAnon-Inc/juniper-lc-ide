@@ -264,4 +264,87 @@ MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
 MAIN
 ASSERT MAIN
 
-# FILE END juniper.lc
+
+
+
+
+
+
+
+
+
+
+# --- AST Substitution Mechanism ---
+# Replaces occurrences of a specific variable ID with a given term within an AST formula.
+SUBST_REC := \self. \target_id. \subst_term. \expr. \
+  IF (IS_VAR expr) \
+    (IF (EQ_NUM (GET_BODY expr) target_id) subst_term expr) \
+    (IF (IS_IMP expr) \
+      (MK_IMP (self target_id subst_term (FIRST (GET_BODY expr))) \
+              (self target_id subst_term (SECOND (GET_BODY expr)))) \
+      (IF (IS_EQ expr) \
+        (MK_EQ (self target_id subst_term (FIRST (GET_BODY expr))) \
+               (self target_id subst_term (SECOND (GET_BODY expr)))) \
+        expr))
+
+SUBST := Y SUBST_REC
+
+# --- Substitution Assertions & Tests ---
+TEST_VAR_ID     := SUCC ZERO
+TEST_TARGET_VAL := MK_VAR (SUCC (SUCC ZERO))
+TEST_FORMULA    := MK_EQ (MK_VAR TEST_VAR_ID) (MK_VAR TEST_VAR_ID)
+
+# Perform substitution: replace variable 1 with VAR_Y in (var 1 = var 1)
+TEST_SUBST_RES  := SUBST TEST_VAR_ID TEST_TARGET_VAL TEST_FORMULA
+EXPECTED_RES    := MK_EQ TEST_TARGET_VAL TEST_TARGET_VAL
+
+# Verify structural match of the substitution result
+ASSERT (IS_SAME_FORMULA TEST_SUBST_RES EXPECTED_RES)
+
+# --- Provability Predicate Skeleton ---
+# Next, we express whether a formula is provable by searching over proof histories.
+# IS_PROVABLE := \formula \axioms. ...
+
+## --- Theorem Extraction from Proof Steps ---
+## Extracts the target formula proven by a single proof step
+#GET_STEP_FORMULA := \step. FIRST (SECOND step)
+#
+## Recursively finds the last step (the main conclusion) of a proof list
+#LAST_STEP_REC := \self. \l. \
+#  IF (IS_NIL (SECOND l)) \
+#    (FIRST l) \
+#    (self (SECOND l))
+#
+#LAST_STEP := Y LAST_STEP_REC
+#
+## Extracts the final theorem established by a complete proof
+#GET_PROOF_THEOREM := \proof. GET_STEP_FORMULA (LAST_STEP proof)
+#
+## --- Provability Predicate ---
+## Checks whether a given formula is provable using the provided axiom set and proof
+#IS_PROVABLE := \formula. \axioms. \proof. \
+#  AND (VERIFY_PROOF axioms proof) \
+#      (IS_SAME_FORMULA formula (GET_PROOF_THEOREM proof))
+#
+## --- Verification of Reflexivity Provability ---
+#ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
+#
+## FILE END juniper.lc
+# --- Theorem Extraction from Proof Steps ---
+# Extracts the target formula proven by a single proof step
+GET_STEP_FORMULA := \step. FIRST (SECOND step)
+
+# Corrected LAST_STEP for Church-encoded lists using a right fold accumulator
+LAST_STEP := \l. l (\h. \acc. IF (IS_NIL acc) h acc) NIL
+
+# Extracts the final theorem established by a complete proof
+GET_PROOF_THEOREM := \proof. GET_STEP_FORMULA (LAST_STEP proof)
+
+# --- Provability Predicate ---
+# Checks whether a given formula is provable using the provided axiom set and proof
+IS_PROVABLE := \formula. \axioms. \proof. \
+  AND (VERIFY_PROOF axioms proof) \
+      (IS_SAME_FORMULA formula (GET_PROOF_THEOREM proof))
+
+# --- Verification of Reflexivity Provability ---
+ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
