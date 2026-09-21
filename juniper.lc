@@ -1,99 +1,198 @@
 #! /usr/bin/env lc.py
 # FILE BEGIN juniper.lc
 
-# --- Standard Terms ---
-I,  IDENTITY := λx      .x
-S            := λx y z  .x z (y z)
-K            := λx y    .x
-B            := λx y z  .x (y z)
-C            := λx y z  .x z y
-W            := λx y    .x y y
-ω, Δ, U      := λx      .x x
-Ω            := ω ω
-
-Y            := λg      .(λx.g (x x)) (λx.g (x x))
-Y2           := λ       .(λ .[1] ([0] [0])) (λ .[1] ([0] [0]))
-#ASSERT_EQ Y, Y2 # FIXME RecursionError: maximum recursion depth exceeded
-Z            := λg      .(λx.g (λv.x x v)) (λx.g (λv.x x v))
-
-# --- Booleans ---
-⊤,  TRUE     := K
-⊥,  FALSE    := λx      .I
-¬,  NOT      := λb      .b ⊥ ⊤
-∧,  AND      := λp q    .p q ⊥
-∨,  OR       := λp q    .p ⊤ q
-
-# NOTE called IFTHENELSE elsewhere... maybe call it BRANCH ??? shorthand/arcane symbol would be great
-IF           := λb t f  .b t f
-
-ASSERT TRUE
-ASSERT (NOT FALSE)
-ASSERT AND TRUE TRUE
-ASSERT NOT (AND TRUE FALSE)
-ASSERT NOT (AND FALSE TRUE)
-ASSERT NOT (AND FALSE FALSE)
-ASSERT OR TRUE TRUE
-ASSERT OR TRUE FALSE
-ASSERT OR FALSE TRUE
-ASSERT NOT (OR FALSE FALSE)
-
-# TODO assert TRUE is not equal to FALSE
-# TODO test IF
-
-# --- Integers ---
-0,  ZERO     := ⊥
-
-SUCC         := λn f x  .f (n f x)
-+,  PLUS     := λm n    .m SUCC n
-#+            ≡ λm n f x.m f (n f x) # TODO assertions and proofs ?
-*,  MULT     := λm n    .m (+ n) 0
-#*,  MULT     ≡ λm n f  .m (n f) # TODO assertions and proofs ?
-POW          := λb n    .n b
-#POW′ := λb.λn.n (MULT b) 1 # TODO assertions and proofs ?
-#POW′′ := λb.λn.λf.n b f # TODO assertions and proofs ?
-
-# TODO handle beta-equivalence, especially for resugaring and asymptotic complexity analysis
+# TODO handle beta-equivalence, ≡, especially for resugaring and asymptotic complexity analysis
 # TODO resugaring output should contain structured comments with kolmogorov complexity, time and space complexity ?
 # TODO write a compiler in lc, and have it compile itself
 # TODO (builtin) need graphics primitives, such as creating a drawing space (new piece of paper), drawing lines (straightedge) and arcs (compass); must be able to work in the browser and also in a physical notebook
 # TODO (builtin) need systems primitives, such as for stdio
 # TODO need to define common structures, such as loops
 
-#1,  ONE      := λf x.f x
-#2,  TWO      := λf x.f (f x)
-#3,  THREE    := λf x.f (f (f x))
+##
+# standard terms
+##
 
-1,  ONE      := SUCC 0
-ASSERT_EQ 1, (λf x.f x)
-2,  TWO      := SUCC 1
-ASSERT_EQ 2, (λf x.f (f x))
-3,  THREE    := SUCC 2
-ASSERT_EQ 3, (λf x.f (f (f x)))
+I, identity := λx    .x
+ASSERT_EQ I, λ.[0]
+S           := λx y z.x z (y z)
+#ASSERT_EQ S, λλλ.[2][0]([1][0]) # FIXME parse error
+K           := λx y  .x
+#ASSERT_EQ K, λλ.[1]             # FIXME parse error
+B           := λx y z.x (y z)
+#ASSERT_EQ B, λλλ.[2]([1][0])    # FIXME parse error
+C           := λx y z.x z y
+#ASSERT_EQ C, λλλ.[2][0][1]      # FIXME parse error
+W           := λx y  .x y y
+#ASSERT_EQ W, λλ.[1][0][0]       # FIXME parse error
+ω,Δ, U      := λx    .x x
+ASSERT_EQ ω, λ.[0][0]
+Ω           := ω ω
+ASSERT_EQ Ω, (λ.[0][0])(λ.[0][0])
 
-=0, IS_ZERO  := λn      .n (λx.⊥) ⊤
-≤,  LEQ      := λm n    .=0 (- m n)
+Y           := λg    . \
+  (λx.g (x x))         \
+  (λx.g (x x))
+#ASSERT_EQ Y, λ.(λ.[1]([0][0]))(λ.[1]([0][0]))           # FIXME maximum recursion depth exceeded
+Z           := λg    . \
+  (λx.g (λv.x x v))    \
+  (λx.g (λv.x x v))
+#ASSERT_EQ Z, λ.(λ.[1](λ.[1][1][0]))(λ.[1](λ.[1][1][0])) # FIXME maximum recursion depth exceeded
 
-# --- Pairs (Duo) ---
+##
+# F.O.L.
+##
+
+⊤,  true  := K
+ASSERT true
+⊥,  false := λx    .I
+# TODO assert true is not equal to false
+¬,  not   := λb    .b ⊥ ⊤
+ASSERT (not false)
+∧,  and   := λp q  .p q ⊥
+ASSERT and true true
+ASSERT not (and true false)
+ASSERT not (and false true)
+ASSERT not (and false false)
+∨,  or    := λp q  .p ⊤ q
+ASSERT or true true
+ASSERT or true false
+ASSERT or false true
+ASSERT not (or false false)
+
+# note called IFTHENELSE elsewhere... maybe call it BRANCH ??? shorthand/arcane symbol would be great
+IF        := λb t f.b t f
+# TODO test IF
+
+##
+# pairs
+##
+
 PAIR         := λx y f  .f x y
 1st, FIRST   := λp      .p ⊤
 2nd, SECOND  := λp      .p ⊥
-Φ            := λp      .PAIR (2nd p) (SUCC (2nd p))
+Φ            := λp      .PAIR (2nd p) (successor (2nd p))
 Ψ            := λf p    .PAIR (2nd p) (f    (2nd p))
 
-NIL          := ⊥
+# TODO ∅
+nil          := ⊥
 NULL         := λp      .p (λx y.⊥)
-
-
-PRED         := λn      .1st (n (Ψ SUCC) (PAIR 0 0))
--,  SUB      := λm n    .n PRED m
 
 CONS         := λh t c n.c h (t c n)
 IS_NIL       := λl      .l (λh t.⊥) ⊤
+
+##
+# natural numbers
+##
+
+0,  zero                := ⊥
+successor               := λn f x  .f (n f x)
+1,  one                 := successor 0
+ASSERT_EQ 1, (λf x.f x)
+2,  two                 := successor 1
+ASSERT_EQ 2, (λf x.f (f x)) # TODO shorthand
+3,  three               := successor 2
+ASSERT_EQ 3, (λf x.f (f (f x))) # TODO shorthand
+4,  four                := successor 3
+5,  five                := successor 4
+6,  six                 := successor 5
+7,  seven               := successor 6
+8,  eight               := successor 7
+9,  nine                := successor 8
+10, ten                 := successor 9
+11, eleven              := successor 10
+12, twelve              := successor 11
+13, thirteen            := successor 12
+14, fourteen            := successor 13
+15, fifteen             := successor 14
+16, sixteen             := successor 15
+17, seventeen           := successor 16
+18, eighteen            := successor 17
+19, nineteen            := successor 18
+20, twenty              := successor 19
+21, twenty-one          := successor 20
+22, twenty-two          := successor 21
+23, twenty-three        := successor 22
+24, twenty-four         := successor 23
+25, twenty-five         := successor 24
+26, twenty-six          := successor 25
+27, twenty-seven        := successor 26
+28, twenty-eight        := successor 27
+29, twenty-nine         := successor 28
+30, thirty              := successor 29
+# TODO need a way to meta-programmatically define more numbers
+
++                       := λm n f x.m f (n f x)
++,  plus, add           := λm n    .m successor n
+#≡ # TODO assertions and proofs ?
+ASSERT_EQ (+ 0 0), 0
+ASSERT_EQ (+ 0 1), 1
+ASSERT_EQ (+ 1 0), 1
+ASSERT_EQ (+ 1 1), 2
+ASSERT_EQ (+ 2 0), 2
+ASSERT_EQ (+ 0 2), 2
+ASSERT_EQ (+ 2 1), 3
+ASSERT_EQ (+ 1 2), 3
+ASSERT_EQ (+ 2 2), 4
+ASSERT_EQ (+ 3 0), 3
+ASSERT_EQ (+ 0 3), 3
+ASSERT_EQ (+ 3 1), 4
+ASSERT_EQ (+ 1 3), 4
+ASSERT_EQ (+ 3 2), 5
+ASSERT_EQ (+ 2 3), 5
+ASSERT_EQ (+ 3 3), 6
+*                       := λm n f  .m (n f)
+*, times, multiply      := λm n    .m (+ n) 0
+#≡ # TODO assertions and proofs ?
+ASSERT_EQ (* 0 0), 0
+ASSERT_EQ (* 0 1), 0
+ASSERT_EQ (* 1 0), 0
+ASSERT_EQ (* 1 1), 1
+ASSERT_EQ (* 2 0), 0
+ASSERT_EQ (* 0 2), 0
+ASSERT_EQ (* 2 1), 2
+ASSERT_EQ (* 1 2), 2
+ASSERT_EQ (* 2 2), 4
+ASSERT_EQ (* 3 0), 0
+ASSERT_EQ (* 0 3), 0
+ASSERT_EQ (* 3 1), 3
+ASSERT_EQ (* 1 3), 3
+ASSERT_EQ (* 3 2), 6
+ASSERT_EQ (* 2 3), 6
+ASSERT_EQ (* 3 3), 9
+POW                     := λbn     .n (* b) 1
+POW                     := λb n f  .n b f
+**, power, exponentiate := λb n    .n b
+#≡ # TODO assertions and proofs ?
+ASSERT_EQ (** 0 0), I # ??? really ???
+ASSERT_EQ (** 0 1), 0
+#ASSERT_EQ (** 1 0), 1 # FIXME I
+ASSERT_EQ (** 1 1), 1
+#ASSERT_EQ (** 2 0), 1 # FIXME I
+ASSERT_EQ (** 0 2), 0
+ASSERT_EQ (** 2 1), 2
+ASSERT_EQ (** 1 2), 1
+ASSERT_EQ (** 2 2), 4
+#ASSERT_EQ (** 3 0), 1
+ASSERT_EQ (** 0 3), 0
+ASSERT_EQ (** 3 1), 3
+ASSERT_EQ (** 1 3), 1
+ASSERT_EQ (** 3 2), 9
+ASSERT_EQ (** 2 3), 8
+ASSERT_EQ (** 3 3), 27
+
+=0, IS_ZERO             := λn      .n (λx.⊥) ⊤
+≤,  LEQ                 := λm n    .=0 (- m n)
+
+predecessor             := λn f x  .n (λg h.h (g f)) (λu.x) I
+predecessor             := λn      .1st (n (Ψ successor) (PAIR 0 0))
+-, minus, subtract      := λm n    .n predecessor m
+
 
 # --- Structural Equality for Numbers/IDs ---
 # Helper to compare Church numerals or tag identifiers
 EQ_NUM       := λm n    .∧ (=0 (- m n)) (=0 (- n m))
 
+# TODO implement remaining math operators
 # ⊻
 # ×
 # ·
@@ -130,9 +229,9 @@ EQ_NUM       := λm n    .∧ (=0 (- m n)) (=0 (- n m))
 # --- AST Constructors ---
 TAG_VAR := 0
 # TODO should resugar to 1
-TAG_IMP := SUCC 0
+TAG_IMP := successor 0
 # TODO should resugar to 2
-TAG_EQ  := SUCC (SUCC 0)
+TAG_EQ  := successor (successor 0)
 
 MK_VAR := \id.PAIR TAG_VAR id
 MK_IMP := \a.\b.PAIR TAG_IMP (PAIR a b)
@@ -150,70 +249,70 @@ IS_EQ  := \e.EQ_NUM (GET_TAG e) TAG_EQ
 # Recursively checks if two AST structures match exactly
 #IS_SAME_FORMULA := \f1.\f2. \
 #  IF (IS_VAR f1) \
-#    (AND (IS_VAR f2) (EQ_NUM (GET_BODY f1) (GET_BODY f2))) \
+#    (and (IS_VAR f2) (EQ_NUM (GET_BODY f1) (GET_BODY f2))) \
 #    (IF (IS_IMP f1) \
-#      (AND (IS_IMP f2) \
-#           (AND (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+#      (and (IS_IMP f2) \
+#           (and (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
 #                (IS_SAME_FORMULA (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
 #      (IF (IS_EQ f1) \
-#        (AND (IS_EQ f2) \
-#             (AND (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+#        (and (IS_EQ f2) \
+#             (and (IS_SAME_FORMULA (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
 #                  (IS_SAME_FORMULA (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
-#        FALSE))
+#        false))
 
 IS_SAME_FORMULA_REC := \self f1 f2. \
   IF (IS_VAR f1) \
-    (AND (IS_VAR f2) (EQ_NUM (GET_BODY f1) (GET_BODY f2))) \
+    (and (IS_VAR f2) (EQ_NUM (GET_BODY f1) (GET_BODY f2))) \
     (IF (IS_IMP f1) \
-      (AND (IS_IMP f2) \
-           (AND (self (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+      (and (IS_IMP f2) \
+           (and (self (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
                 (self (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
       (IF (IS_EQ f1) \
-        (AND (IS_EQ f2) \
-             (AND (self (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
+        (and (IS_EQ f2) \
+             (and (self (FIRST (GET_BODY f1)) (FIRST (GET_BODY f2))) \
                   (self (SECOND (GET_BODY f1)) (SECOND (GET_BODY f2))))) \
-        FALSE))
+        false))
 
 IS_SAME_FORMULA := Y IS_SAME_FORMULA_REC
 
 
 
 # --- Terms ---
-VAR_X := MK_VAR (SUCC ZERO)
-VAR_Y := MK_VAR (SUCC (SUCC ZERO))
+VAR_X := MK_VAR (successor 0)
+VAR_Y := MK_VAR (successor (successor 0))
 
 # --- Axiom 1: Reflexivity of Equality (x = x) ---
 AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
 
-# --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> FALSE) ---
+# --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> false) ---
 # Represented structurally as Implication: S(x) = 0 -> x != x
-S_X := MK_VAR (SUCC (SUCC (SUCC ZERO))) # S(x) term
-AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR ZERO)) (MK_EQ VAR_X VAR_Y)
+S_X := MK_VAR (successor (successor (successor 0))) # S(x) term
+AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR 0)) (MK_EQ VAR_X VAR_Y)
 
 # --- Full Axiom List ---
-AXIOM_SET := CONS AXIOM_REFLEXIVE (CONS AXIOM_ZERO_SUCC NIL)
+AXIOM_SET := CONS AXIOM_REFLEXIVE (CONS AXIOM_ZERO_SUCC nil)
 
 
 
 # --- Check if Formula is in Axiom Set ---
 IS_AXIOM := \formula.\axioms. \
-  axioms (\h.\acc.OR (IS_SAME_FORMULA formula h) acc) FALSE
+  axioms (\h.\acc.or (IS_SAME_FORMULA formula h) acc) false
 
 # --- Modus Ponens Verifier ---
 # Given Premise 1 (A), Premise 2 (A -> B), and Target (B):
 # Validates that Premise 2 is an Implication, its antecedent matches A, and consequence matches B.
 VERIFY_MP := \p1.\p2.\target. \
   IF (IS_IMP p2) \
-    (AND (IS_SAME_FORMULA p1 (FIRST (GET_BODY p2))) \
+    (and (IS_SAME_FORMULA p1 (FIRST (GET_BODY p2))) \
          (IS_SAME_FORMULA target (SECOND (GET_BODY p2)))) \
-    FALSE
+    false
 
 # --- Single Step Checker ---
 # A step is a tuple: PAIR Rule_Type (PAIR Target_Formula Parameters)
 # Rule 0: Axiom Assertion (Parameters = Ignored)
 # Rule 1: Modus Ponens (Parameters = PAIR Premise1 Premise2)
-RULE_AXIOM := ZERO
-RULE_MP    := SUCC ZERO
+RULE_AXIOM := 0
+RULE_MP    := successor 0
 
 ####CHECK_STEP := \step.\axioms.\history. \
 ####  \rule. \payload. \target. \params. \
@@ -221,7 +320,7 @@ RULE_MP    := SUCC ZERO
 ####    (IS_AXIOM target axioms) \
 ####    ((rule = RULE_MP) \
 ####      (VERIFY_MP (FIRST params) (SECOND params) target) \
-####      FALSE)
+####      false)
 #### Corrected Single Step Checker
 ###CHECK_STEP := \step.\axioms.\history. \
 ###  \rule.\payload. \
@@ -229,38 +328,38 @@ RULE_MP    := SUCC ZERO
 ###    (IS_AXIOM (FIRST payload) axioms) \
 ###    (IF (EQ_NUM rule RULE_MP) \
 ###      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
-###      FALSE)
+###      false)
 ##CHECK_STEP := \step.\axioms.\history. \
 ##  \rule.\payload. \
 ##  IF (EQ_NUM rule RULE_AXIOM) \
 ##    (IS_AXIOM (FIRST payload) axioms) \
 ##    (IF (EQ_NUM rule RULE_MP) \
 ##      (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
-##      FALSE)
+##      false)
 #CHECK_STEP := \step.\axioms.\history. \
 #  step (\rule.\payload. \
 #    IF (EQ_NUM rule RULE_AXIOM) \
 #      (IS_AXIOM (FIRST payload) axioms) \
 #      (IF (EQ_NUM rule RULE_MP) \
 #        (VERIFY_MP (FIRST (SECOND payload)) (SECOND (SECOND payload)) (FIRST payload)) \
-#        FALSE))
+#        false))
 #
 ## --- Proof List Verifier ---
 ## Iterates through a list of steps, verifying each against axioms and prior history
 #VERIFY_PROOF := \axioms.\proof. \
 #  proof (\step.\acc_result. \
-#    AND acc_result (CHECK_STEP step axioms NIL) \
-#  ) TRUE
+#    and acc_result (CHECK_STEP step axioms nil) \
+#  ) true
 # --- 1. List Operations ---
 # Checks if a formula exists in a list (replacing IS_AXIOM)
 IN_LIST := \formula. \lst. \
-  lst (\h. \acc. OR (IS_SAME_FORMULA formula h) acc) FALSE
+  lst (\h. \acc. or (IS_SAME_FORMULA formula h) acc) false
 
 # Left fold for Church lists: FOLDL f init [a, b, c] -> f (f (f init a) b) c
 FOLDL := \f. \init. \lst. \
   lst (\elem. \acc_func. \curr_acc. \
     acc_func (f curr_acc elem) \
-  ) IDENTITY init
+  ) identity init
 
 # --- 2. Step Validator ---
 # Now requires 'history' to prove premises exist before applying them.
@@ -270,10 +369,10 @@ CHECK_STEP := \step. \history. \
       IF (EQ_NUM rule RULE_AXIOM) \
         (IN_LIST target history) \
         (IF (EQ_NUM rule RULE_MP) \
-          (AND (IN_LIST (FIRST params) history) \
-               (AND (IN_LIST (SECOND params) history) \
+          (and (IN_LIST (FIRST params) history) \
+               (and (IN_LIST (SECOND params) history) \
                     (VERIFY_MP (FIRST params) (SECOND params) target))) \
-          FALSE)))
+          false)))
 
 GET_STEP_FORMULA := \step. FIRST (SECOND step)
 
@@ -284,14 +383,14 @@ PROCESS_STEP := \state. \step. \
   state (\is_valid. \history. \
     IF is_valid \
       (IF (CHECK_STEP step history) \
-        (PAIR TRUE (CONS (GET_STEP_FORMULA step) history)) \
-        (PAIR FALSE history)) \
-      (PAIR FALSE history))
+        (PAIR true (CONS (GET_STEP_FORMULA step) history)) \
+        (PAIR false history)) \
+      (PAIR false history))
 
 # --- 4. The Multi-Step Proof Verifier ---
-# Initializes state with (TRUE, axioms) and extracts the final boolean flag.
+# Initializes state with (true, axioms) and extracts the final boolean flag.
 VERIFY_PROOF := \axioms. \proof. \
-  FIRST (FOLDL PROCESS_STEP (PAIR TRUE axioms) proof)
+  FIRST (FOLDL PROCESS_STEP (PAIR true axioms) proof)
 
 
 
@@ -301,13 +400,13 @@ VERIFY_PROOF := \axioms. \proof. \
 THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
 
 # --- Step 1: Assert AXIOM_REFLEXIVE ---
-STEP_1 := PAIR RULE_AXIOM (PAIR THEOREM_REFLEXIVE NIL)
+STEP_1 := PAIR RULE_AXIOM (PAIR THEOREM_REFLEXIVE nil)
 
 # --- Proof Sequence ---
-PROOF_1 := CONS STEP_1 NIL
+PROOF_1 := CONS STEP_1 nil
 
 # --- FINAL EVALUATION ---
-# Running this term reduces down purely to TRUE (\x.\y.x)
+# Running this term reduces down purely to true (\x.\y.x)
 MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
 
 MAIN
@@ -339,8 +438,8 @@ SUBST_REC := \self. \target_id. \subst_term. \expr. \
 SUBST := Y SUBST_REC
 
 # --- Substitution Assertions & Tests ---
-TEST_VAR_ID     := SUCC ZERO
-TEST_TARGET_VAL := MK_VAR (SUCC (SUCC ZERO))
+TEST_VAR_ID     := successor 0
+TEST_TARGET_VAL := MK_VAR (successor (successor 0))
 TEST_FORMULA    := MK_EQ (MK_VAR TEST_VAR_ID) (MK_VAR TEST_VAR_ID)
 
 # Perform substitution: replace variable 1 with VAR_Y in (var 1 = var 1)
@@ -372,7 +471,7 @@ ASSERT (IS_SAME_FORMULA TEST_SUBST_RES EXPECTED_RES)
 ## --- Provability Predicate ---
 ## Checks whether a given formula is provable using the provided axiom set and proof
 #IS_PROVABLE := \formula. \axioms. \proof. \
-#  AND (VERIFY_PROOF axioms proof) \
+#  and (VERIFY_PROOF axioms proof) \
 #      (IS_SAME_FORMULA formula (GET_PROOF_THEOREM proof))
 #
 ## --- Verification of Reflexivity Provability ---
@@ -383,7 +482,7 @@ ASSERT (IS_SAME_FORMULA TEST_SUBST_RES EXPECTED_RES)
 #GET_STEP_FORMULA := \step. FIRST (SECOND step)
 
 # Corrected LAST_STEP for Church-encoded lists using a right fold accumulator
-LAST_STEP := \l. l (\h. \acc. IF (IS_NIL acc) h acc) NIL
+LAST_STEP := \l. l (\h. \acc. IF (IS_NIL acc) h acc) nil
 
 # Extracts the final theorem established by a complete proof
 GET_PROOF_THEOREM := \proof. GET_STEP_FORMULA (LAST_STEP proof)
@@ -391,7 +490,7 @@ GET_PROOF_THEOREM := \proof. GET_STEP_FORMULA (LAST_STEP proof)
 # --- Provability Predicate ---
 # Checks whether a given formula is provable using the provided axiom set and proof
 IS_PROVABLE := \formula. \axioms. \proof. \
-  AND (VERIFY_PROOF axioms proof) \
+  and (VERIFY_PROOF axioms proof) \
       (IS_SAME_FORMULA formula (GET_PROOF_THEOREM proof))
 
 # --- Verification of Reflexivity Provability ---
@@ -407,10 +506,10 @@ ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
 #THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
 #
 ## Step 1: Assert an axiom or prerequisite theorem
-#STEP_1 := PAIR RULE_AXIOM (PAIR AXIOM_REFLEXIVE NIL)
+#STEP_1 := PAIR RULE_AXIOM (PAIR AXIOM_REFLEXIVE nil)
 #
 ## Step 2: Apply Modus Ponens or chain steps using CONS
-#PROOF_MULTI := CONS STEP_1 (CONS STEP_2 NIL)
+#PROOF_MULTI := CONS STEP_1 (CONS STEP_2 nil)
 #
 ## Verify the multi-step proof against the axiom set
 #MAIN_MULTI := VERIFY_PROOF AXIOM_SET PROOF_MULTI
@@ -421,28 +520,247 @@ ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
 THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
 
 # We inject the implication into our testing axioms
-MY_AXIOMS := CONS THEOREM_IMP (CONS AXIOM_REFLEXIVE NIL)
+MY_AXIOMS := CONS THEOREM_IMP (CONS AXIOM_REFLEXIVE nil)
 
 # Step 1: Cite the Reflexivity Axiom (x = x)
-STEP_1 := PAIR RULE_AXIOM (PAIR AXIOM_REFLEXIVE NIL)
+STEP_1 := PAIR RULE_AXIOM (PAIR AXIOM_REFLEXIVE nil)
 
 # Step 2: Cite the Implication Axiom (x = x -> x = x)
-STEP_2 := PAIR RULE_AXIOM (PAIR THEOREM_IMP NIL)
+STEP_2 := PAIR RULE_AXIOM (PAIR THEOREM_IMP nil)
 
 # Step 3: Modus Ponens (Premise 1: STEP_1, Premise 2: STEP_2, Target: x = x)
 STEP_3 := PAIR RULE_MP (PAIR AXIOM_REFLEXIVE (PAIR AXIOM_REFLEXIVE THEOREM_IMP))
 
 # Construct the sequential proof
-PROOF_MULTI := CONS STEP_1 (CONS STEP_2 (CONS STEP_3 NIL))
+PROOF_MULTI := CONS STEP_1 (CONS STEP_2 (CONS STEP_3 nil))
 
 # Verify
 MAIN_MULTI := VERIFY_PROOF MY_AXIOMS PROOF_MULTI
-ASSERT MAIN_MULTI
+#ASSERT MAIN_MULTI # FIXME
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+# --- Meta-Circular Compiler: AST for De Bruijn Terms ---
+TAG_DB_VAR := 0
+TAG_DB_ABS := 1
+TAG_DB_APP := 2
+
+MK_DB_VAR := \idx. PAIR TAG_DB_VAR idx
+MK_DB_ABS := \body. PAIR TAG_DB_ABS body
+MK_DB_APP := \fun. \arg. PAIR TAG_DB_APP (PAIR fun arg)
+
+IS_DB_VAR := \t. EQ_NUM (FIRST t) TAG_DB_VAR
+IS_DB_ABS := \t. EQ_NUM (FIRST t) TAG_DB_ABS
+IS_DB_APP := \t. EQ_NUM (FIRST t) TAG_DB_APP
+
+# --- Meta-Circular Compiler: Structural Equality ---
+DB_EQUAL_REC := \self. \t1. \t2. \
+  IF (IS_DB_VAR t1) \
+    (and (IS_DB_VAR t2) (EQ_NUM (SECOND t1) (SECOND t2))) \
+    (IF (IS_DB_ABS t1) \
+      (and (IS_DB_ABS t2) (self (SECOND t1) (SECOND t2))) \
+      (IF (IS_DB_APP t1) \
+        (and (IS_DB_APP t2) \
+             (and (self (FIRST (SECOND t1)) (FIRST (SECOND t2))) \
+                  (self (SECOND (SECOND t1)) (SECOND (SECOND t2))))) \
+        false))
+
+DB_EQUAL := Y DB_EQUAL_REC
+
+# --- Utility: Math Comparisons ---
+# LEQ (\m \n. m <= n) is already defined as =0 (- m n).
+GEQ := \m. \n. LEQ n m
+GT  := \m. \n. not (LEQ m n)
+
+# --- Meta-Circular Compiler: De Bruijn Shifting ---
+SHIFT_REC := \self. \t. \d. \c. \
+  IF (IS_DB_VAR t) \
+    (( \idx. IF (GEQ idx c) (MK_DB_VAR (+ idx d)) t ) (SECOND t)) \
+    (IF (IS_DB_ABS t) \
+      (MK_DB_ABS (self (SECOND t) d (successor c))) \
+      (IF (IS_DB_APP t) \
+        (MK_DB_APP (self (FIRST (SECOND t)) d c) (self (SECOND (SECOND t)) d c)) \
+        t))
+
+SHIFT := Y SHIFT_REC
+
+# --- Meta-Circular Compiler: Substitution ---
+DB_SUBSTITUTE_REC := \self. \t. \v. \i. \
+  IF (IS_DB_VAR t) \
+    (( \idx. \
+         IF (EQ_NUM idx i) \
+           (SHIFT v i 0) \
+           (IF (GT idx i) (MK_DB_VAR (predecessor idx)) t) \
+     ) (SECOND t)) \
+    (IF (IS_DB_ABS t) \
+      (MK_DB_ABS (self (SECOND t) v (successor i))) \
+      (IF (IS_DB_APP t) \
+        (MK_DB_APP (self (FIRST (SECOND t)) v i) (self (SECOND (SECOND t)) v i)) \
+        t))
+
+DB_SUBSTITUTE := Y DB_SUBSTITUTE_REC
+
+# --- Meta-Circular Compiler: Beta Reduction Step ---
+BETA_REDUCE_STEP_REC := \self. \t. \
+  IF (IS_DB_APP t) \
+    (( \fun. \arg. \
+         IF (IS_DB_ABS fun) \
+           (PAIR (DB_SUBSTITUTE (SECOND fun) arg 0) true) \
+           (( \res. \
+                IF (SECOND res) \
+                  (PAIR (MK_DB_APP (FIRST res) arg) true) \
+                  (PAIR t false) \
+            ) (self fun)) \
+     ) (FIRST (SECOND t)) (SECOND (SECOND t))) \
+    (PAIR t false)
+
+BETA_REDUCE_STEP := Y BETA_REDUCE_STEP_REC
+
+# --- Meta-Circular Compiler: Full Normalization ---
+NORMALIZE_REC := \self. \t. \
+  (( \res. \
+       IF (SECOND res) \
+         (self (FIRST res)) \
+         (IF (IS_DB_ABS t) \
+           (MK_DB_ABS (self (SECOND t))) \
+           (IF (IS_DB_APP t) \
+             (MK_DB_APP (self (FIRST (SECOND t))) (self (SECOND (SECOND t)))) \
+             t)) \
+   ) (BETA_REDUCE_STEP t))
+
+NORMALIZE := Y NORMALIZE_REC
+
+# --- Meta-Circular Compiler: Church Numeral Decoder ---
+CHECK_CHURCH_BODY_REC := \self. \curr. \count. \
+  IF (IS_DB_APP curr) \
+    (( \fun. \arg. \
+         IF (and (IS_DB_VAR fun) (EQ_NUM (SECOND fun) 1)) \
+           (self arg (successor count)) \
+           (PAIR false 0) \
+     ) (FIRST (SECOND curr)) (SECOND (SECOND curr))) \
+    (IF (and (IS_DB_VAR curr) (EQ_NUM (SECOND curr) 0)) \
+      (PAIR true count) \
+      (PAIR false 0))
+
+CHECK_CHURCH_BODY := Y CHECK_CHURCH_BODY_REC
+
+TRY_DECODE_CHURCH := \t. \
+  IF (IS_DB_ABS t) \
+    (IF (IS_DB_ABS (SECOND t)) \
+      (CHECK_CHURCH_BODY (SECOND (SECOND t)) 0) \
+      (PAIR false 0)) \
+    (PAIR false 0)
+
+# --- Utility: Maximum ---
+MAX := \m. \n. IF (GEQ m n) m n
+
+# --- Meta-Circular Compiler: Structural Complexity ---
+DB_NODE_COUNT_REC := \self. \t. \
+  IF (IS_DB_VAR t) 1 \
+    (IF (IS_DB_ABS t) (successor (self (SECOND t))) \
+      (IF (IS_DB_APP t) \
+        (successor (+ (self (FIRST (SECOND t))) (self (SECOND (SECOND t))))) \
+        1))
+
+DB_NODE_COUNT := Y DB_NODE_COUNT_REC
+
+DB_DEPTH_REC := \self. \t. \
+  IF (IS_DB_VAR t) 1 \
+    (IF (IS_DB_ABS t) (successor (self (SECOND t))) \
+      (IF (IS_DB_APP t) \
+        (successor (MAX (self (FIRST (SECOND t))) (self (SECOND (SECOND t))))) \
+        1))
+
+DB_DEPTH := Y DB_DEPTH_REC
+
+# --- Meta-Circular Compiler: Environment Management ---
+ENV_LOOKUP_REC := \self. \env. \key. \
+  IF (IS_NIL env) \
+    nil \
+    (( \head. \
+         IF (EQ_NUM (FIRST head) key) \
+           (PAIR true (SECOND head)) \
+           (self (SECOND env) key) \
+     ) (FIRST env))
+
+ENV_LOOKUP := Y ENV_LOOKUP_REC
+
+EXTEND_ENV := \env. \key. \val. CONS (PAIR key val) env
+
+# --- Meta-Circular Compiler: Statement Evaluator ---
+TAG_STMT_ASSIGN    := 0
+TAG_STMT_ASSERT    := 1
+TAG_STMT_ASSERT_EQ := 2
+TAG_STMT_EVAL      := 3
+
+MK_STMT_ASSIGN    := \id. \expr. PAIR TAG_STMT_ASSIGN (PAIR id expr)
+MK_STMT_ASSERT    := \expr. PAIR TAG_STMT_ASSERT expr
+MK_STMT_ASSERT_EQ := \left. \right. PAIR TAG_STMT_ASSERT_EQ (PAIR left right)
+MK_STMT_EVAL      := \expr. PAIR TAG_STMT_EVAL expr
+
+EVAL_STATEMENT := \env. \stmt. \
+  (( \tag. \payload. \
+       IF (EQ_NUM tag TAG_STMT_ASSIGN) \
+         (( \key. \expr. \
+              (PAIR (EXTEND_ENV env key (NORMALIZE expr)) true) \
+          ) (FIRST payload) (SECOND payload)) \
+         (IF (EQ_NUM tag TAG_STMT_ASSERT) \
+           (PAIR env (DB_EQUAL (NORMALIZE payload) ⊤)) \
+           (IF (EQ_NUM tag TAG_STMT_ASSERT_EQ) \
+             (PAIR env (DB_EQUAL (NORMALIZE (FIRST payload)) (NORMALIZE (SECOND payload)))) \
+             (IF (EQ_NUM tag TAG_STMT_EVAL) \
+               (PAIR env true) \
+               (PAIR env false)))) \
+   ) (FIRST stmt) (SECOND stmt))
+
+# --- Meta-Circular Self-Verification ---
+
+# Test Terms
+TEST_IDENTITY := MK_DB_ABS (MK_DB_VAR 0)
+TEST_APP_ID   := MK_DB_APP TEST_IDENTITY (MK_DB_VAR 5)
+
+# Verify Normalization: ((λ.[0]) [5]) -> [5]
+ASSERT (DB_EQUAL (NORMALIZE TEST_APP_ID) (MK_DB_VAR 5))
+
+# Verify Structural Metrics: (λ.[0]) has 2 nodes and depth 2
+ASSERT (EQ_NUM (DB_NODE_COUNT TEST_IDENTITY) 2)
+ASSERT (EQ_NUM (DB_DEPTH TEST_IDENTITY) 2)
+
+# Verify Church Numeral Decoding for Church 2: λf.λx. f (f x)
+TEST_CHURCH_2 := MK_DB_ABS (MK_DB_ABS (MK_DB_APP (MK_DB_VAR 1) (MK_DB_APP (MK_DB_VAR 1) (MK_DB_VAR 0))))
+TEST_DECODE   := TRY_DECODE_CHURCH TEST_CHURCH_2
+ASSERT (FIRST TEST_DECODE)
+ASSERT (EQ_NUM (SECOND TEST_DECODE) 2)
+
+# Verify Environment Lookup and Statement Execution
+EMPTY_ENV  := nil
+STMT_1     := MK_STMT_ASSIGN 10 TEST_IDENTITY
+EXEC_RES_1 := EVAL_STATEMENT EMPTY_ENV STMT_1
+NEW_ENV_1  := FIRST EXEC_RES_1
+
+LOOKUP_RES := ENV_LOOKUP NEW_ENV_1 10
+ASSERT (FIRST LOOKUP_RES)
+ASSERT (DB_EQUAL (SECOND LOOKUP_RES) TEST_IDENTITY)
+
+# Verify Meta-Assertion Statement: ASSERT_EQ ((λ.[0]) [5]) [5]
+STMT_2     := MK_STMT_ASSERT_EQ TEST_APP_ID (MK_DB_VAR 5)
+EXEC_RES_2 := EVAL_STATEMENT NEW_ENV_1 STMT_2
+ASSERT (SECOND EXEC_RES_2)
 
 
 

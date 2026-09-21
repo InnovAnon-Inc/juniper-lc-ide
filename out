@@ -1,26 +1,4 @@
-=== Evaluating: ./juniper.lc ===
-✓ ASSERTION PASSED (Line 29)
-✓ ASSERTION PASSED (Line 30)
-✓ ASSERTION PASSED (Line 31)
-✓ ASSERTION PASSED (Line 32)
-✓ ASSERTION PASSED (Line 33)
-✓ ASSERTION PASSED (Line 34)
-✓ ASSERTION PASSED (Line 35)
-✓ ASSERTION PASSED (Line 36)
-✓ ASSERTION PASSED (Line 37)
-✓ ASSERTION PASSED (Line 38)
-✓ ASSERT_EQ PASSED (Line 60)
-✓ ASSERT_EQ PASSED (Line 62)
-✓ ASSERT_EQ PASSED (Line 64)
-# Eval (./juniper.lc:306): MAIN
-# Result → K
-✓ ASSERTION PASSED (Line 307)
-✓ ASSERTION PASSED (Line 344)
-✓ ASSERTION PASSED (Line 391)
-
-❌ ASSERTION FAILED at ./juniper.lc:433
-   Got: (\a.a (2nd (1 (Ψ SUCC) (PAIR ⊥ ⊥))) (SUCC (2nd (1 (Ψ SUCC) (PAIR ⊥ ⊥))))) K (Ψ SUCC) (PAIR ⊥ ⊥) K (\a b c.c) K (∧ ((\a.IS_SAME_FORMULA_REC (a a)) (\a.IS_SAME_FORMULA_REC (a a)) (1st (2nd (1st (PAIR AXIOM_REFLEXIVE THEOREM_IMP)))) (1st (2nd (1st (2nd (2nd (PAIR AXIOM_REFLEXIVE THEOREM_IMP))))))) ((\a.IS_SAME_FORMULA_REC (a a)) (\a.IS_SAME_FORMULA_REC (a a)) (2nd (2nd (1st (PAIR AXIOM_REFLEXIVE THEOREM_IMP)))) (2nd (2nd (1st (2nd (2nd (PAIR AXIOM_REFLEXIVE THEOREM_IMP)))))))) ⊥ (IS_SAME_FORMULA AXIOM_REFLEXIVE (2nd (2nd (2nd (PAIR AXIOM_REFLEXIVE THEOREM_IMP))))) ⊥ (PAIR K (CONS (GET_STEP_FORMULA STEP_3) (CONS (GET_STEP_FORMULA STEP_2) (CONS (GET_STEP_FORMULA STEP_1) MY_AXIOMS)))) (PAIR ⊥ (CONS (GET_STEP_FORMULA STEP_2) (CONS (GET_STEP_FORMULA STEP_1) MY_AXIOMS))) K
-I, IDENTITY := \a.a
+I, identity := \a.a
 S := \a b c.a c (b c)
 K := \a b.a
 B := \a b c.a (b c)
@@ -31,11 +9,11 @@ W := \a b.a b b
 Y := \a.(\b.a (b b)) (\b.a (b b))
 Y2 := Y
 Z := \a.(\b.a (\c.b b c)) (\b.a (\c.b b c))
-⊤, TRUE := K
-⊥, FALSE := \a b.b
-¬, NOT := \a.a ⊥ K
-∧, AND := \a b.a b ⊥
-∨, OR := \a b.a K b
+⊤, true := K
+⊥, false := \a b.b
+¬, not := \a.a ⊥ K
+∧, and := \a b.a b ⊥
+∨, or := \a b.a K b
 IF := \a b c.a b c
 ASSERT K
 ASSERT ¬ ⊥
@@ -48,26 +26,26 @@ ASSERT ∨ K ⊥
 ASSERT ∨ ⊥ K
 ASSERT ¬ (∨ ⊥ ⊥)
 0, ZERO := ⊥
-SUCC := \a b c.b (a b c)
-+, PLUS := \a b.a SUCC b
-*, MULT := \a b.a (+ b) ⊥
+successor := \a b c.b (a b c)
++, plus, add := \a b.a successor b
+*, multiply := \a b.a (+ b) ⊥
 POW := \a b.b a
-1, ONE := SUCC ⊥
+1, one := successor ⊥
 ASSERT_EQ 1, 1
-2, TWO := SUCC 1
+2, two := successor 1
 ASSERT_EQ 2, 2
-3, THREE := SUCC 2
+3, three := successor 2
 ASSERT_EQ 3, 3
 =0, IS_ZERO := \a.a (\b c d.d) K
 ≤, LEQ := \a b.=0 (- a b)
 PAIR := \a b c.c a b
 1st, FIRST := \a.a K
 2nd, SECOND := \a.a ⊥
-Φ := \a.PAIR (2nd a) (SUCC (2nd a))
+Φ := \a.PAIR (2nd a) (successor (2nd a))
 Ψ := \a b.PAIR (2nd b) (a (2nd b))
-NIL := ⊥
+nil := ⊥
 NULL := \a.a (\b c d e.e)
-PRED := \a.1st (a (Ψ SUCC) (PAIR ⊥ ⊥))
+PRED := \a.1st (a (Ψ successor) (PAIR ⊥ ⊥))
 -, SUB := \a b.b PRED a
 CONS := \a b c d.c a (b c d)
 IS_NIL := \a.a (\b c d e.e) K
@@ -126,3 +104,46 @@ STEP_2 := PAIR ⊥ (PAIR THEOREM_IMP ⊥)
 STEP_3 := PAIR 1 (PAIR AXIOM_REFLEXIVE (PAIR AXIOM_REFLEXIVE THEOREM_IMP))
 PROOF_MULTI := CONS STEP_1 (CONS STEP_2 (CONS STEP_3 ⊥))
 MAIN_MULTI := VERIFY_PROOF MY_AXIOMS PROOF_MULTI
+TAG_DB_VAR := ⊥
+TAG_DB_ABS := 1
+TAG_DB_APP := 2
+MK_DB_VAR := MK_VAR
+MK_DB_ABS := \a.PAIR 1 a
+MK_DB_APP := MK_EQ
+IS_DB_VAR := IS_VAR
+IS_DB_ABS := IS_IMP
+IS_DB_APP := IS_EQ
+DB_EQUAL_REC := \a b c.IF (IS_VAR b) (∧ (IS_VAR c) (EQ_NUM (2nd b) (2nd c))) (IF (IS_IMP b) (∧ (IS_IMP c) (a (2nd b) (2nd c))) (IF (IS_EQ b) (∧ (IS_EQ c) (∧ (a (1st (2nd b)) (1st (2nd c))) (a (2nd (2nd b)) (2nd (2nd c))))) ⊥))
+DB_EQUAL := Y DB_EQUAL_REC
+GEQ := \a b.(\c d.=0 (- c d)) b a
+GT := \a b.¬ ((\c d.=0 (- c d)) a b)
+SHIFT_REC := \a b c d.IF (IS_VAR b) ((\e.IF ((\f g.(\h i.=0 (- h i)) g f) e d) (MK_VAR (+ e c)) b) (2nd b)) (IF (IS_IMP b) (MK_DB_ABS (a (2nd b) c (successor d))) (IF (IS_EQ b) (MK_EQ (a (1st (2nd b)) c d) (a (2nd (2nd b)) c d)) b))
+SHIFT := Y SHIFT_REC
+DB_SUBSTITUTE_REC := \a b c d.IF (IS_VAR b) ((\e.IF (EQ_NUM e d) (Y (\f g h i.IF (IS_VAR g) ((\j.IF ((\k l.(\m n.=0 (- m n)) l k) j i) (MK_VAR (+ j h)) g) (2nd g)) (IF (IS_IMP g) (MK_DB_ABS (f (2nd g) h (successor i))) (IF (IS_EQ g) (MK_EQ (f (1st (2nd g)) h i) (f (2nd (2nd g)) h i)) g))) c d ⊥) (IF ((\f g.¬ ((\h i.=0 (- h i)) f g)) e d) (MK_VAR (PRED e)) b)) (2nd b)) (IF (IS_IMP b) (MK_DB_ABS (a (2nd b) c (successor d))) (IF (IS_EQ b) (MK_EQ (a (1st (2nd b)) c d) (a (2nd (2nd b)) c d)) b))
+DB_SUBSTITUTE := Y DB_SUBSTITUTE_REC
+BETA_REDUCE_STEP_REC := \a b.IF (IS_EQ b) ((\c d.IF (IS_IMP c) (PAIR (Y (\e f g h.IF (IS_VAR f) ((\i.IF (EQ_NUM i h) (Y (\j k l m.IF (IS_VAR k) ((\n.IF ((\o p.(\q r.=0 (- q r)) p o) n m) (MK_VAR (+ n l)) k) (2nd k)) (IF (IS_IMP k) (MK_DB_ABS (j (2nd k) l (successor m))) (IF (IS_EQ k) (MK_EQ (j (1st (2nd k)) l m) (j (2nd (2nd k)) l m)) k))) g h ⊥) (IF ((\j k.¬ ((\l m.=0 (- l m)) j k)) i h) (MK_VAR (PRED i)) f)) (2nd f)) (IF (IS_IMP f) (MK_DB_ABS (e (2nd f) g (successor h))) (IF (IS_EQ f) (MK_EQ (e (1st (2nd f)) g h) (e (2nd (2nd f)) g h)) f))) (2nd c) d ⊥) K) ((\e.IF (2nd e) (PAIR (MK_EQ (1st e) d) K) (PAIR b ⊥)) (a c))) (1st (2nd b)) (2nd (2nd b))) (PAIR b ⊥)
+BETA_REDUCE_STEP := Y BETA_REDUCE_STEP_REC
+NORMALIZE_REC := \a b.(\c.IF (2nd c) (a (1st c)) (IF (IS_IMP b) (MK_DB_ABS (a (2nd b))) (IF (IS_EQ b) (MK_EQ (a (1st (2nd b))) (a (2nd (2nd b)))) b))) (Y (\c d.IF (IS_EQ d) ((\e f.IF (IS_IMP e) (PAIR (Y (\g h i j.IF (IS_VAR h) ((\k.IF (EQ_NUM k j) (Y (\l m n o.IF (IS_VAR m) ((\p.IF ((\q r.(\s t.=0 (- s t)) r q) p o) (MK_VAR (+ p n)) m) (2nd m)) (IF (IS_IMP m) (MK_DB_ABS (l (2nd m) n (successor o))) (IF (IS_EQ m) (MK_EQ (l (1st (2nd m)) n o) (l (2nd (2nd m)) n o)) m))) i j ⊥) (IF ((\l m.¬ ((\n o.=0 (- n o)) l m)) k j) (MK_VAR (PRED k)) h)) (2nd h)) (IF (IS_IMP h) (MK_DB_ABS (g (2nd h) i (successor j))) (IF (IS_EQ h) (MK_EQ (g (1st (2nd h)) i j) (g (2nd (2nd h)) i j)) h))) (2nd e) f ⊥) K) ((\g.IF (2nd g) (PAIR (MK_EQ (1st g) f) K) (PAIR d ⊥)) (c e))) (1st (2nd d)) (2nd (2nd d))) (PAIR d ⊥)) b)
+NORMALIZE := Y NORMALIZE_REC
+CHECK_CHURCH_BODY_REC := \a b c.IF (IS_EQ b) ((\d e.IF (∧ (IS_VAR d) (EQ_NUM (2nd d) 1)) (a e (successor c)) (PAIR ⊥ ⊥)) (1st (2nd b)) (2nd (2nd b))) (IF (∧ (IS_VAR b) (EQ_NUM (2nd b) ⊥)) (PAIR K c) (PAIR ⊥ ⊥))
+CHECK_CHURCH_BODY := Y CHECK_CHURCH_BODY_REC
+TRY_DECODE_CHURCH := \a.IF (IS_IMP a) (IF (IS_IMP (2nd a)) (CHECK_CHURCH_BODY (2nd (2nd a)) ⊥) (PAIR ⊥ ⊥)) (PAIR ⊥ ⊥)
+MAX := \a b.IF ((\c d.(\e f.=0 (- e f)) d c) a b) a b
+DB_NODE_COUNT_REC := \a b.IF (IS_VAR b) 1 (IF (IS_IMP b) (successor (a (2nd b))) (IF (IS_EQ b) (successor (+ (a (1st (2nd b))) (a (2nd (2nd b))))) 1))
+DB_NODE_COUNT := Y DB_NODE_COUNT_REC
+DB_DEPTH_REC := \a b.IF (IS_VAR b) 1 (IF (IS_IMP b) (successor (a (2nd b))) (IF (IS_EQ b) (successor ((\c d.IF ((\e f.(\g h.=0 (- g h)) f e) c d) c d) (a (1st (2nd b))) (a (2nd (2nd b))))) 1))
+DB_DEPTH := Y DB_DEPTH_REC
+ENV_LOOKUP_REC := \a b c.IF (IS_NIL b) ⊥ ((\d.IF (EQ_NUM (1st d) c) (PAIR K (2nd d)) (a (2nd b) c)) (1st b))
+ENV_LOOKUP := Y ENV_LOOKUP_REC
+EXTEND_ENV := \a b c.CONS (PAIR b c) a
+TAG_STMT_ASSIGN := ⊥
+TAG_STMT_ASSERT := 1
+TAG_STMT_ASSERT_EQ := 2
+TAG_STMT_EVAL := 3
+MK_STMT_ASSIGN := \a b.PAIR ⊥ (PAIR a b)
+MK_STMT_ASSERT := MK_DB_ABS
+MK_STMT_ASSERT_EQ := MK_EQ
+MK_STMT_EVAL := \a.PAIR 3 a
+EVAL_STATEMENT := \a b.(\c d.IF (EQ_NUM c ⊥) ((\e f.PAIR (EXTEND_ENV a e (Y (\g h.(\i.IF (2nd i) (g (1st i)) (IF (IS_IMP h) (MK_DB_ABS (g (2nd h))) (IF (IS_EQ h) (MK_EQ (g (1st (2nd h))) (g (2nd (2nd h)))) h))) (Y (\i j.IF (IS_EQ j) ((\k l.IF (IS_IMP k) (PAIR (Y (\m n o p.IF (IS_VAR n) ((\q.IF (EQ_NUM q p) (Y (\r s t u.IF (IS_VAR s) ((\v.IF ((\w x.(\y z.=0 (- y z)) x w) v u) (MK_VAR (+ v t)) s) (2nd s)) (IF (IS_IMP s) (MK_DB_ABS (r (2nd s) t (successor u))) (IF (IS_EQ s) (MK_EQ (r (1st (2nd s)) t u) (r (2nd (2nd s)) t u)) s))) o p ⊥) (IF ((\r s.¬ ((\t u.=0 (- t u)) r s)) q p) (MK_VAR (PRED q)) n)) (2nd n)) (IF (IS_IMP n) (MK_DB_ABS (m (2nd n) o (successor p))) (IF (IS_EQ n) (MK_EQ (m (1st (2nd n)) o p) (m (2nd (2nd n)) o p)) n))) (2nd k) l ⊥) K) ((\m.IF (2nd m) (PAIR (MK_EQ (1st m) l) K) (PAIR j ⊥)) (i k))) (1st (2nd j)) (2nd (2nd j))) (PAIR j ⊥)) h)) f)) K) (1st d) (2nd d)) (IF (EQ_NUM c 1) (PAIR a (DB_EQUAL (Y (\e f.(\g.IF (2nd g) (e (1st g)) (IF (IS_IMP f) (MK_DB_ABS (e (2nd f))) (IF (IS_EQ f) (MK_EQ (e (1st (2nd f))) (e (2nd (2nd f)))) f))) (Y (\g h.IF (IS_EQ h) ((\i j.IF (IS_IMP i) (PAIR (Y (\k l m n.IF (IS_VAR l) ((\o.IF (EQ_NUM o n) (Y (\p q r s.IF (IS_VAR q) ((\t.IF ((\u v.(\w x.=0 (- w x)) v u) t s) (MK_VAR (+ t r)) q) (2nd q)) (IF (IS_IMP q) (MK_DB_ABS (p (2nd q) r (successor s))) (IF (IS_EQ q) (MK_EQ (p (1st (2nd q)) r s) (p (2nd (2nd q)) r s)) q))) m n ⊥) (IF ((\p q.¬ ((\r s.=0 (- r s)) p q)) o n) (MK_VAR (PRED o)) l)) (2nd l)) (IF (IS_IMP l) (MK_DB_ABS (k (2nd l) m (successor n))) (IF (IS_EQ l) (MK_EQ (k (1st (2nd l)) m n) (k (2nd (2nd l)) m n)) l))) (2nd i) j ⊥) K) ((\k.IF (2nd k) (PAIR (MK_EQ (1st k) j) K) (PAIR h ⊥)) (g i))) (1st (2nd h)) (2nd (2nd h))) (PAIR h ⊥)) f)) d) K)) (IF (EQ_NUM c 2) (PAIR a (DB_EQUAL (Y (\e f.(\g.IF (2nd g) (e (1st g)) (IF (IS_IMP f) (MK_DB_ABS (e (2nd f))) (IF (IS_EQ f) (MK_EQ (e (1st (2nd f))) (e (2nd (2nd f)))) f))) (Y (\g h.IF (IS_EQ h) ((\i j.IF (IS_IMP i) (PAIR (Y (\k l m n.IF (IS_VAR l) ((\o.IF (EQ_NUM o n) (Y (\p q r s.IF (IS_VAR q) ((\t.IF ((\u v.(\w x.=0 (- w x)) v u) t s) (MK_VAR (+ t r)) q) (2nd q)) (IF (IS_IMP q) (MK_DB_ABS (p (2nd q) r (successor s))) (IF (IS_EQ q) (MK_EQ (p (1st (2nd q)) r s) (p (2nd (2nd q)) r s)) q))) m n ⊥) (IF ((\p q.¬ ((\r s.=0 (- r s)) p q)) o n) (MK_VAR (PRED o)) l)) (2nd l)) (IF (IS_IMP l) (MK_DB_ABS (k (2nd l) m (successor n))) (IF (IS_EQ l) (MK_EQ (k (1st (2nd l)) m n) (k (2nd (2nd l)) m n)) l))) (2nd i) j ⊥) K) ((\k.IF (2nd k) (PAIR (MK_EQ (1st k) j) K) (PAIR h ⊥)) (g i))) (1st (2nd h)) (2nd (2nd h))) (PAIR h ⊥)) f)) (1st d)) (Y (\e f.(\g.IF (2nd g) (e (1st g)) (IF (IS_IMP f) (MK_DB_ABS (e (2nd f))) (IF (IS_EQ f) (MK_EQ (e (1st (2nd f))) (e (2nd (2nd f)))) f))) (Y (\g h.IF (IS_EQ h) ((\i j.IF (IS_IMP i) (PAIR (Y (\k l m n.IF (IS_VAR l) ((\o.IF (EQ_NUM o n) (Y (\p q r s.IF (IS_VAR q) ((\t.IF ((\u v.(\w x.=0 (- w x)) v u) t s) (MK_VAR (+ t r)) q) (2nd q)) (IF (IS_IMP q) (MK_DB_ABS (p (2nd q) r (successor s))) (IF (IS_EQ q) (MK_EQ (p (1st (2nd q)) r s) (p (2nd (2nd q)) r s)) q))) m n ⊥) (IF ((\p q.¬ ((\r s.=0 (- r s)) p q)) o n) (MK_VAR (PRED o)) l)) (2nd l)) (IF (IS_IMP l) (MK_DB_ABS (k (2nd l) m (successor n))) (IF (IS_EQ l) (MK_EQ (k (1st (2nd l)) m n) (k (2nd (2nd l)) m n)) l))) (2nd i) j ⊥) K) ((\k.IF (2nd k) (PAIR (MK_EQ (1st k) j) K) (PAIR h ⊥)) (g i))) (1st (2nd h)) (2nd (2nd h))) (PAIR h ⊥)) f)) (2nd d)))) (IF (EQ_NUM c 3) (PAIR a K) (PAIR a ⊥))))) (1st b) (2nd b)
+TEST_IDENTITY := MK_DB_ABS (MK_VAR ⊥)
+TEST_APP_ID := MK_EQ TEST_IDENTITY (MK_VAR 5)
