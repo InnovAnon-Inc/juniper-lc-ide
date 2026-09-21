@@ -13,7 +13,7 @@ W            := λx y    .x y y
 
 Y            := λg      .(λx.g (x x)) (λx.g (x x))
 Y2           := λ       .(λ .[1] ([0] [0])) (λ .[1] ([0] [0]))
-#ASSERT_EQ Y, Y2 # RecursionError: maximum recursion depth exceeded
+#ASSERT_EQ Y, Y2 # FIXME RecursionError: maximum recursion depth exceeded
 Z            := λg      .(λx.g (λv.x x v)) (λx.g (λv.x x v))
 
 # --- Booleans ---
@@ -51,6 +51,13 @@ SUCC         := λn f x  .f (n f x)
 POW          := λb n    .n b
 #POW′ := λb.λn.n (MULT b) 1 # TODO assertions and proofs ?
 #POW′′ := λb.λn.λf.n b f # TODO assertions and proofs ?
+
+# TODO handle beta-equivalence, especially for resugaring and asymptotic complexity analysis
+# TODO resugaring output should contain structured comments with kolmogorov complexity, time and space complexity ?
+# TODO write a compiler in lc, and have it compile itself
+# TODO (builtin) need graphics primitives, such as creating a drawing space (new piece of paper), drawing lines (straightedge) and arcs (compass); must be able to work in the browser and also in a physical notebook
+# TODO (builtin) need systems primitives, such as for stdio
+# TODO need to define common structures, such as loops
 
 #1,  ONE      := λf x.f x
 #2,  TWO      := λf x.f (f x)

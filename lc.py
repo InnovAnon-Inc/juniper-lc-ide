@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# TODO handle beta-equivalence, especially for resugaring and asymptotic complexity analysis
+# TODO resugaring output should contain structured comments with kolmogorov complexity, time and space complexity ?
+# TODO write a compiler in lc, and have it compile itself
+# TODO (builtin) need graphics primitives, such as creating a drawing space (new piece of paper), drawing lines (straightedge) and arcs (compass); must be able to work in the browser and also in a physical notebook
+# TODO (builtin) need systems primitives, such as for stdio
+# TODO need to define common structures, such as loops
+
 import sys
 from typing import Dict, List, Tuple, Optional, Set
 from lark import Lark, Transformer, v_args
