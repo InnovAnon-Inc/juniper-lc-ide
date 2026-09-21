@@ -1,5 +1,24 @@
 #!/usr/bin/env python3
 
+# TODO idempotent resugaring
+# TODO visual evaluation -- fruit of life-like: hexagonal; circles overlap slightly... position computed with radius r, but drawn with radius r + overlap ???
+# TODO support f**n (superscript) repeated applications
+# TODO graphics primitives / geometric proofs, e.g., circle/arc/compass and straightedge
+# TODO system primitives, e.g., stdio/print
+
+# FIXME where does this go
+#    # Sort declared terms by string length (shortest/most succinct first)
+#    sorted_declarations = sorted(
+#        [item for item in declared.items() if item[0] not in exclude_names],
+#        key=lambda item: len(item[0])
+#    )
+#    for name, decl in sorted_declarations:
+#        if db_equal(term, decl):
+#            # Ensure no forward reference if it's part of the file's defined symbols
+#            if all_defined_symbols is not None and name in all_defined_symbols and name not in declared:
+#                continue
+#            return name
+
 import sys
 from typing import Dict, List, Tuple, Optional, Set
 from lark import Lark, Transformer, v_args
@@ -132,6 +151,12 @@ class LCTransformer(Transformer):
             res = SApp(res, arg)
         return res
 
+   # def var(self, name):
+   #     s = str(name)
+   #     # Intercept identifiers that are purely numeric strings and route them to int_lit
+   #     if s.isdigit() or (s.startswith('-') and s[1:].isdigit()):
+   #         return self.int_lit(s)
+   #     return SVar(s)
     def var(self, name):
         return SVar(str(name))
 
@@ -233,6 +258,7 @@ def normalize(term: DBTerm, max_steps: int = 10000) -> DBTerm:
     for _ in range(max_steps):
         curr, reduced = beta_reduce_step(curr)
         if not reduced:
+            # If no top-level reduction happened, normalize subterms and continue if changes occur
             if isinstance(curr, DBAbs):
                 body_norm = normalize(curr.body, max_steps)
                 if not db_equal(curr.body, body_norm):
@@ -248,7 +274,7 @@ def normalize(term: DBTerm, max_steps: int = 10000) -> DBTerm:
     return curr
 
 # =====================================================================
-# 5. Structural Equivalence & Scoped Resugaring
+# 5. Structural Equivalence & Scoped Resugaring with Dependencies
 # =====================================================================
 
 def db_equal(t1: DBTerm, t2: DBTerm) -> bool:
@@ -286,6 +312,7 @@ def debruijn_to_str(
     if names is None: names = []
     if exclude_names is None: exclude_names = set()
 
+    # Only lookup in declared dictionary if the symbol is validly defined (avoids forward references)
     for name, decl in declared.items():
         if name in exclude_names:
             continue
@@ -296,6 +323,7 @@ def debruijn_to_str(
     if num is not None:
         s_num = str(num)
         if s_num not in exclude_names:
+            # If it's a number, but it's used as a symbol later in the file that isn't defined yet, skip resugaring to prevent circular defs
             if all_defined_symbols is not None and s_num in all_defined_symbols and s_num not in declared:
                 pass
             else:
@@ -309,7 +337,20 @@ def debruijn_to_str(
             return INV_FREE_VAR_MAP[free_idx]
         return f"_{term.index}"
 
+#    elif isinstance(term, DBAbs):
+#        var_name = chr(97 + (len(names) % 26))
+#        if names.count(var_name) > 0:
+#            var_name = f"{var_name}{len(names)}"
+#
+#        body_str = debruijn_to_str(
+#            term.body, declared, names + [var_name],
+#            parent_type=None, exclude_names=exclude_names,
+#            all_defined_symbols=all_defined_symbols
+#        )
+#        res = f"\\{var_name}.{body_str}"
+#        return f"({res})" if parent_type in (DBApp, "fun") else res
     elif isinstance(term, DBAbs):
+        # Collect consecutive abstractions for cleaner multi-parameter syntax
         params = []
         curr = term
         while isinstance(curr, DBAbs):
@@ -345,51 +386,7 @@ def debruijn_to_str(
     return str(term)
 
 # =====================================================================
-# 6. Static Time and Space Complexity Analysis
-# =====================================================================
-
-def db_node_count(term: DBTerm) -> int:
-    if isinstance(term, DBVar): return 1
-    if isinstance(term, DBAbs): return 1 + db_node_count(term.body)
-    if isinstance(term, DBApp): return 1 + db_node_count(term.fun) + db_node_count(term.arg)
-    return 1
-
-def db_depth(term: DBTerm) -> int:
-    if isinstance(term, DBVar): return 1
-    if isinstance(term, DBAbs): return 1 + db_depth(term.body)
-    if isinstance(term, DBApp): return 1 + max(db_depth(term.fun), db_depth(term.arg))
-    return 1
-
-def analyze_static_complexity(term: DBTerm, declared: Dict[str, DBTerm]) -> Tuple[str, str]:
-    """
-    Statically predicts time and space complexity bounds for predictable terms.
-    Returns a tuple of strings: (Time Complexity, Space Complexity).
-    """
-    # Check if it's a Church numeral
-    num = try_decode_church(term)
-    if num is not None:
-        return "O(1)", "O(1)"
-
-    # Check for binary arithmetic patterns if term is an application tree
-    # e.g., PLUS m n, MULT m n, POW b n
-    nodes = db_node_count(term)
-    depth = db_depth(term)
-
-    # Heuristic pattern matching for common combinator structures
-    if isinstance(term, DBApp):
-        # Look for named functions in declared environment if possible
-        pass
-
-    # General structural fallback
-    if nodes < 15:
-        return "O(1)", "O(1)"
-    elif depth > 50:
-        return "O(2^n) [Deep Recursion / Potential Divergence]", f"O({depth})"
-    
-    return f"O(n) [Structural nodes: {nodes}]", f"O({depth})"
-
-# =====================================================================
-# 7. Self-Checking Assertions & Execution Engine
+# 6. Self-Checking Assertions & Execution Engine
 # =====================================================================
 
 def verify_unit_idempotency(
@@ -446,6 +443,7 @@ def execute_program(
         print(f"\n❌ PARSE ERROR in {filename}:\n{e}", file=sys.stderr)
         sys.exit(1)
 
+    # First pass: collect all symbols that will eventually be defined in this file.
     all_defined_symbols = set()
     for stmt in statements:
         if stmt[1] == "ASSIGN":
@@ -472,12 +470,6 @@ def execute_program(
                     sys.exit(1)
 
                 pretty_expr = debruijn_to_str(db_term, declared_terms, all_defined_symbols=all_defined_symbols)
-                
-                # Output Kolmogorov and Static Complexity stats to stderr
-                time_c, space_c = analyze_static_complexity(db_term, declared_terms)
-                print(f"# [STATIC COMPLEXITY] Line {line_no} | Time: {time_c} | Space: {space_c}", file=sys.stderr)
-                print(f"# [KOLMOGOROV K(x) APPROX] Line {line_no} | Length: {len(pretty_expr)} chars", file=sys.stderr)
-
                 if enable_idempotency_check:
                     verify_unit_idempotency(db_term, pretty_expr, env, declared_terms, parser, line_no, filename, all_defined_symbols=all_defined_symbols)
 
@@ -497,14 +489,12 @@ def execute_program(
 
                 if not db_equal(red_left, red_right):
                     print(f"\n❌ ASSERT_EQ FAILED at {filename}:{line_no}", file=sys.stderr)
+                    print(f"   Left:  {debruijn_to_str(red_left, declared_terms, all_defined_symbols=all_defined_symbols)}", file=sys.stderr)
+                    print(f"   Right: {debruijn_to_str(red_right, declared_terms, all_defined_symbols=all_defined_symbols)}", file=sys.stderr)
                     sys.exit(1)
 
                 pretty_left = debruijn_to_str(db_left, declared_terms, all_defined_symbols=all_defined_symbols)
                 pretty_right = debruijn_to_str(db_right, declared_terms, all_defined_symbols=all_defined_symbols)
-
-                time_c, space_c = analyze_static_complexity(db_left, declared_terms)
-                print(f"# [STATIC COMPLEXITY] Line {line_no} (Left) | Time: {time_c} | Space: {space_c}", file=sys.stderr)
-                print(f"# [KOLMOGOROV K(x) APPROX] Line {line_no} (Left) | Length: {len(pretty_left)} chars", file=sys.stderr)
 
                 if enable_idempotency_check:
                     verify_unit_idempotency(db_left, pretty_left, env, declared_terms, parser, line_no, filename, all_defined_symbols=all_defined_symbols)
@@ -522,11 +512,6 @@ def execute_program(
 
                 exclude_set = set(target)
                 pretty = debruijn_to_str(db_term, declared_terms, exclude_names=exclude_set, all_defined_symbols=all_defined_symbols)
-
-                # Output Kolmogorov and Static Complexity stats to stderr
-                time_c, space_c = analyze_static_complexity(db_term, declared_terms)
-                print(f"# [STATIC COMPLEXITY] Assign '{', '.join(target)}' (Line {line_no}) | Time: {time_c} | Space: {space_c}", file=sys.stderr)
-                print(f"# [KOLMOGOROV K(x) APPROX] Assign '{', '.join(target)}' (Line {line_no}) | Length: {len(pretty)} chars", file=sys.stderr)
 
                 if enable_idempotency_check:
                     verify_unit_idempotency(db_term, pretty, env, declared_terms, parser, line_no, filename, target_names=target, all_defined_symbols=all_defined_symbols)
@@ -549,10 +534,6 @@ def execute_program(
                 pretty_in = debruijn_to_str(db_term, declared_terms, all_defined_symbols=all_defined_symbols)
                 pretty_res = debruijn_to_str(evaluated, declared_terms, all_defined_symbols=all_defined_symbols)
 
-                time_c, space_c = analyze_static_complexity(db_term, declared_terms)
-                print(f"# [STATIC COMPLEXITY] Eval (Line {line_no}) | Time: {time_c} | Space: {space_c}", file=sys.stderr)
-                print(f"# [KOLMOGOROV K(x) APPROX] Eval (Line {line_no}) | Length: {len(pretty_in)} chars", file=sys.stderr)
-
                 if enable_idempotency_check:
                     verify_unit_idempotency(db_term, pretty_in, env, declared_terms, parser, line_no, filename, all_defined_symbols=all_defined_symbols)
 
@@ -565,10 +546,41 @@ def execute_program(
 
         except RecursionError:
             print(f"\n💥 CRASH: Maximum Recursion Depth Exceeded (Divergent Term?)", file=sys.stderr)
+            print(f" ➔ File: {filename}:{line_no}", file=sys.stderr)
+            print(f" ➔ Operation: {action}", file=sys.stderr)
             sys.exit(1)
         except Exception as e:
             print(f"\n💥 CRASH: Unexpected Error: {e}", file=sys.stderr)
+            print(f" ➔ File: {filename}:{line_no}", file=sys.stderr)
+            print(f" ➔ Operation: {action}", file=sys.stderr)
             sys.exit(1)
+
+    if enable_idempotency_check:
+        resugared_code = "\n".join(output_lines)
+        env_pass2: Dict[str, DBTerm] = {}
+        declared_pass2: Dict[str, DBTerm] = {}
+
+        output_lines_pass2, _, _ = execute_program(
+            f"{filename}_idempotency_check",
+            resugared_code,
+            env_pass2,
+            declared_pass2,
+            enable_idempotency_check=False,
+            quiet=True
+        )
+
+        resugared_code_pass2 = "\n".join(output_lines_pass2)
+
+        if resugared_code != resugared_code_pass2:
+            print(f"\n❌ INTEGRATION IDEMPOTENCY FAILED for {filename}:", file=sys.stderr)
+            print("--- Pass 1 Output ---", file=sys.stderr)
+            print(resugared_code, file=sys.stderr)
+            print("--- Pass 2 Output ---", file=sys.stderr)
+            print(resugared_code_pass2, file=sys.stderr)
+            sys.exit(1)
+
+        if not quiet:
+            print(f"✓ INTEGRATION IDEMPOTENCY VERIFIED for {filename}", file=sys.stderr)
 
     return output_lines, env, declared_terms
 
