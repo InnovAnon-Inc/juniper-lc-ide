@@ -7,6 +7,39 @@
 # TODO (builtin) need systems primitives, such as for stdio
 # TODO need to define common structures, such as loops
 
+# for IPC/stdio and use as a shell:
+# IN/OUT
+# File Descriptors
+
+# geometry: relational instead of coordinate-based
+# NEW_PAPER
+# DRAW_LINE
+# DRAW_ARC
+# INTERSECT
+
+# SEND_AUDIO
+
+## =====================================================================
+## 8. Universal Primitives & Effect Handlers (Browser / CLI / UEFI)
+## =====================================================================
+#
+#def evaluate_builtin_primitive(name: str, arg: DBTerm) -> Optional[DBTerm]:
+#    """
+#    Handles hardware/system effects for graphics, audio, and stdio 
+#    when running in CLI, browser, or UEFI environments.
+#    """
+#    if name == "BUILTIN_PRINT":
+#        # Stdio primitive for printing evaluated structures
+#        print(f"[STDIN/STDOUT] {arg}")
+#        return arg
+#    elif name == "BUILTIN_DRAW_LINE":
+#        # Straightedge graphics primitive 
+#        return arg
+#    elif name == "BUILTIN_AUDIO_EMIT":
+#        # Audio device primitive (e.g. 432 Hz wave generation)
+#        return arg
+#    return None
+
 import sys
 from typing import Dict, List, Tuple, Optional, Set
 from lark import Lark, Transformer, v_args
