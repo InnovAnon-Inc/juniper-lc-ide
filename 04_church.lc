@@ -89,6 +89,10 @@ mod         := Y MOD_REC
 # ·
 # √
 
+# TODO assertions & proofs for max
+max := \m. \n. if (geq m n) m n
+# TODO min
+
 ASSERT_EQ 1, (λf x.f x)
 ASSERT_EQ 2, (λf x.f (f x)) # TODO shorthand
 ASSERT_EQ 3, (λf x.f (f (f x))) # TODO shorthand
