@@ -4,11 +4,11 @@
 # standard terms
 ##
 
-INCLUDE "01_standard_terms.lc"
-INCLUDE "02_fol.lc"
-INCLUDE "03_pair.lc"
-INCLUDE "04_church.lc"
-INCLUDE "05_map_reduce.lc"
+#INCLUDE "01_standard_terms.lc"
+#INCLUDE "02_fol.lc"
+#INCLUDE "03_pair.lc"
+#INCLUDE "04_church.lc"
+#INCLUDE "05_map_reduce.lc"
 INCLUDE "06_hol.lc"
 
 # --- AST Formulas for SKI Type Schemas ---

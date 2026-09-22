@@ -1,0 +1,101 @@
+#! /usr/bin/env lc.py
+
+##
+# 13_pairs.lc - Formal Proofs and Theorems for Pair Structures & Product Logic
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+INCLUDE "06_hol.lc"
+INCLUDE "12_fol.lc"
+
+# =====================================================================
+# 1. AST Terms for Pair & Product Logic Statements
+# =====================================================================
+
+VAR_PAIR_A := MK_VAR 10
+VAR_PAIR_B := MK_VAR 11
+VAR_PAIR_C := MK_VAR 12
+
+# Projection Schema 1: A -> (B -> A)  (First Projection / 1st)
+FORMULA_PROJ_1 := MK_IMP VAR_PAIR_A (MK_IMP VAR_PAIR_B VAR_PAIR_A)
+
+# Projection Schema 2: B -> (A -> B)  (Second Projection / 2nd)
+FORMULA_PROJ_2 := MK_IMP VAR_PAIR_B (MK_IMP VAR_PAIR_A VAR_PAIR_B)
+
+# Swap Schema: (A -> (B -> C)) -> (B -> (A -> C))  (Pair Argument Permutation)
+FORMULA_SWAP := MK_IMP (MK_IMP VAR_PAIR_A (MK_IMP VAR_PAIR_B VAR_PAIR_C)) \
+                       (MK_IMP VAR_PAIR_B (MK_IMP VAR_PAIR_A VAR_PAIR_C))
+
+# =====================================================================
+# 2. Formal Proof: First Projection Axiomatic Instance
+# =====================================================================
+
+PAIR_AXIOMS_1 := cons FORMULA_PROJ_1 nil
+
+PROJ_STEP_1 := pair RULE_AXIOM (pair FORMULA_PROJ_1 nil)
+
+PROOF_PROJ_1 := cons PROJ_STEP_1 nil
+
+ASSERT (VERIFY_PROOF PAIR_AXIOMS_1 PROOF_PROJ_1)
+ASSERT (IS_PROVABLE FORMULA_PROJ_1 PAIR_AXIOMS_1 PROOF_PROJ_1)
+
+# =====================================================================
+# 3. Formal Proof: Pair Projection Syllogism (Chain of Projections)
+# =====================================================================
+
+# P1: A -> B (Extract first component)
+# P2: B -> C (Extract second component)
+# Target: A -> C
+FORMULA_STEP_AB := MK_IMP VAR_PAIR_A VAR_PAIR_B
+FORMULA_STEP_BC := MK_IMP VAR_PAIR_B VAR_PAIR_C
+FORMULA_STEP_AC := MK_IMP VAR_PAIR_A VAR_PAIR_C
+
+# Axiom Schema A2 Instance for Syllogism Chain
+FORMULA_CHAIN_A2 := MK_IMP (MK_IMP VAR_PAIR_A (MK_IMP VAR_PAIR_B VAR_PAIR_C)) \
+                           (MK_IMP (MK_IMP VAR_PAIR_A VAR_PAIR_B) (MK_IMP VAR_PAIR_A VAR_PAIR_C))
+
+# Weakening Axiom Instance: (B -> C) -> (A -> (B -> C))
+FORMULA_WEAKEN := MK_IMP FORMULA_STEP_BC (MK_IMP VAR_PAIR_A FORMULA_STEP_BC)
+
+PAIR_CHAIN_AXIOMS := cons FORMULA_STEP_AB \
+                    (cons FORMULA_STEP_BC \
+                    (cons FORMULA_CHAIN_A2 \
+                    (cons FORMULA_WEAKEN nil)))
+
+# Step 1: Cite B -> C
+CHAIN_STEP_1 := pair RULE_AXIOM (pair FORMULA_STEP_BC nil)
+
+# Step 2: Cite (B -> C) -> (A -> (B -> C))
+CHAIN_STEP_2 := pair RULE_AXIOM (pair FORMULA_WEAKEN nil)
+
+# Step 3: MP (Step 1, Step 2) -> A -> (B -> C)
+FORMULA_INT_ABC := MK_IMP VAR_PAIR_A FORMULA_STEP_BC
+CHAIN_STEP_3 := pair RULE_MP (pair FORMULA_INT_ABC (pair FORMULA_STEP_BC FORMULA_WEAKEN))
+
+# Step 4: Cite A2 Instance
+CHAIN_STEP_4 := pair RULE_AXIOM (pair FORMULA_CHAIN_A2 nil)
+
+# Step 5: MP (Step 3, Step 4) -> (A -> B) -> (A -> C)
+FORMULA_INT_AB_AC := MK_IMP FORMULA_STEP_AB FORMULA_STEP_AC
+CHAIN_STEP_5 := pair RULE_MP (pair FORMULA_INT_AB_AC (pair FORMULA_INT_ABC FORMULA_CHAIN_A2))
+
+# Step 6: Cite A -> B
+CHAIN_STEP_6 := pair RULE_AXIOM (pair FORMULA_STEP_AB nil)
+
+# Step 7: MP (Step 6, Step 5) -> A -> C
+CHAIN_STEP_7 := pair RULE_MP (pair FORMULA_STEP_AC (pair FORMULA_STEP_AB FORMULA_INT_AB_AC))
+
+PROOF_PAIR_CHAIN := cons CHAIN_STEP_1 \
+                   (cons CHAIN_STEP_2 \
+                   (cons CHAIN_STEP_3 \
+                   (cons CHAIN_STEP_4 \
+                   (cons CHAIN_STEP_5 \
+                   (cons CHAIN_STEP_6 \
+                   (cons CHAIN_STEP_7 nil))))))
+
+ASSERT (VERIFY_PROOF PAIR_CHAIN_AXIOMS PROOF_PAIR_CHAIN)
+ASSERT (IS_PROVABLE FORMULA_STEP_AC PAIR_CHAIN_AXIOMS PROOF_PAIR_CHAIN)

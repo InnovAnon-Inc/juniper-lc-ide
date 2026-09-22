@@ -1,0 +1,89 @@
+#! /usr/bin/env lc.py
+
+##
+# 14_church.lc - Peano Axioms, Formal Proofs, and Church Arithmetic Verification
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+INCLUDE "06_hol.lc"
+INCLUDE "12_fol.lc"
+INCLUDE "13_pair.lc"
+
+# =====================================================================
+# 1. AST Terms & Variables for Peano Arithmetic Schemas
+# =====================================================================
+
+VAR_NUM_X    := MK_VAR 20
+VAR_NUM_Y    := MK_VAR 21
+VAR_NUM_Z    := MK_VAR 22
+VAR_ZERO     := MK_VAR 0
+VAR_SUCC_X   := MK_VAR 23
+VAR_SUCC_Y   := MK_VAR 24
+
+# P1: Reflexivity of Natural Number Equality (x = x)
+PEANO_REFLEX := MK_EQ VAR_NUM_X VAR_NUM_X
+
+# P2: Successor Injectivity Axiom Schema: S(x) = S(y) -> x = y
+PEANO_SUCC_INJ := MK_IMP (MK_EQ VAR_SUCC_X VAR_SUCC_Y) (MK_EQ VAR_NUM_X VAR_NUM_Y)
+
+# P3: Zero Non-Successor Axiom Schema: S(x) = 0 -> false (x != x)
+PEANO_ZERO_SUCC := MK_IMP (MK_EQ VAR_SUCC_X VAR_ZERO) (MK_EQ VAR_NUM_X VAR_NUM_Y)
+
+# P4: Addition Base Schema: x + 0 = x
+VAR_ADD_X_0 := MK_VAR 25
+PEANO_ADD_BASE := MK_EQ VAR_ADD_X_0 VAR_NUM_X
+
+# P5: Addition Recurrence Schema: x + S(y) = S(x + y)
+VAR_ADD_X_SY := MK_VAR 26
+VAR_SUCC_ADD := MK_VAR 27
+PEANO_ADD_REC := MK_EQ VAR_ADD_X_SY VAR_SUCC_ADD
+
+# =====================================================================
+# 2. Formal Hilbert Proofs for Peano Theorems
+# =====================================================================
+
+# --- Theorem 1: Successor Injectivity Deduction ---
+# Given Premise: S(x) = S(y)
+# Prove Target: x = y
+FORMULA_GIVEN_SUCC_EQ := MK_EQ VAR_SUCC_X VAR_SUCC_Y
+
+PEANO_INJ_AXIOMS := cons FORMULA_GIVEN_SUCC_EQ (cons PEANO_SUCC_INJ nil)
+
+INJ_STEP_1 := pair RULE_AXIOM (pair FORMULA_GIVEN_SUCC_EQ nil)
+INJ_STEP_2 := pair RULE_AXIOM (pair PEANO_SUCC_INJ nil)
+INJ_STEP_3 := pair RULE_MP (pair (MK_EQ VAR_NUM_X VAR_NUM_Y) (pair FORMULA_GIVEN_SUCC_EQ PEANO_SUCC_INJ))
+
+PROOF_PEANO_INJECTIVITY := cons INJ_STEP_1 (cons INJ_STEP_2 (cons INJ_STEP_3 nil))
+
+ASSERT (VERIFY_PROOF PEANO_INJ_AXIOMS PROOF_PEANO_INJECTIVITY)
+ASSERT (IS_PROVABLE (MK_EQ VAR_NUM_X VAR_NUM_Y) PEANO_INJ_AXIOMS PROOF_PEANO_INJECTIVITY)
+
+# --- Theorem 2: Formal Induction Step Chain (P(0) -> P(1) -> P(2)) ---
+VAR_P0 := MK_VAR 30
+VAR_P1 := MK_VAR 31
+VAR_P2 := MK_VAR 32
+
+FORMULA_IND_0_1 := MK_IMP VAR_P0 VAR_P1
+FORMULA_IND_1_2 := MK_IMP VAR_P1 VAR_P2
+
+PEANO_IND_AXIOMS := cons VAR_P0 (cons FORMULA_IND_0_1 (cons FORMULA_IND_1_2 nil))
+
+IND_STEP_1 := pair RULE_AXIOM (pair VAR_P0 nil)
+IND_STEP_2 := pair RULE_AXIOM (pair FORMULA_IND_0_1 nil)
+IND_STEP_3 := pair RULE_MP (pair VAR_P1 (pair VAR_P0 FORMULA_IND_0_1))
+IND_STEP_4 := pair RULE_AXIOM (pair FORMULA_IND_1_2 nil)
+IND_STEP_5 := pair RULE_MP (pair VAR_P2 (pair VAR_P1 FORMULA_IND_1_2))
+
+PROOF_PEANO_INDUCTION := cons IND_STEP_1 \
+                        (cons IND_STEP_2 \
+                        (cons IND_STEP_3 \
+                        (cons IND_STEP_4 \
+                        (cons IND_STEP_5 nil))))
+
+ASSERT (VERIFY_PROOF PEANO_IND_AXIOMS PROOF_PEANO_INDUCTION)
+ASSERT (IS_PROVABLE VAR_P2 PEANO_IND_AXIOMS PROOF_PEANO_INDUCTION)
+

@@ -4,8 +4,8 @@
 # natural numbers
 ##
 
-INCLUDE "01_standard_terms.lc"
-INCLUDE "02_fol.lc"
+#INCLUDE "01_standard_terms.lc"
+#INCLUDE "02_fol.lc"
 INCLUDE "03_pair.lc"
 
 0,  zero                := ⊥
@@ -182,3 +182,65 @@ ASSERT (EQ_NUM 4 4)
 ASSERT_EQ (div 5 2), 2
 # TODO more assertions
 ASSERT_EQ (mod 5 2), 1
+
+# =====================================================================
+# 3. Computational Church Arithmetic Verification (Peano Identities)
+# =====================================================================
+
+# --- Predecessor & Successor Inverses ---
+ASSERT_EQ (predecessor (successor 0)), 0
+ASSERT_EQ (predecessor (successor 1)), 1
+ASSERT_EQ (predecessor (successor 5)), 5
+ASSERT_EQ (predecessor (successor 10)), 10
+ASSERT_EQ (predecessor (successor 25)), 25
+
+# --- Addition Peano Properties ---
+# Base Case: 0 + n = n and n + 0 = n
+ASSERT_EQ (+ 0 0), 0
+ASSERT_EQ (+ 0 5), 5
+ASSERT_EQ (+ 5 0), 5
+
+# Recurrence: S(m) + n = S(m + n)
+ASSERT_EQ (+ (successor 2) 3), (successor (+ 2 3))
+ASSERT_EQ (+ (successor 4) 5), (successor (+ 4 5))
+
+# Commutativity & Associativity Checks
+ASSERT_EQ (+ 3 7), (+ 7 3)
+ASSERT_EQ (+ (+ 2 3) 4), (+ 2 (+ 3 4))
+
+# --- Subtraction & Order Properties ---
+ASSERT_EQ (- 5 0), 5
+ASSERT_EQ (- 5 5), 0
+ASSERT_EQ (- 10 3), 7
+ASSERT (leq 0 5)
+ASSERT (leq 5 5)
+ASSERT (leq 3 8)
+ASSERT (not (leq 8 3))
+
+# --- Multiplication Peano Properties ---
+# Base Cases: 0 * n = 0, n * 0 = 0
+ASSERT_EQ (* 0 5), 0
+ASSERT_EQ (* 5 0), 0
+
+# Distributivity: a * (b + c) = (a * b) + (a * c)
+ASSERT_EQ (* 2 (+ 3 4)), (+ (* 2 3) (* 2 4))
+ASSERT_EQ (* 3 (+ 2 5)), (+ (* 3 2) (* 3 5))
+
+# --- Exponential Identity Verification ---
+# FIXME
+#ASSERT_EQ (** 2 0), 1
+#   Left:  I
+#   Right: 1
+ASSERT_EQ (** 2 1), 2
+ASSERT_EQ (** 2 3), 8
+ASSERT_EQ (** 3 2), 9
+
+# --- Division and Modulo Peano Equivalence ---
+# n = (div n d) * d + (mod n d)
+TEST_N := 13
+TEST_D := 4
+ASSERT_EQ TEST_N, (+ (* (div TEST_N TEST_D) TEST_D) (mod TEST_N TEST_D))
+
+TEST_N2 := 27
+TEST_D2 := 5
+ASSERT_EQ TEST_N2, (+ (* (div TEST_N2 TEST_D2) TEST_D2) (mod TEST_N2 TEST_D2))

@@ -1,8 +1,8 @@
 #! /usr/bin/env lc.py
 
-INCLUDE "01_standard_terms.lc"
-INCLUDE "02_fol.lc"
-INCLUDE "03_pair.lc"   # TODO assertions
+#INCLUDE "01_standard_terms.lc"
+#INCLUDE "02_fol.lc"
+#INCLUDE "03_pair.lc"   # TODO assertions
 INCLUDE "04_church.lc" # TODO assertions
 
 ##

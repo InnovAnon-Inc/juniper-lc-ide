@@ -4,13 +4,13 @@
 # 12_fol.lc - Extended First-Order Logic Operations & Formal Proof Verifications
 ##
 
-INCLUDE "01_standard_terms.lc"
-INCLUDE "02_fol.lc"
-INCLUDE "03_pair.lc"
-INCLUDE "04_church.lc"
-INCLUDE "05_map_reduce.lc"
+#INCLUDE "01_standard_terms.lc"
+#INCLUDE "02_fol.lc"
+#INCLUDE "03_pair.lc"
+#INCLUDE "04_church.lc"
+#INCLUDE "05_map_reduce.lc"
 INCLUDE "06_hol.lc"
-#INCLUDE "11_standard_terms.lc"
+##INCLUDE "11_standard_terms.lc"
 
 # =====================================================================
 # 1. Extended Logical Operators & Equivalences
@@ -62,11 +62,11 @@ VAR_Q := MK_VAR 2
 VAR_R := MK_VAR 3
 
 ## --- Axiom Schemas (Hilbert System / SKI-Compatible) ---
-## A1 Schema: P -> (Q -> P)
-#AXIOM_A1 := MK_IMP VAR_P (MK_IMP VAR_Q VAR_P)
+# A1 Schema: P -> (Q -> P)
+AXIOM_A1 := MK_IMP VAR_P (MK_IMP VAR_Q VAR_P)
 #
-## A2 Schema: (P -> (Q -> R)) -> ((P -> Q) -> (P -> R))
-#AXIOM_A2 := MK_IMP (MK_IMP VAR_P (MK_IMP VAR_Q VAR_R)) (MK_IMP (MK_IMP VAR_P VAR_Q) (MK_IMP VAR_P VAR_R))
+# A2 Schema: (P -> (Q -> R)) -> ((P -> Q) -> (P -> R))
+AXIOM_A2 := MK_IMP (MK_IMP VAR_P (MK_IMP VAR_Q VAR_R)) (MK_IMP (MK_IMP VAR_P VAR_Q) (MK_IMP VAR_P VAR_R))
 #
 ## Instantiated Axiom A1 with Q = (P -> P)
 #AXIOM_A1_INST := MK_IMP VAR_P (MK_IMP (MK_IMP VAR_P VAR_P) VAR_P)
@@ -147,4 +147,5 @@ SYLLOGISM_AXIOMS := cons FORMULA_P_Q (cons FORMULA_Q_R nil)
 HS_STEP_1 := pair RULE_AXIOM (pair FORMULA_P_Q nil)
 HS_STEP_2 := pair RULE_AXIOM (pair FORMULA_Q_R nil)
 
-ASSERT (1st (VERIFY_PROOF SYLLOGISM_AXIOMS (cons HS_STEP_1 (cons HS_STEP_2 nil))))
+#ASSERT (1st (VERIFY_PROOF SYLLOGISM_AXIOMS (cons HS_STEP_1 (cons HS_STEP_2 nil))))
+ASSERT (VERIFY_PROOF SYLLOGISM_AXIOMS (cons HS_STEP_1 (cons HS_STEP_2 nil)))

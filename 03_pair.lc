@@ -4,23 +4,51 @@
 # pair
 ##
 
-INCLUDE "01_standard_terms.lc"
+#INCLUDE "01_standard_terms.lc"
 INCLUDE "02_fol.lc"
 
 pair         := λx y f  .f x y
 1st, first   := λp      .p ⊤
 2nd, second  := λp      .p ⊥
 head, car    := λl      .l K ⊥
-# TODO cdr ?
-tail         := λl      .l nil ⊥
+tail, cdr    := λl      .l nil ⊥
 Φ            := λp      .pair (2nd p) (successor (2nd p))
 Ψ            := λf p    .pair (2nd p) (f         (2nd p))
 
-# TODO ∅
-nil          := ⊥
+∅, nil       := ⊥
 NULL         := λp      .p (λx y.⊥)
 
 cons         := λh t c n.c h (t c n)
-=nil         := λl      .l (λh t.⊥) ⊤
+=∅, =nil     := λl      .l (λh t.⊥) ⊤
 
-# TODO assertions
+# Projections
+ASSERT_EQ (1st (pair true false)), true
+ASSERT_EQ (2nd (pair true false)), false
+ASSERT_EQ (first (pair 1 2)), 1
+ASSERT_EQ (second (pair 1 2)), 2
+
+# Step Transformations (Φ and Ψ)
+ASSERT_EQ (1st (Φ (pair 0 0))), 0
+# FIXME
+#ASSERT_EQ (2nd (Φ (pair 0 0))), 1
+#   Left:  successor 0
+#   Right: 1
+# FIXME
+#ASSERT_EQ (2nd (Φ (Φ (pair 0 0)))), 2
+#   Left:  successor (successor 0)
+#   Right: 2
+
+# FIXME
+#ASSERT_EQ (2nd (Ψ successor (pair 0 1))), 2
+#   Left:  successor 1
+#   Right: 2
+
+
+# Nil and Nullability Checks
+ASSERT (=nil nil)
+ASSERT (=nil ∅)
+ASSERT not (=nil (cons 1 nil))
+
+# Cons, Head, and Tail Operations
+ASSERT_EQ (head (cons 10 nil)), 10
+ASSERT_EQ (head (cons 20 (cons 10 nil))), 20

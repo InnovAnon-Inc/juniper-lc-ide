@@ -23,6 +23,9 @@ INCLUDE "05_map_reduce.lc" # TODO assertions, FIXME ?
 INCLUDE "06_hol.lc"        # TODO assertions
 INCLUDE "11_standard_terms.lc"
 INCLUDE "12_fol.lc"
+INCLUDE "13_pair.lc"
+INCLUDE "14_church.lc"
+
 
 ##
 #

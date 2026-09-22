@@ -1,9 +1,9 @@
 #! /usr/bin/env lc.py
 
-INCLUDE "01_standard_terms.lc"
-INCLUDE "02_fol.lc"
-INCLUDE "03_pair.lc"
-INCLUDE "04_church.lc"
+#INCLUDE "01_standard_terms.lc"
+#INCLUDE "02_fol.lc"
+#INCLUDE "03_pair.lc"
+#INCLUDE "04_church.lc"
 INCLUDE "05_map_reduce.lc"
 
 # --- AST Constructors ---
@@ -110,8 +110,15 @@ SUBST := Y SUBST_REC
 
 # --- Theorem Extraction from Proof Steps ---
 
-# Corrected LAST_STEP for Church-encoded lists using a right fold accumulator
-LAST_STEP := \l. l (\h. \acc. if (=nil acc) h acc) nil
+## Corrected LAST_STEP for Church-encoded lists using a right fold accumulator
+#LAST_STEP := \l. l (\h. \acc. if (=∅ acc) h acc) nil
+#
+## Extracts the final theorem established by a complete proof
+#GET_PROOF_THEOREM := \proof. GET_STEP_FORMULA (LAST_STEP proof)
+# --- Theorem Extraction from Proof Steps ---
+
+# Corrected LAST_STEP using left-fold list traversal
+LAST_STEP := \l. foldl (\acc elem. elem) nil l
 
 # Extracts the final theorem established by a complete proof
 GET_PROOF_THEOREM := \proof. GET_STEP_FORMULA (LAST_STEP proof)
