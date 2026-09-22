@@ -4,6 +4,13 @@
 # - use specialized unicode symbols when they exist
 # - all caps is usually for builtins/primitives
 
+# language uses:
+# - physical turing books
+# - user space
+# - in a web app
+# - kernel space
+# - uefi/bios level computation
+
 # TODO ≡ handle beta-equivalence, especially for resugaring and asymptotic complexity analysis; need to verify that redifinitions are beta-equivalent
 # TODO resugaring:
 # - use specialized unicode symbols when they exist / short names
@@ -15,6 +22,10 @@
 # - structured comments: asymptotic complexity (space)
 # TODO meta-circularity
 
+##
+# standard library
+##
+
 INCLUDE "01_standard_terms.lc"
 INCLUDE "02_fol.lc"
 INCLUDE "03_pair.lc"       # TODO assertions
@@ -25,7 +36,34 @@ INCLUDE "11_standard_terms.lc"
 INCLUDE "12_fol.lc"
 INCLUDE "13_pair.lc"
 INCLUDE "14_church.lc"
+INCLUDE "15_map_reduce.lc"
+INCLUDE "16_hol.lc"
 
+# TODO define standard sets, such as ints, rationals, reals, complex, etc
+# TODO prove math up to calculus
+# TODO data structures & algorithms
+# TODO ieee floats, two's complement ints, etc
+# TODO bit twiddling
+# TODO automatic multi-threading
+# TODO compiler, transpiler
+# TODO systems stuff... stdio, shell stuff / spawning processes, socket/server stuff
+# TODO generative animation and audio
+# TODO geometry proofs
+# TODO define how to draw/construct unicode symbols
+# TODO rasterization algorithms
+# TODO generate a font from those definitions
+# TODO asymptotic analysis
+# TODO resugaring
+# TODO kolmogorov complexity
+# TODO linear algebra (with proofs)
+# TODO projective geometry (with proofs)
+# TODO statistics & probability
+# TODO computer algebra system & computer calculus system (with proofs)
+# TODO more algorithms: ra algorithm, rsa algorithm, graph algos such as djikstra and popularity
+# TODO relational algebra / databases
+# TODO kernel algorithms / operating system algorithms
+# TODO generate euclidean/bjorklund polygons
+# TODO generate (balanced) cyclotomic polygons
 
 ##
 #
@@ -38,7 +76,6 @@ INCLUDE "14_church.lc"
 set_difference      := λs1 s2 elem. ∧ (s1 elem) (¬ (s2 elem))
 
 # TODO
-# ∅
 # ∉
 # ⊂
 # ⊆
@@ -57,45 +94,43 @@ set_difference      := λs1 s2 elem. ∧ (s1 elem) (¬ (s2 elem))
 
 
 
-# --- Terms ---
-VAR_X := MK_VAR (successor 0)
-VAR_Y := MK_VAR (successor (successor 0))
-
-# --- Axiom 1: Reflexivity of Equality (x = x) ---
-AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
-
-# --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> false) ---
-# Represented structurally as Implication: S(x) = 0 -> x != x
-S_X := MK_VAR (successor (successor (successor 0))) # S(x) term
-AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR 0)) (MK_EQ VAR_X VAR_Y)
-
-# --- Full Axiom List ---
-AXIOM_SET := cons AXIOM_REFLEXIVE (cons AXIOM_ZERO_SUCC nil)
-
-
-
-
-
-
-
-
-# --- Target Theorem: x = x ---
-THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
-
-# --- Step 1: Assert AXIOM_REFLEXIVE ---
-STEP_1 := pair RULE_AXIOM (pair THEOREM_REFLEXIVE nil)
-
-# --- Proof Sequence ---
-PROOF_1 := cons STEP_1 nil
-
-# --- FINAL EVALUATION ---
-# Running this term reduces down purely to true (\x.\y.x)
-MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
-
-MAIN
-ASSERT MAIN
-
-
+## --- Terms ---
+#VAR_X := MK_VAR (successor 0)
+#VAR_Y := MK_VAR (successor (successor 0))
+#
+## --- Axiom 1: Reflexivity of Equality (x = x) ---
+#AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
+#
+## --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> false) ---
+## Represented structurally as Implication: S(x) = 0 -> x != x
+#S_X := MK_VAR (successor (successor (successor 0))) # S(x) term
+#AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR 0)) (MK_EQ VAR_X VAR_Y)
+#
+## --- Full Axiom List ---
+#AXIOM_SET := cons AXIOM_REFLEXIVE (cons AXIOM_ZERO_SUCC nil)
+#
+#
+#
+#
+#
+#
+#
+#
+## --- Target Theorem: x = x ---
+#THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
+#
+## --- Step 1: Assert AXIOM_REFLEXIVE ---
+#STEP_1 := pair RULE_AXIOM (pair THEOREM_REFLEXIVE nil)
+#
+## --- Proof Sequence ---
+#PROOF_1 := cons STEP_1 nil
+#
+## --- FINAL EVALUATION ---
+## Running this term reduces down purely to true (\x.\y.x)
+#MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
+#
+#MAIN
+#ASSERT MAIN
 
 
 
@@ -106,47 +141,49 @@ ASSERT MAIN
 
 
 
-# --- Substitution Assertions & Tests ---
-TEST_VAR_ID     := successor 0
-TEST_TARGET_VAL := MK_VAR (successor (successor 0))
-TEST_FORMULA    := MK_EQ (MK_VAR TEST_VAR_ID) (MK_VAR TEST_VAR_ID)
-
-# Perform substitution: replace variable 1 with VAR_Y in (var 1 = var 1)
-TEST_SUBST_RES  := SUBST TEST_VAR_ID TEST_TARGET_VAL TEST_FORMULA
-EXPECTED_RES    := MK_EQ TEST_TARGET_VAL TEST_TARGET_VAL
-
-# Verify structural match of the substitution result
-ASSERT (IS_SAME_FORMULA TEST_SUBST_RES EXPECTED_RES)
-
-ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
 
 
-
-
-
-## --- Multi-Step Proof Example ---
-
-# Define an implication to serve as a test theorem: (x=x) -> (x=x)
-THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
-
-# We inject the implication into our testing axioms
-MY_AXIOMS := cons THEOREM_IMP (cons AXIOM_REFLEXIVE nil)
-
-# Step 1: Cite the Reflexivity Axiom (x = x)
-STEP_1 := pair RULE_AXIOM (pair AXIOM_REFLEXIVE nil)
-
-# Step 2: Cite the Implication Axiom (x = x -> x = x)
-STEP_2 := pair RULE_AXIOM (pair THEOREM_IMP nil)
-
-# Step 3: Modus Ponens (Premise 1: STEP_1, Premise 2: STEP_2, Target: x = x)
-STEP_3 := pair RULE_MP (pair AXIOM_REFLEXIVE (pair AXIOM_REFLEXIVE THEOREM_IMP))
-
-# Construct the sequential proof
-PROOF_MULTI := cons STEP_1 (cons STEP_2 (cons STEP_3 nil))
-
-# Verify
-MAIN_MULTI := VERIFY_PROOF MY_AXIOMS PROOF_MULTI
-ASSERT MAIN_MULTI
+## --- Substitution Assertions & Tests ---
+#TEST_VAR_ID     := successor 0
+#TEST_TARGET_VAL := MK_VAR (successor (successor 0))
+#TEST_FORMULA    := MK_EQ (MK_VAR TEST_VAR_ID) (MK_VAR TEST_VAR_ID)
+#
+## Perform substitution: replace variable 1 with VAR_Y in (var 1 = var 1)
+#TEST_SUBST_RES  := SUBST TEST_VAR_ID TEST_TARGET_VAL TEST_FORMULA
+#EXPECTED_RES    := MK_EQ TEST_TARGET_VAL TEST_TARGET_VAL
+#
+## Verify structural match of the substitution result
+#ASSERT (IS_SAME_FORMULA TEST_SUBST_RES EXPECTED_RES)
+#
+#ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
+#
+#
+#
+#
+#
+### --- Multi-Step Proof Example ---
+#
+## Define an implication to serve as a test theorem: (x=x) -> (x=x)
+#THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
+#
+## We inject the implication into our testing axioms
+#MY_AXIOMS := cons THEOREM_IMP (cons AXIOM_REFLEXIVE nil)
+#
+## Step 1: Cite the Reflexivity Axiom (x = x)
+#STEP_1 := pair RULE_AXIOM (pair AXIOM_REFLEXIVE nil)
+#
+## Step 2: Cite the Implication Axiom (x = x -> x = x)
+#STEP_2 := pair RULE_AXIOM (pair THEOREM_IMP nil)
+#
+## Step 3: Modus Ponens (Premise 1: STEP_1, Premise 2: STEP_2, Target: x = x)
+#STEP_3 := pair RULE_MP (pair AXIOM_REFLEXIVE (pair AXIOM_REFLEXIVE THEOREM_IMP))
+#
+## Construct the sequential proof
+#PROOF_MULTI := cons STEP_1 (cons STEP_2 (cons STEP_3 nil))
+#
+## Verify
+#MAIN_MULTI := VERIFY_PROOF MY_AXIOMS PROOF_MULTI
+#ASSERT MAIN_MULTI
 
 
 
@@ -175,8 +212,15 @@ MK_DB_ABS := \body. pair TAG_DB_ABS body
 MK_DB_APP := \fun. \arg. pair TAG_DB_APP (pair fun arg)
 
 IS_DB_VAR := \t. EQ_NUM (first t) TAG_DB_VAR
+#IS_DB_ABS := \t. EQ_NUM (first t) TAG_DB_ABS
+#IS_DB_APP := \t. EQ_NUM (first t) TAG_DB_APP
 IS_DB_ABS := \t. EQ_NUM (first t) TAG_DB_ABS
 IS_DB_APP := \t. EQ_NUM (first t) TAG_DB_APP
+
+DB_VAR_INDEX := second
+DB_ABS_BODY  := second
+DB_APP_FUN   := \t. first (second t)
+DB_APP_ARG   := \t. second (second t)
 
 # --- Meta-Circular Compiler: Structural Equality ---
 DB_EQUAL_REC := \self. \t1. \t2. \
@@ -504,6 +548,6 @@ EVAL_TIME_REC := \self t steps. \
 EVAL_TIME := \t. EVAL_TIME_REC t 0
 
 
-
+# TODO verify idempotency of meta-circular
 
 ## FILE END juniper.lc

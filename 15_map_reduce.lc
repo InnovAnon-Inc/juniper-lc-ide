@@ -1,0 +1,147 @@
+#! /usr/bin/env lc.py
+
+##
+# 15_map_reduce.lc - Formal Proofs and Theorems for List Combinators
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+INCLUDE "06_hol.lc"
+INCLUDE "12_fol.lc"
+
+# =====================================================================
+# 1. AST Terms for Map & Reduce (Fold) Logic Statements
+# =====================================================================
+
+#VAR_NIL           := MK_VAR 50
+#VAR_F             := MK_VAR 51
+#VAR_MAP_F_NIL     := MK_VAR 52
+#VAR_LEN_MAP_F_NIL := MK_VAR 53
+#VAR_LEN_NIL       := MK_VAR 54
+#VAR_ZERO          := MK_VAR 55
+
+# =====================================================================
+# 1. AST Terms for Map & Reduce (Fold) Logic Statements
+# =====================================================================
+
+VAR_NIL           := MK_VAR 1
+VAR_F             := MK_VAR 2
+VAR_MAP_F_NIL     := MK_VAR 3
+VAR_LEN_MAP_F_NIL := MK_VAR 4
+VAR_LEN_NIL       := MK_VAR 5
+VAR_ZERO          := MK_VAR 6
+
+
+# =====================================================================
+# 2. Formal Proof: Functor Identity (length (map f nil) = 0)
+# =====================================================================
+
+# Axiom 1: map f nil = nil
+AXIOM_MAP_NIL := MK_EQ VAR_MAP_F_NIL VAR_NIL
+
+# Axiom 2: Equality Congruence for length -> (x = y) -> (len x = len y)
+AXIOM_LEN_CONG := MK_IMP (MK_EQ VAR_MAP_F_NIL VAR_NIL) (MK_EQ VAR_LEN_MAP_F_NIL VAR_LEN_NIL)
+
+# Axiom 3: Transitivity of Equality for our specific terms
+# (len(map f nil) = len(nil)) -> ((len(nil) = 0) -> (len(map f nil) = 0))
+AXIOM_EQ_TRANS := MK_IMP (MK_EQ VAR_LEN_MAP_F_NIL VAR_LEN_NIL) \
+                         (MK_IMP (MK_EQ VAR_LEN_NIL VAR_ZERO) (MK_EQ VAR_LEN_MAP_F_NIL VAR_ZERO))
+
+# Axiom 4: length nil = 0
+AXIOM_LEN_NIL := MK_EQ VAR_LEN_NIL VAR_ZERO
+
+# Target Theorem: length (map f nil) = 0
+THEOREM_LEN_MAP_NIL := MK_EQ VAR_LEN_MAP_F_NIL VAR_ZERO
+
+MAP_AXIOMS := cons AXIOM_MAP_NIL \
+             (cons AXIOM_LEN_CONG \
+             (cons AXIOM_EQ_TRANS \
+             (cons AXIOM_LEN_NIL nil)))
+
+# Step 1: Cite map f nil = nil
+MAP_STEP_1 := pair RULE_AXIOM (pair AXIOM_MAP_NIL nil)
+
+# Step 2: Cite Congruence
+MAP_STEP_2 := pair RULE_AXIOM (pair AXIOM_LEN_CONG nil)
+
+# Step 3: MP(Step 1, Step 2) -> len(map f nil) = len(nil)
+FORMULA_INT_LEN := MK_EQ VAR_LEN_MAP_F_NIL VAR_LEN_NIL
+MAP_STEP_3 := pair RULE_MP (pair FORMULA_INT_LEN (pair AXIOM_MAP_NIL AXIOM_LEN_CONG))
+
+# Step 4: Cite Transitivity
+MAP_STEP_4 := pair RULE_AXIOM (pair AXIOM_EQ_TRANS nil)
+
+# Step 5: MP(Step 3, Step 4) -> (len(nil) = 0) -> (len(map f nil) = 0)
+FORMULA_INT_TRANS := MK_IMP (MK_EQ VAR_LEN_NIL VAR_ZERO) THEOREM_LEN_MAP_NIL
+MAP_STEP_5 := pair RULE_MP (pair FORMULA_INT_TRANS (pair FORMULA_INT_LEN AXIOM_EQ_TRANS))
+
+# Step 6: Cite len(nil) = 0
+MAP_STEP_6 := pair RULE_AXIOM (pair AXIOM_LEN_NIL nil)
+
+# Step 7: MP(Step 6, Step 5) -> len(map f nil) = 0
+MAP_STEP_7 := pair RULE_MP (pair THEOREM_LEN_MAP_NIL (pair AXIOM_LEN_NIL FORMULA_INT_TRANS))
+
+PROOF_MAP_NIL_LEN := cons MAP_STEP_1 \
+                    (cons MAP_STEP_2 \
+                    (cons MAP_STEP_3 \
+                    (cons MAP_STEP_4 \
+                    (cons MAP_STEP_5 \
+                    (cons MAP_STEP_6 \
+                    (cons MAP_STEP_7 nil))))))
+
+ASSERT (VERIFY_PROOF MAP_AXIOMS PROOF_MAP_NIL_LEN)
+ASSERT (IS_PROVABLE THEOREM_LEN_MAP_NIL MAP_AXIOMS PROOF_MAP_NIL_LEN)
+
+# =====================================================================
+# 3. Formal Proof: Monadic Identity (chain nil L = L)
+# =====================================================================
+
+#VAR_CHAIN_NIL_L     := MK_VAR 70
+#VAR_FOLD_CONS_L_NIL := MK_VAR 71
+#VAR_L               := MK_VAR 72
+
+# =====================================================================
+# 3. Formal Proof: Monadic Identity (chain nil L = L)
+# =====================================================================
+
+VAR_CHAIN_NIL_L     := MK_VAR 7
+VAR_FOLD_CONS_L_NIL := MK_VAR 8
+VAR_L               := MK_VAR 9
+
+# Axiom 1: chain nil L = fold cons L nil
+AXIOM_CHAIN_DEF := MK_EQ VAR_CHAIN_NIL_L VAR_FOLD_CONS_L_NIL
+
+# Axiom 2: fold cons L nil = L (Base case definition of fold on nil)
+AXIOM_FOLD_NIL := MK_EQ VAR_FOLD_CONS_L_NIL VAR_L
+
+# Axiom 3: Equality Transitivity
+AXIOM_TRANS_CHAIN := MK_IMP (MK_EQ VAR_CHAIN_NIL_L VAR_FOLD_CONS_L_NIL) \
+                            (MK_IMP (MK_EQ VAR_FOLD_CONS_L_NIL VAR_L) (MK_EQ VAR_CHAIN_NIL_L VAR_L))
+
+# Target Theorem: chain nil L = L
+THEOREM_CHAIN_NIL := MK_EQ VAR_CHAIN_NIL_L VAR_L
+
+CHAIN_AXIOMS := cons AXIOM_CHAIN_DEF \
+               (cons AXIOM_FOLD_NIL \
+               (cons AXIOM_TRANS_CHAIN nil))
+
+CHAIN_STEP_1 := pair RULE_AXIOM (pair AXIOM_CHAIN_DEF nil)
+CHAIN_STEP_2 := pair RULE_AXIOM (pair AXIOM_TRANS_CHAIN nil)
+
+FORMULA_CHAIN_INT := MK_IMP (MK_EQ VAR_FOLD_CONS_L_NIL VAR_L) THEOREM_CHAIN_NIL
+CHAIN_STEP_3 := pair RULE_MP (pair FORMULA_CHAIN_INT (pair AXIOM_CHAIN_DEF AXIOM_TRANS_CHAIN))
+
+CHAIN_STEP_4 := pair RULE_AXIOM (pair AXIOM_FOLD_NIL nil)
+CHAIN_STEP_5 := pair RULE_MP (pair THEOREM_CHAIN_NIL (pair AXIOM_FOLD_NIL FORMULA_CHAIN_INT))
+
+PROOF_CHAIN_NIL := cons CHAIN_STEP_1 \
+                  (cons CHAIN_STEP_2 \
+                  (cons CHAIN_STEP_3 \
+                  (cons CHAIN_STEP_4 \
+                  (cons CHAIN_STEP_5 nil))))
+
+ASSERT (VERIFY_PROOF CHAIN_AXIOMS PROOF_CHAIN_NIL)
+ASSERT (IS_PROVABLE THEOREM_CHAIN_NIL CHAIN_AXIOMS PROOF_CHAIN_NIL)

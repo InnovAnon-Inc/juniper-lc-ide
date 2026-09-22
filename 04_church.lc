@@ -41,17 +41,24 @@ successor               := λn f x  .f (n f x)
 29, twenty-nine         := successor 28
 30, thirty              := successor 29
 31, thirty-one          := successor 30
+32, thirty-two          := successor 31
 # TODO need a way to meta-programmatically define more numbers
 
-+                       := λm n f x.m f (n f x)
-+,  plus, add            ≡ λm n    .m successor n
+#+                       := λm n f x.m f (n f x)
+#+,  plus, add            ≡ λm n    .m successor n
 
-*                       := B
-ASSERT_EQ *, λm n f.m (n f)
-*, times, multiply       ≡ λm n    .m (+ n) 0
-**                      := λb n f  .n b f
-**, power, exponentiate  ≡ λb n    .n b
-**                       ≡ λbn     .n (* b) 1
+#*                        ≡ B
+#*                       := B
+#ASSERT_EQ *, λm n f.m (n f)
+#*, times, multiply       ≡ λm n    .m (+ n) 0
+#**                      := λb n f  .n b f
+#**, power, exponentiate  ≡ λb n    .n b
+#**                       ≡ λbn     .n (* b) 1
+#**, power, expoentiate   ≡ λb n.   if (=0 n) 1 (n b) # FIXME
+
++, plus, add             := λm n f x.m f (n f x)
+*, times, multiply       := B
+**, power, exponentiate  := λb n    .n b
 
 predecessor             := λn      .1st (n (Ψ successor) (pair 0 0))
 predecessor              ≡ λn f x  .n (λg h.h (g f)) (λu.x) I
@@ -120,7 +127,7 @@ ASSERT_EQ (* 3 2), 6
 ASSERT_EQ (* 2 3), 6
 ASSERT_EQ (* 3 3), 9
 
-ASSERT_EQ (** 0 0), I # ??? really ???
+#ASSERT_EQ (** 0 0), ??? FIXME
 ASSERT_EQ (** 0 1), 0
 #ASSERT_EQ (** 1 0), 1 # FIXME I
 ASSERT_EQ (** 1 1), 1

@@ -11,7 +11,15 @@ pair         := λx y f  .f x y
 1st, first   := λp      .p ⊤
 2nd, second  := λp      .p ⊥
 head, car    := λl      .l K ⊥
-tail, cdr    := λl      .l nil ⊥
+cdr    := λl      .l nil ⊥
+tail         := λl      .    \
+   1st                       \
+   (l                        \
+      (λh acc.               \
+         pair                \
+         (2nd acc)           \
+         (cons h (2nd acc))) \
+      (pair nil nil))
 Φ            := λp      .pair (2nd p) (successor (2nd p))
 Ψ            := λf p    .pair (2nd p) (f         (2nd p))
 
@@ -50,5 +58,5 @@ ASSERT (=nil ∅)
 ASSERT not (=nil (cons 1 nil))
 
 # Cons, Head, and Tail Operations
-ASSERT_EQ (head (cons 10 nil)), 10
-ASSERT_EQ (head (cons 20 (cons 10 nil))), 20
+ASSERT_EQ (car (cons 10 nil)), 10
+ASSERT_EQ (car (cons 20 (cons 10 nil))), 20

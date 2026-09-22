@@ -40,24 +40,13 @@
 ✓ ASSERT_EQ PASSED (Line 54)
 === Evaluating: /home/frederick/juniper/human/juniper-lc-ide/04_church.lc ===
 # [INCLUDE] Skipping already included file: 03_pair.lc
-✓ ASSERT_EQ PASSED (Line 50)
-# Eval (/home/frederick/juniper/human/juniper-lc-ide/04_church.lc:54): ** ≡
-# Result → \a.a ≡
-# Eval (/home/frederick/juniper/human/juniper-lc-ide/04_church.lc:54): \a.n (* b) 1
-# Result → \a.n (\b.b (\c.b successor c) ⊥) 1
-# Eval (/home/frederick/juniper/human/juniper-lc-ide/04_church.lc:57): predecessor ≡
+# Eval (/home/frederick/juniper/human/juniper-lc-ide/04_church.lc:63): predecessor ≡
 # Result → ≡ (\a b.b (a ⊥) (\c d.c (a ⊥ c d))) (\a.a ⊥ ⊥) K
-# Eval (/home/frederick/juniper/human/juniper-lc-ide/04_church.lc:57): \a b c.a (\d e.e (d b)) (\d.c) I
+# Eval (/home/frederick/juniper/human/juniper-lc-ide/04_church.lc:63): \a b c.a (\d e.e (d b)) (\d.c) I
 # Result → \a b c.a (\d e.e (d b)) (\d.c) I
-✓ ASSERT_EQ PASSED (Line 85)
-✓ ASSERT_EQ PASSED (Line 86)
-✓ ASSERT_EQ PASSED (Line 87)
-✓ ASSERT_EQ PASSED (Line 89)
-✓ ASSERT_EQ PASSED (Line 90)
 ✓ ASSERT_EQ PASSED (Line 91)
 ✓ ASSERT_EQ PASSED (Line 92)
 ✓ ASSERT_EQ PASSED (Line 93)
-✓ ASSERT_EQ PASSED (Line 94)
 ✓ ASSERT_EQ PASSED (Line 95)
 ✓ ASSERT_EQ PASSED (Line 96)
 ✓ ASSERT_EQ PASSED (Line 97)
@@ -68,12 +57,12 @@
 ✓ ASSERT_EQ PASSED (Line 102)
 ✓ ASSERT_EQ PASSED (Line 103)
 ✓ ASSERT_EQ PASSED (Line 104)
+✓ ASSERT_EQ PASSED (Line 105)
 ✓ ASSERT_EQ PASSED (Line 106)
 ✓ ASSERT_EQ PASSED (Line 107)
 ✓ ASSERT_EQ PASSED (Line 108)
 ✓ ASSERT_EQ PASSED (Line 109)
 ✓ ASSERT_EQ PASSED (Line 110)
-✓ ASSERT_EQ PASSED (Line 111)
 ✓ ASSERT_EQ PASSED (Line 112)
 ✓ ASSERT_EQ PASSED (Line 113)
 ✓ ASSERT_EQ PASSED (Line 114)
@@ -84,25 +73,24 @@
 ✓ ASSERT_EQ PASSED (Line 119)
 ✓ ASSERT_EQ PASSED (Line 120)
 ✓ ASSERT_EQ PASSED (Line 121)
+✓ ASSERT_EQ PASSED (Line 122)
 ✓ ASSERT_EQ PASSED (Line 123)
 ✓ ASSERT_EQ PASSED (Line 124)
+✓ ASSERT_EQ PASSED (Line 125)
 ✓ ASSERT_EQ PASSED (Line 126)
-✓ ASSERT_EQ PASSED (Line 128)
-✓ ASSERT_EQ PASSED (Line 129)
+✓ ASSERT_EQ PASSED (Line 127)
 ✓ ASSERT_EQ PASSED (Line 130)
-✓ ASSERT_EQ PASSED (Line 131)
-✓ ASSERT_EQ PASSED (Line 133)
+✓ ASSERT_EQ PASSED (Line 132)
 ✓ ASSERT_EQ PASSED (Line 134)
 ✓ ASSERT_EQ PASSED (Line 135)
 ✓ ASSERT_EQ PASSED (Line 136)
 ✓ ASSERT_EQ PASSED (Line 137)
-✓ ASSERT_EQ PASSED (Line 138)
+✓ ASSERT_EQ PASSED (Line 139)
 ✓ ASSERT_EQ PASSED (Line 140)
 ✓ ASSERT_EQ PASSED (Line 141)
 ✓ ASSERT_EQ PASSED (Line 142)
 ✓ ASSERT_EQ PASSED (Line 143)
 ✓ ASSERT_EQ PASSED (Line 144)
-✓ ASSERT_EQ PASSED (Line 145)
 ✓ ASSERT_EQ PASSED (Line 146)
 ✓ ASSERT_EQ PASSED (Line 147)
 ✓ ASSERT_EQ PASSED (Line 148)
@@ -127,39 +115,45 @@
 ✓ ASSERT_EQ PASSED (Line 167)
 ✓ ASSERT_EQ PASSED (Line 168)
 ✓ ASSERT_EQ PASSED (Line 169)
-✓ ASSERTION PASSED (Line 173)
-✓ ASSERTION PASSED (Line 175)
-✓ ASSERTION PASSED (Line 177)
-✓ ASSERT_EQ PASSED (Line 180)
-✓ ASSERT_EQ PASSED (Line 182)
-✓ ASSERT_EQ PASSED (Line 189)
-✓ ASSERT_EQ PASSED (Line 190)
-✓ ASSERT_EQ PASSED (Line 191)
-✓ ASSERT_EQ PASSED (Line 192)
-✓ ASSERT_EQ PASSED (Line 193)
+✓ ASSERT_EQ PASSED (Line 170)
+✓ ASSERT_EQ PASSED (Line 171)
+✓ ASSERT_EQ PASSED (Line 172)
+✓ ASSERT_EQ PASSED (Line 173)
+✓ ASSERT_EQ PASSED (Line 174)
+✓ ASSERT_EQ PASSED (Line 175)
+✓ ASSERTION PASSED (Line 179)
+✓ ASSERTION PASSED (Line 181)
+✓ ASSERTION PASSED (Line 183)
+✓ ASSERT_EQ PASSED (Line 186)
+✓ ASSERT_EQ PASSED (Line 188)
+✓ ASSERT_EQ PASSED (Line 195)
+✓ ASSERT_EQ PASSED (Line 196)
 ✓ ASSERT_EQ PASSED (Line 197)
 ✓ ASSERT_EQ PASSED (Line 198)
 ✓ ASSERT_EQ PASSED (Line 199)
-✓ ASSERT_EQ PASSED (Line 202)
 ✓ ASSERT_EQ PASSED (Line 203)
-✓ ASSERT_EQ PASSED (Line 206)
-✓ ASSERT_EQ PASSED (Line 207)
-✓ ASSERT_EQ PASSED (Line 210)
-✓ ASSERT_EQ PASSED (Line 211)
+✓ ASSERT_EQ PASSED (Line 204)
+✓ ASSERT_EQ PASSED (Line 205)
+✓ ASSERT_EQ PASSED (Line 208)
+✓ ASSERT_EQ PASSED (Line 209)
 ✓ ASSERT_EQ PASSED (Line 212)
-✓ ASSERTION PASSED (Line 213)
-✓ ASSERTION PASSED (Line 214)
-✓ ASSERTION PASSED (Line 215)
-✓ ASSERTION PASSED (Line 216)
-✓ ASSERT_EQ PASSED (Line 220)
-✓ ASSERT_EQ PASSED (Line 221)
-✓ ASSERT_EQ PASSED (Line 224)
-✓ ASSERT_EQ PASSED (Line 225)
-✓ ASSERT_EQ PASSED (Line 232)
-✓ ASSERT_EQ PASSED (Line 233)
-✓ ASSERT_EQ PASSED (Line 234)
+✓ ASSERT_EQ PASSED (Line 213)
+✓ ASSERT_EQ PASSED (Line 216)
+✓ ASSERT_EQ PASSED (Line 217)
+✓ ASSERT_EQ PASSED (Line 218)
+✓ ASSERTION PASSED (Line 219)
+✓ ASSERTION PASSED (Line 220)
+✓ ASSERTION PASSED (Line 221)
+✓ ASSERTION PASSED (Line 222)
+✓ ASSERT_EQ PASSED (Line 226)
+✓ ASSERT_EQ PASSED (Line 227)
+✓ ASSERT_EQ PASSED (Line 230)
+✓ ASSERT_EQ PASSED (Line 231)
+✓ ASSERT_EQ PASSED (Line 238)
+✓ ASSERT_EQ PASSED (Line 239)
 ✓ ASSERT_EQ PASSED (Line 240)
-✓ ASSERT_EQ PASSED (Line 244)
+✓ ASSERT_EQ PASSED (Line 246)
+✓ ASSERT_EQ PASSED (Line 250)
 === Evaluating: /home/frederick/juniper/human/juniper-lc-ide/05_map_reduce.lc ===
 # [INCLUDE] Skipping already included file: 04_church.lc
 ✓ ASSERT_EQ PASSED (Line 14)
@@ -230,3 +224,454 @@
 # [INCLUDE] Skipping already included file: 12_fol.lc
 ✓ ASSERTION PASSED (Line 43)
 ✓ ASSERTION PASSED (Line 44)
+✓ ASSERTION PASSED (Line 100)
+✓ ASSERTION PASSED (Line 101)
+✓ ASSERTION PASSED (Line 62)
+✓ ASSERTION PASSED (Line 63)
+
+❌ ASSERTION FAILED at ./14_church.lc:87
+   Got: 32 (\a.a (\b c.c (b ⊥) (\d e.d (b ⊥ d e))) (\b.b ⊥ ⊥) K) 32 (\a b c.c) K (32 (\a.a (\b c.c (b ⊥) (\d e.d (b ⊥ d e))) (\b.b ⊥ ⊥) K) 32 (\a b c.c) K) ⊥ K ⊥ (\a.a K (\b c.b (\d.d 1 (\e.e (\f.f ⊥ 31) (\f.f ⊥ 32))) (b (\d.d ⊥ 31) (b (\d.d 1 (\e.e (\f.f ⊥ 30) (\f.f ⊥ 31))) (b (\d.d ⊥ 30) (b (\d.d ⊥ 30) (b (\d.d 1 (\e.e (\f.f ⊥ 30) (\f.f ⊥ 31))) (b (\d.d 1 (\e.e (\f.f ⊥ 31) (\f.f ⊥ 32))) c)))))))) (\a.a ⊥ (\b c.b (\d.d ⊥ 31) (b (\d.d 1 (\e.e (\f.f ⊥ 30) (\f.f ⊥ 31))) (b (\d.d ⊥ 30) (b (\d.d ⊥ 30) (b (\d.d 1 (\e.e (\f.f ⊥ 30) (\f.f ⊥ 31))) (b (\d.d 1 (\e.e (\f.f ⊥ 31) (\f.f ⊥ 32))) c))))))) (\a b.a (b (\c d.c K (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) ⊥ (\e f g.g) K (c K (\e f g.g) K) ⊥ (c ⊥ (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) 31 (\e f g.g) K (c ⊥ (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f g.g) K) ⊥) ⊥ K d) ⊥ (b (\c d.c K (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) 1 (\e f g.g) K (c K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f g.g) K) ⊥ (c ⊥ K K (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) ⊥ (\e f g.g) K (c ⊥ K K (\e f g.g) K) ⊥ (c ⊥ K ⊥ (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) 31 (\e f g.g) K (c ⊥ K ⊥ (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f.f (e ⊥) (\g h.g (e ⊥ g h))) (\e.e ⊥ ⊥) K (\e f g.g) K) ⊥) ⊥ (c ⊥ ⊥ K (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) ⊥ (\e f g.g) K (c ⊥ ⊥ K (\e f g.g) K) ⊥ (c ⊥ ⊥ ⊥ (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) 32 (\e f g.g) K (32 (\e.e (\f g.g (f ⊥) (\h i.h (f ⊥ h i))) (\f.f ⊥ ⊥) K) (c ⊥ ⊥ ⊥) (\e f g.g) K) ⊥) ⊥) ⊥) ⊥ K d) ⊥ (32 (\c.c (\d e.e (d ⊥) (\f g.f (d ⊥ f g))) (\d.d ⊥ ⊥) K) 32 (\c d e.e) K (32 (\c.c (\d e.e (d ⊥) (\f g.f (d ⊥ f g))) (\d.d ⊥ ⊥) K) 32 (\c d e.e) K) ⊥) ⊥) ⊥ (\c.c K (\d e.d (\f.f ⊥ 32) (b d e))) (\c.c ⊥ b)) (\c.c ⊥ b)) K
+I, identity := \a.a
+S := \a b c.a c (b c)
+K := \a b.a
+ASSERT_EQ I, S K K
+B := \a b c.a (b c)
+C := \a b c.a c b
+W := \a b.a b b
+ω, Δ, U := \a.a a
+Ω := ω ω
+Y := \a.(\b.a (b b)) (\b.a (b b))
+Z := \a.(\b.a (\c.b b c)) (\b.a (\c.b b c))
+ASSERT_EQ I, I
+ASSERT_EQ S, S
+ASSERT_EQ K, K
+ASSERT_EQ B, B
+ASSERT_EQ C, C
+ASSERT_EQ W, W
+ASSERT_EQ ω, ω
+ASSERT_EQ Ω, Ω
+⊤, true := K
+⊥, false := 0
+¬, not := \a.a ⊥ K
+∧, and := \a b.a b ⊥
+∨, or := \a b.a K b
+⊻, xor := \a b.∧ (∨ a b) (∨ (¬ a) (¬ b))
+⇒, implies := \a b.∨ (¬ a) b
+⇔, iff := \a b.∧ (⇒ a b) (⇒ b a)
+if := \a b c.a b c
+ASSERT K
+ASSERT_EQ K, K
+ASSERT_EQ ⊥, ⊥
+ASSERT ¬ ⊥
+ASSERT ¬ (¬ K)
+ASSERT ∧ K K
+ASSERT ¬ (∧ K ⊥)
+ASSERT ¬ (∧ ⊥ K)
+ASSERT ¬ (∧ ⊥ ⊥)
+ASSERT ∨ K K
+ASSERT ∨ K ⊥
+ASSERT ∨ ⊥ K
+ASSERT ¬ (∨ ⊥ ⊥)
+ASSERT_EQ if K 1 2, 1
+ASSERT_EQ if ⊥ 1 2, 2
+pair := \a b c.c a b
+1st, first := \a.a K
+2nd, second := \a.a ⊥
+head, car := \a.a K ⊥
+tail, cdr := \a.a nil ⊥
+Φ := \a.pair (2nd a) (successor (2nd a))
+Ψ := \a b.pair (2nd b) (a (2nd b))
+∅, nil := ⊥
+null := \a.a (\b c d e.e)
+cons := \a b c d.c a (b c d)
+=∅, =nil := \a.a (\b c d e.e) K
+ASSERT_EQ 1st (pair K ⊥), K
+ASSERT_EQ 2nd (pair K ⊥), ⊥
+ASSERT_EQ 1st (pair 1 2), 1
+ASSERT_EQ 2nd (pair 1 2), 2
+ASSERT_EQ 1st (Φ (pair 0 0)), 0
+ASSERT =∅ ⊥
+ASSERT =∅ ⊥
+ASSERT ¬ (=∅ (cons 1 ⊥))
+ASSERT_EQ head (cons 10 ⊥), 10
+ASSERT_EQ head (cons 20 (cons 10 ⊥)), 20
+0, zero := ⊥
+successor := \a b c.b (a b c)
+1, one := successor ⊥
+2, two := successor 1
+3, three := successor 2
+4, four := successor 3
+5, five := successor 4
+6, six := successor 5
+7, seven := successor 6
+8, eight := successor 7
+9, nine := successor 8
+10, ten := successor 9
+11, eleven := successor 10
+12, twelve := successor 11
+13, thirteen := successor 12
+14, fourteen := successor 13
+15, fifteen := successor 14
+16, sixteen := successor 15
+17, seventeen := successor 16
+18, eighteen := successor 17
+19, nineteen := successor 18
+20, twenty := successor 19
+21, twenty-one := successor 20
+22, twenty-two := successor 21
+23, twenty-three := successor 22
+24, twenty-four := successor 23
+25, twenty-five := successor 24
+26, twenty-six := successor 25
+27, twenty-seven := successor 26
+28, twenty-eight := successor 27
+29, twenty-nine := successor 28
+30, thirty := successor 29
+31, thirty-one := successor 30
++, plus, add := \a b c d.a c (b c d)
+*, times, multiply := \a b.a (+ b) ⊥
+**, power, exponentiate := \a b.b a
+predecessor := \a.1st (a (Ψ successor) (pair ⊥ ⊥))
+predecessor ≡
+\a b c.a (\d e.e (d b)) (\d.c) I
+-, minus, subtract := \a b.b predecessor a
+=0, eqz := \a.a (\b c d.d) K
+≤, leq := \a b.=0 (- a b)
+≥, geq := \a b.≤ b a
+>, gt := \a b.¬ (≤ a b)
+<, lt := \a b.> b a
+EQ_NUM := \a b.∧ (=0 (- a b)) (=0 (- b a))
+DIV_REC := \a b c.if (≤ c b) (successor (a (- b c) c)) ⊥
+div := Y DIV_REC
+MOD_REC := \a b c.if (≤ c b) (a (- b c) c) b
+mod := Y MOD_REC
+ASSERT_EQ 1, 1
+ASSERT_EQ 2, 2
+ASSERT_EQ 3, 3
+ASSERT_EQ + ⊥ ⊥, ⊥
+ASSERT_EQ + ⊥ 1, 1
+ASSERT_EQ + 1 ⊥, 1
+ASSERT_EQ + 1 1, 2
+ASSERT_EQ + 2 ⊥, 2
+ASSERT_EQ + ⊥ 2, 2
+ASSERT_EQ + 2 1, 3
+ASSERT_EQ + 1 2, 3
+ASSERT_EQ + 2 2, 4
+ASSERT_EQ + 3 ⊥, 3
+ASSERT_EQ + ⊥ 3, 3
+ASSERT_EQ + 3 1, 4
+ASSERT_EQ + 1 3, 4
+ASSERT_EQ + 3 2, 5
+ASSERT_EQ + 2 3, 5
+ASSERT_EQ + 3 3, 6
+ASSERT_EQ * ⊥ ⊥, ⊥
+ASSERT_EQ * ⊥ 1, ⊥
+ASSERT_EQ * 1 ⊥, ⊥
+ASSERT_EQ * 1 1, 1
+ASSERT_EQ * 2 ⊥, ⊥
+ASSERT_EQ * ⊥ 2, ⊥
+ASSERT_EQ * 2 1, 2
+ASSERT_EQ * 1 2, 2
+ASSERT_EQ * 2 2, 4
+ASSERT_EQ * 3 ⊥, ⊥
+ASSERT_EQ * ⊥ 3, ⊥
+ASSERT_EQ * 3 1, 3
+ASSERT_EQ * 1 3, 3
+ASSERT_EQ * 3 2, 6
+ASSERT_EQ * 2 3, 6
+ASSERT_EQ * 3 3, 9
+ASSERT_EQ ** ⊥ 1, ⊥
+ASSERT_EQ ** 1 1, 1
+ASSERT_EQ ** ⊥ 2, ⊥
+ASSERT_EQ ** 2 1, 2
+ASSERT_EQ ** 1 2, 1
+ASSERT_EQ ** 2 2, 4
+ASSERT_EQ ** ⊥ 3, ⊥
+ASSERT_EQ ** 3 1, 3
+ASSERT_EQ ** 1 3, 1
+ASSERT_EQ ** 3 2, 9
+ASSERT_EQ ** 2 3, 8
+ASSERT_EQ ** 3 3, 27
+ASSERT_EQ predecessor 1, ⊥
+ASSERT_EQ predecessor 2, 1
+ASSERT_EQ predecessor 3, 2
+ASSERT_EQ predecessor 4, 3
+ASSERT_EQ predecessor 5, 4
+ASSERT_EQ predecessor 6, 5
+ASSERT_EQ predecessor 7, 6
+ASSERT_EQ predecessor 8, 7
+ASSERT_EQ predecessor 9, 8
+ASSERT_EQ predecessor 10, 9
+ASSERT_EQ predecessor 11, 10
+ASSERT_EQ predecessor 12, 11
+ASSERT_EQ predecessor 13, 12
+ASSERT_EQ predecessor 14, 13
+ASSERT_EQ predecessor 15, 14
+ASSERT_EQ predecessor 16, 15
+ASSERT_EQ predecessor 17, 16
+ASSERT_EQ predecessor 18, 17
+ASSERT_EQ predecessor 19, 18
+ASSERT_EQ predecessor 20, 19
+ASSERT_EQ predecessor 21, 20
+ASSERT_EQ predecessor 22, 21
+ASSERT_EQ predecessor 23, 22
+ASSERT_EQ predecessor 24, 23
+ASSERT_EQ predecessor 25, 24
+ASSERT_EQ predecessor 26, 25
+ASSERT_EQ predecessor 27, 26
+ASSERT_EQ predecessor 28, 27
+ASSERT_EQ predecessor 29, 28
+ASSERT_EQ predecessor 30, 29
+ASSERT ≤ 2 3
+ASSERT > 3 2
+ASSERT EQ_NUM 4 4
+ASSERT_EQ div 5 2, 2
+ASSERT_EQ mod 5 2, 1
+ASSERT_EQ predecessor 1, ⊥
+ASSERT_EQ predecessor 2, 1
+ASSERT_EQ predecessor 6, 5
+ASSERT_EQ predecessor 11, 10
+ASSERT_EQ predecessor 26, 25
+ASSERT_EQ + ⊥ ⊥, ⊥
+ASSERT_EQ + ⊥ 5, 5
+ASSERT_EQ + 5 ⊥, 5
+ASSERT_EQ + 3 3, successor (+ 2 3)
+ASSERT_EQ + 5 5, successor (+ 4 5)
+ASSERT_EQ + 3 7, + 7 3
+ASSERT_EQ + (+ 2 3) 4, + 2 (+ 3 4)
+ASSERT_EQ - 5 ⊥, 5
+ASSERT_EQ - 5 5, ⊥
+ASSERT_EQ - 10 3, 7
+ASSERT ≤ ⊥ 5
+ASSERT ≤ 5 5
+ASSERT ≤ 3 8
+ASSERT ¬ (≤ 8 3)
+ASSERT_EQ * ⊥ 5, ⊥
+ASSERT_EQ * 5 ⊥, ⊥
+ASSERT_EQ * 2 (+ 3 4), + (* 2 3) (* 2 4)
+ASSERT_EQ * 3 (+ 2 5), + (* 3 2) (* 3 5)
+ASSERT_EQ ** 2 1, 2
+ASSERT_EQ ** 2 3, 8
+ASSERT_EQ ** 3 2, 9
+TEST_N := 13
+TEST_D := 4
+ASSERT_EQ 13, + (* (div 13 4) 4) (mod 13 4)
+TEST_N2 := 27
+TEST_D2 := 5
+ASSERT_EQ 27, + (* (div 27 5) 5) (mod 27 5)
+let := **
+ASSERT_EQ **, **
+letrec := \a b.b (Y a)
+seq, do := ⊥
+ASSERT_EQ ⊥, ⊥
+cond2 := \a b c d e.if a b (if c d e)
+cond3 := \a b c d e f g.if a b (if c d (if e f g))
+cond4 := \a b c d e f g h i.if a b (if c d (if e f (if g h i)))
+WHILE_REC := \a b c d.if (b d) (a b c (c d)) d
+while := Y WHILE_REC
+FOR_RANGE_REC := \a b c d e.if (≤ b c) (a (successor b) c d (d e b)) e
+FOR_RANGE := Y FOR_RANGE_REC
+repeat := if
+ASSERT_EQ if, if
+foldl := \a b c.c (\d e f.e (a f d)) I b
+reduce := foldl
+foldr := pair
+ASSERT_EQ pair, pair
+map := \a b.b (\c d.cons (a c) d) ⊥
+filter := \a b.b (\c d.if (a c) (cons c d) d) ⊥
+length := \a.a (\b c.successor c) ⊥
+reverse := \a.foldl (\b c.cons c b) ⊥ a
+chain, concat := \a b.a cons b
+flat_map := \a b.b (\c d.chain (a c) d) ⊥
+any, some := \a b.b (\c d.∨ (a c) d) ⊥
+all, every := \a b.b (\c d.∧ (a c) d) K
+range := \a b.reverse (FOR_RANGE a b (\c d.cons d c) ⊥)
+TAKE_REC := \a b c.if (∨ (=0 b) (=∅ c)) ⊥ (cons (head c) (a (predecessor b) ((\d.d nil ⊥) c)))
+take := Y TAKE_REC
+drop := \a b.a (\c.c nil ⊥) b
+ZIP_REC := \a b c.if (∨ (=∅ b) (=∅ c)) ⊥ (cons (pair (head b) (head c)) (a ((\d.d nil ⊥) b) ((\d.d nil ⊥) c)))
+zip := Y ZIP_REC
+ENUM_REC := \a b c.if (=∅ c) ⊥ (cons (pair b (head c)) (a (successor b) ((\d.d nil ⊥) c)))
+enumerate := \a.Y (\b c d.if (=∅ d) ⊥ (cons (pair c (head d)) (b (successor c) ((\e.e nil ⊥) d)))) ⊥ a
+FIND_REC := \a b c.if (=∅ c) ⊥ (if (b (head c)) (head c) (a b ((\d.d nil ⊥) c)))
+find := Y FIND_REC
+ASSERT_EQ ** 5 (\a.+ a 2), 7
+ASSERT_EQ letrec (\a b.if (=0 b) ⊥ (+ b (a (predecessor b)))) (\a.a 4), 10
+ASSERT_EQ cond3 ⊥ 100 ⊥ 200 K 300 400, 300
+ASSERT_EQ cond3 ⊥ 100 ⊥ 200 ⊥ 300 400, 400
+ASSERT_EQ while (\a.¬ (=0 a)) predecessor 3, ⊥
+TEST_WHILE_STEP := \a.pair (predecessor (1st a)) (+ (2nd a) (1st a))
+TEST_WHILE_COND := \a.¬ (=0 (1st a))
+TEST_WHILE_RES := while TEST_WHILE_COND TEST_WHILE_STEP (pair 3 ⊥)
+ASSERT_EQ 2nd TEST_WHILE_RES, 6
+TEST_FOR_RES := FOR_RANGE 1 4 (\a b.+ a b) ⊥
+ASSERT_EQ TEST_FOR_RES, 10
+TEST_LIST := cons 1 (cons 2 (cons 3 ⊥))
+ASSERT_EQ length TEST_LIST, 3
+TEST_MAP_RES := map (\a.+ a 1) TEST_LIST
+ASSERT_EQ length TEST_MAP_RES, 3
+ASSERT_EQ head TEST_MAP_RES, 2
+TEST_FILTER_RES := filter (\a.> a 1) TEST_LIST
+ASSERT_EQ length TEST_FILTER_RES, 2
+ASSERT_EQ head TEST_FILTER_RES, 2
+TEST_REV_RES := reverse TEST_LIST
+ASSERT_EQ head TEST_REV_RES, 3
+TEST_LIST_A := cons 1 (cons 2 ⊥)
+TEST_LIST_B := cons 3 (cons 4 ⊥)
+TEST_CHAIN_RES := chain TEST_LIST_A TEST_LIST_B
+ASSERT_EQ length TEST_CHAIN_RES, 4
+ASSERT_EQ head TEST_CHAIN_RES, 1
+ASSERT_EQ foldl (\a b.+ a b) ⊥ TEST_LIST, 6
+ASSERT any (\a.> a 2) TEST_LIST
+ASSERT ¬ (any (\a.> a 5) TEST_LIST)
+ASSERT all (\a.> a ⊥) TEST_LIST
+ASSERT ¬ (all (\a.> a 2) TEST_LIST)
+TEST_RANGE := range 1 3
+ASSERT_EQ length TEST_RANGE, 3
+ASSERT_EQ head TEST_RANGE, 1
+TEST_TAKE := take 2 TEST_LIST
+ASSERT_EQ head TEST_TAKE, 1
+TEST_DROP := drop 2 TEST_LIST
+TEST_ZIP := zip TEST_LIST_A TEST_LIST_B
+ASSERT_EQ 1st (head TEST_ZIP), 1
+ASSERT_EQ 2nd (head TEST_ZIP), 3
+TEST_ENUM := enumerate TEST_LIST_B
+ASSERT_EQ 1st (head TEST_ENUM), ⊥
+ASSERT_EQ 2nd (head TEST_ENUM), 3
+TAG_VAR := ⊥
+TAG_IMP := 1
+TAG_EQ := 2
+MK_VAR := \a.pair ⊥ a
+MK_IMP := \a b.pair 1 (pair a b)
+MK_EQ := \a b.pair 2 (pair a b)
+GET_TAG := 1st
+GET_BODY := 2nd
+IS_VAR := \a.EQ_NUM (1st a) ⊥
+IS_IMP := \a.EQ_NUM (1st a) 1
+IS_EQ := \a.EQ_NUM (1st a) 2
+IS_SAME_FORMULA_REC := \a b c.if (EQ_NUM (1st b) (1st c)) (if (IS_VAR b) (EQ_NUM (2nd b) (2nd c)) (∧ (a (1st (2nd b)) (1st (2nd c))) (a (2nd (2nd b)) (2nd (2nd c))))) ⊥
+IS_SAME_FORMULA := Y IS_SAME_FORMULA_REC
+IS_AXIOM := \a b.b (\c d.∨ (IS_SAME_FORMULA a c) d) ⊥
+VERIFY_MP := \a b c.if (IS_IMP b) (∧ (IS_SAME_FORMULA a (1st (2nd b))) (IS_SAME_FORMULA c (2nd (2nd b)))) ⊥
+RULE_AXIOM := ⊥
+RULE_MP := 1
+IN_LIST := IS_AXIOM
+CHECK_STEP := \a b.a (\c d.d (\e f.if (EQ_NUM c ⊥) (IS_AXIOM e b) (if (EQ_NUM c 1) (∧ (IS_AXIOM (1st f) b) (∧ (IS_AXIOM (2nd f) b) (VERIFY_MP (1st f) (2nd f) e))) ⊥)))
+GET_STEP_FORMULA := \a.1st (2nd a)
+PROCESS_STEP := \a b.a (\c d.if c (if (CHECK_STEP b d) (pair K (cons (GET_STEP_FORMULA b) d)) (pair ⊥ d)) (pair ⊥ d))
+VERIFY_PROOF := \a b.1st (foldl PROCESS_STEP (pair K a) b)
+SUBST_REC := \a b c d.if (IS_VAR d) (if (EQ_NUM (2nd d) b) c d) (if (IS_IMP d) (MK_IMP (a b c (1st (2nd d))) (a b c (2nd (2nd d)))) (if (IS_EQ d) (MK_EQ (a b c (1st (2nd d))) (a b c (2nd (2nd d)))) d))
+SUBST := Y SUBST_REC
+LAST_STEP := \a.foldl ⊥ ⊥ a
+GET_PROOF_THEOREM := \a.GET_STEP_FORMULA (LAST_STEP a)
+IS_PROVABLE := \a b c.∧ (VERIFY_PROOF b c) (IS_SAME_FORMULA a (GET_PROOF_THEOREM c))
+⇔, iff := \a b.∧ (⇒ a b) (⇒ b a)
+ASSERT ¬ (⊻ K K)
+ASSERT ⊻ K ⊥
+ASSERT ⊻ ⊥ K
+ASSERT ¬ (⊻ ⊥ ⊥)
+ASSERT ⇒ K K
+ASSERT ¬ (⇒ K ⊥)
+ASSERT ⇒ ⊥ K
+ASSERT ⇒ ⊥ ⊥
+ASSERT ⇔ K K
+ASSERT ¬ (⇔ K ⊥)
+ASSERT ¬ (⇔ ⊥ K)
+ASSERT ⇔ ⊥ ⊥
+ASSERT_EQ ¬ (∧ K K), ∨ (¬ K) (¬ K)
+ASSERT_EQ ¬ (∧ K ⊥), ∨ (¬ K) (¬ ⊥)
+ASSERT_EQ ¬ (∨ K ⊥), ∧ (¬ K) (¬ ⊥)
+ASSERT_EQ ¬ (∨ ⊥ ⊥), ∧ (¬ ⊥) (¬ ⊥)
+ASSERT_EQ ¬ (¬ K), K
+ASSERT_EQ ¬ (¬ ⊥), ⊥
+ASSERT ∨ K (¬ K)
+ASSERT ∨ ⊥ (¬ ⊥)
+VAR_P := MK_VAR 1
+VAR_Q := MK_VAR 2
+VAR_R := MK_VAR 3
+AXIOM_A1 := MK_IMP VAR_P (MK_IMP VAR_Q VAR_P)
+AXIOM_A2 := MK_IMP (MK_IMP VAR_P (MK_IMP VAR_Q VAR_R)) (MK_IMP (MK_IMP VAR_P VAR_Q) (MK_IMP VAR_P VAR_R))
+AXIOM_A1_P := MK_IMP VAR_P (MK_IMP VAR_P VAR_P)
+AXIOM_A1_INST := MK_IMP VAR_P (MK_IMP (MK_IMP VAR_P VAR_P) VAR_P)
+AXIOM_A2_INST := MK_IMP AXIOM_A1_INST (MK_IMP AXIOM_A1_P (MK_IMP VAR_P VAR_P))
+THEOREM_P_IMP_P := MK_IMP VAR_P VAR_P
+FOL_AXIOMS := cons AXIOM_A1 (cons AXIOM_A2 (cons AXIOM_A1_P (cons AXIOM_A1_INST (cons AXIOM_A2_INST ⊥))))
+STEP_1 := pair ⊥ (pair AXIOM_A2_INST ⊥)
+STEP_2 := pair ⊥ (pair AXIOM_A1_INST ⊥)
+FORMULA_INT_1 := MK_IMP AXIOM_A1_P THEOREM_P_IMP_P
+STEP_3 := pair 1 (pair FORMULA_INT_1 (pair AXIOM_A1_INST AXIOM_A2_INST))
+STEP_4 := pair ⊥ (pair AXIOM_A1_P ⊥)
+STEP_5 := pair 1 (pair THEOREM_P_IMP_P (pair AXIOM_A1_P FORMULA_INT_1))
+PROOF_IDENTITY := cons STEP_1 (cons STEP_2 (cons STEP_3 (cons STEP_4 (cons STEP_5 ⊥))))
+VERIFICATION_RESULT := VERIFY_PROOF FOL_AXIOMS PROOF_IDENTITY
+ASSERT VERIFICATION_RESULT
+ASSERT IS_PROVABLE THEOREM_P_IMP_P FOL_AXIOMS PROOF_IDENTITY
+FORMULA_P_Q := MK_IMP VAR_P VAR_Q
+FORMULA_Q_R := MK_IMP VAR_Q VAR_R
+SYLLOGISM_AXIOMS := cons FORMULA_P_Q (cons FORMULA_Q_R ⊥)
+HS_STEP_1 := pair ⊥ (pair FORMULA_P_Q ⊥)
+HS_STEP_2 := pair ⊥ (pair FORMULA_Q_R ⊥)
+ASSERT VERIFY_PROOF SYLLOGISM_AXIOMS (cons HS_STEP_1 (cons HS_STEP_2 ⊥))
+VAR_PAIR_A := MK_VAR 10
+VAR_PAIR_B := MK_VAR 11
+VAR_PAIR_C := MK_VAR 12
+FORMULA_PROJ_1 := MK_IMP VAR_PAIR_A (MK_IMP VAR_PAIR_B VAR_PAIR_A)
+FORMULA_PROJ_2 := MK_IMP VAR_PAIR_B (MK_IMP VAR_PAIR_A VAR_PAIR_B)
+FORMULA_SWAP := MK_IMP (MK_IMP VAR_PAIR_A (MK_IMP VAR_PAIR_B VAR_PAIR_C)) (MK_IMP VAR_PAIR_B (MK_IMP VAR_PAIR_A VAR_PAIR_C))
+PAIR_AXIOMS_1 := cons FORMULA_PROJ_1 ⊥
+PROJ_STEP_1 := pair ⊥ (pair FORMULA_PROJ_1 ⊥)
+PROOF_PROJ_1 := cons PROJ_STEP_1 ⊥
+ASSERT VERIFY_PROOF PAIR_AXIOMS_1 PROOF_PROJ_1
+ASSERT IS_PROVABLE FORMULA_PROJ_1 PAIR_AXIOMS_1 PROOF_PROJ_1
+FORMULA_STEP_AB := MK_IMP VAR_PAIR_A VAR_PAIR_B
+FORMULA_STEP_BC := MK_IMP VAR_PAIR_B VAR_PAIR_C
+FORMULA_STEP_AC := MK_IMP VAR_PAIR_A VAR_PAIR_C
+FORMULA_CHAIN_A2 := MK_IMP (MK_IMP VAR_PAIR_A FORMULA_STEP_BC) (MK_IMP FORMULA_STEP_AB FORMULA_STEP_AC)
+FORMULA_WEAKEN := MK_IMP FORMULA_STEP_BC (MK_IMP VAR_PAIR_A FORMULA_STEP_BC)
+PAIR_CHAIN_AXIOMS := cons FORMULA_STEP_AB (cons FORMULA_STEP_BC (cons FORMULA_CHAIN_A2 (cons FORMULA_WEAKEN ⊥)))
+CHAIN_STEP_1 := pair ⊥ (pair FORMULA_STEP_BC ⊥)
+CHAIN_STEP_2 := pair ⊥ (pair FORMULA_WEAKEN ⊥)
+FORMULA_INT_ABC := MK_IMP VAR_PAIR_A FORMULA_STEP_BC
+CHAIN_STEP_3 := pair 1 (pair FORMULA_INT_ABC (pair FORMULA_STEP_BC FORMULA_WEAKEN))
+CHAIN_STEP_4 := pair ⊥ (pair FORMULA_CHAIN_A2 ⊥)
+FORMULA_INT_AB_AC := MK_IMP FORMULA_STEP_AB FORMULA_STEP_AC
+CHAIN_STEP_5 := pair 1 (pair FORMULA_INT_AB_AC (pair FORMULA_INT_ABC FORMULA_CHAIN_A2))
+CHAIN_STEP_6 := pair ⊥ (pair FORMULA_STEP_AB ⊥)
+CHAIN_STEP_7 := pair 1 (pair FORMULA_STEP_AC (pair FORMULA_STEP_AB FORMULA_INT_AB_AC))
+PROOF_PAIR_CHAIN := cons CHAIN_STEP_1 (cons CHAIN_STEP_2 (cons CHAIN_STEP_3 (cons CHAIN_STEP_4 (cons CHAIN_STEP_5 (cons CHAIN_STEP_6 (cons CHAIN_STEP_7 ⊥))))))
+ASSERT VERIFY_PROOF PAIR_CHAIN_AXIOMS PROOF_PAIR_CHAIN
+ASSERT IS_PROVABLE FORMULA_STEP_AC PAIR_CHAIN_AXIOMS PROOF_PAIR_CHAIN
+VAR_NUM_X := MK_VAR 20
+VAR_NUM_Y := MK_VAR 21
+VAR_NUM_Z := MK_VAR 22
+VAR_ZERO := MK_VAR ⊥
+VAR_SUCC_X := MK_VAR 23
+VAR_SUCC_Y := MK_VAR 24
+PEANO_REFLEX := MK_EQ VAR_NUM_X VAR_NUM_X
+PEANO_SUCC_INJ := MK_IMP (MK_EQ VAR_SUCC_X VAR_SUCC_Y) (MK_EQ VAR_NUM_X VAR_NUM_Y)
+PEANO_ZERO_SUCC := MK_IMP (MK_EQ VAR_SUCC_X VAR_ZERO) (MK_EQ VAR_NUM_X VAR_NUM_Y)
+VAR_ADD_X_0 := MK_VAR 25
+PEANO_ADD_BASE := MK_EQ VAR_ADD_X_0 VAR_NUM_X
+VAR_ADD_X_SY := MK_VAR 26
+VAR_SUCC_ADD := MK_VAR 27
+PEANO_ADD_REC := MK_EQ VAR_ADD_X_SY VAR_SUCC_ADD
+FORMULA_GIVEN_SUCC_EQ := MK_EQ VAR_SUCC_X VAR_SUCC_Y
+PEANO_INJ_AXIOMS := cons FORMULA_GIVEN_SUCC_EQ (cons PEANO_SUCC_INJ ⊥)
+INJ_STEP_1 := pair ⊥ (pair FORMULA_GIVEN_SUCC_EQ ⊥)
+INJ_STEP_2 := pair ⊥ (pair PEANO_SUCC_INJ ⊥)
+INJ_STEP_3 := pair 1 (pair (MK_EQ VAR_NUM_X VAR_NUM_Y) (pair FORMULA_GIVEN_SUCC_EQ PEANO_SUCC_INJ))
+PROOF_PEANO_INJECTIVITY := cons INJ_STEP_1 (cons INJ_STEP_2 (cons INJ_STEP_3 ⊥))
+ASSERT VERIFY_PROOF PEANO_INJ_AXIOMS PROOF_PEANO_INJECTIVITY
+ASSERT IS_PROVABLE (MK_EQ VAR_NUM_X VAR_NUM_Y) PEANO_INJ_AXIOMS PROOF_PEANO_INJECTIVITY
+VAR_P0 := MK_VAR 30
+VAR_P1 := MK_VAR 31
+VAR_P2 := MK_VAR 32
+FORMULA_IND_0_1 := MK_IMP VAR_P0 VAR_P1
+FORMULA_IND_1_2 := MK_IMP VAR_P1 VAR_P2
+PEANO_IND_AXIOMS := cons VAR_P0 (cons FORMULA_IND_0_1 (cons FORMULA_IND_1_2 ⊥))
+IND_STEP_1 := pair ⊥ (pair VAR_P0 ⊥)
+IND_STEP_2 := pair ⊥ (pair FORMULA_IND_0_1 ⊥)
+IND_STEP_3 := pair 1 (pair VAR_P1 (pair VAR_P0 FORMULA_IND_0_1))
+IND_STEP_4 := pair ⊥ (pair FORMULA_IND_1_2 ⊥)
+IND_STEP_5 := pair 1 (pair VAR_P2 (pair VAR_P1 FORMULA_IND_1_2))
+PROOF_PEANO_INDUCTION := cons IND_STEP_1 (cons IND_STEP_2 (cons IND_STEP_3 (cons IND_STEP_4 (cons IND_STEP_5 ⊥))))
