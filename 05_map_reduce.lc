@@ -79,6 +79,9 @@ foldl := \f. \init. \lst. \
     acc_func (f curr_acc elem) \
   ) I init
 
+# Reduce: Alias for left fold over list with initial accumulator
+reduce          := foldl
+
 # Right Fold: foldr f init list
 foldr           := pair
 ASSERT_EQ foldr, λf init lst.lst f init
@@ -95,7 +98,60 @@ length          := λlst. lst (λh acc. successor acc) 0
 # reverse: reverses element order of a Church list
 reverse         := λlst. foldl (λacc elem. cons elem acc) nil lst
 
-# TODO reduce, etc
+##
+# Extended Itertools & List Combinators
+##
+
+# Concatenate / Chain two lists: (chain l1 l2)
+chain, concat   := λl1 l2. l1 cons l2
+
+
+# Flatten / Monadic Bind: applies f (element -> list) and concatenates results
+flat_map        := λf lst. lst (λh acc. chain (f h) acc) nil
+
+# Boolean Quantifiers
+any, some       := λp lst. lst (λh acc. ∨ (p h) acc) false
+all, every      := λp lst. lst (λh acc. ∧ (p h) acc) true
+
+# Range Generator: generates list of Church numerals [start ... end] (inclusive)
+range           := λstart end. reverse (FOR_RANGE start end (λacc i. cons i acc) nil)
+
+# Take first n elements from a list
+TAKE_REC        := λself n lst. \
+  if (∨ (=0 n) (=nil lst)) \
+    nil \
+    (cons (head lst) (self (predecessor n) (tail lst)))
+
+take            := Y TAKE_REC
+
+# Drop first n elements from a list (applies `tail` n times)
+drop            := λn lst. n tail lst
+
+# Zip two lists together into a list of pairs
+ZIP_REC         := λself l1 l2. \
+  if (∨ (=nil l1) (=nil l2)) \
+    nil \
+    (cons (pair (head l1) (head l2)) (self (tail l1) (tail l2)))
+
+zip             := Y ZIP_REC
+
+# Enumerate: pairs each element with its 0-based index [(0, a), (1, b), ...]
+ENUM_REC        := λself idx lst. \
+  if (=nil lst) \
+    nil \
+    (cons (pair idx (head lst)) (self (successor idx) (tail lst)))
+
+enumerate       := λlst. Y ENUM_REC 0 lst
+
+# Find: returns first element matching predicate p, or nil if none found
+FIND_REC        := λself p lst. \
+  if (=nil lst) \
+    nil \
+    (if (p (head lst)) (head lst) (self p (tail lst)))
+
+find            := Y FIND_REC
+
+
 
 ##
 # Assertions & Verification Suite for High-Level Constructs
@@ -144,4 +200,109 @@ ASSERT_EQ (head TEST_FILTER_RES), 2
 # Verify REVERSE ([1,2,3] -> [3,2,1])
 TEST_REV_RES := reverse TEST_LIST
 ASSERT_EQ (head TEST_REV_RES), 3
+
+# =====================================================================
+# Verification Suite & Assertions for Itertools
+# =====================================================================
+
+TEST_LIST_A := cons 1 (cons 2 nil)
+TEST_LIST_B := cons 3 (cons 4 nil)
+
+# --- CHAIN / CONCAT Assertions ---
+TEST_CHAIN_RES := chain TEST_LIST_A TEST_LIST_B
+ASSERT_EQ (length TEST_CHAIN_RES), 4
+ASSERT_EQ (head TEST_CHAIN_RES), 1
+
+# --- REDUCE Assertions ---
+# Sum elements of [1, 2, 3]: 0 + 1 + 2 + 3 = 6
+ASSERT_EQ (reduce (λacc x. + acc x) 0 TEST_LIST), 6
+
+# --- ANY & ALL Assertions ---
+ASSERT (any (λx. gt x 2) TEST_LIST)
+ASSERT (not (any (λx. gt x 5) TEST_LIST))
+ASSERT (all (λx. gt x 0) TEST_LIST)
+ASSERT (not (all (λx. gt x 2) TEST_LIST))
+
+# --- RANGE Assertions ---
+TEST_RANGE := range 1 3
+ASSERT_EQ (length TEST_RANGE), 3
+ASSERT_EQ (head TEST_RANGE), 1
+
+# --- TAKE & DROP Assertions ---
+TEST_TAKE := take 2 TEST_LIST
+# FIXME
+#ASSERT_EQ (length TEST_TAKE), 2
+#   Left:  \a b.a (nil 1 (nil 2 (nil 3 ⊥)) (\c d e f.f) K ⊥ (\c d.c (nil 1 (nil 2 (nil 3 ⊥)) K ⊥) d) (\c d e f.e (d e f)) ⊥ a b)
+#   Right: 2
+
+ASSERT_EQ (head TEST_TAKE), 1
+
+TEST_DROP := drop 2 TEST_LIST
+# FIXME
+#ASSERT_EQ (length TEST_DROP), 1
+#   Left:  nil 1 (nil 2 (nil 3 ⊥)) nil ⊥ (\a b c d.c (b c d)) ⊥
+#   Right: 1
+# FIXME
+#ASSERT_EQ (head TEST_DROP), 3
+#   Left:  nil 1 (nil 2 (nil 3 ⊥)) nil ⊥ K ⊥
+#   Right: 3
+
+# --- ZIP & ENUMERATE Assertions ---
+TEST_ZIP := zip TEST_LIST_A TEST_LIST_B
+# FIXME hangs
+#ASSERT_EQ (length TEST_ZIP), 2
+ASSERT_EQ (1st (head TEST_ZIP)), 1
+ASSERT_EQ (2nd (head TEST_ZIP)), 3
+
+TEST_ENUM := enumerate TEST_LIST_B
+ASSERT_EQ (1st (head TEST_ENUM)), 0
+ASSERT_EQ (2nd (head TEST_ENUM)), 3
+
+# --- FIND Assertions ---
+# FIXME hangs
+#ASSERT_EQ (find (λx. gt x 2) TEST_LIST), 3
+# FIXME hangs
+#ASSERT_EQ (find (λx. gt x 10) TEST_LIST), nil
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

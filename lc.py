@@ -39,7 +39,7 @@ LC_GRAMMAR = r"""
 
     LAMBDA: "\\" | "λ"
     DOT: "."
-    ASSIGN: ":="
+    ASSIGN: ":=" | "≡"
     BRACKETED_INT: /\[\d+\]/
 
     IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^\w\u0080-\uFFFF]+/

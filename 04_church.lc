@@ -40,23 +40,21 @@ successor               := λn f x  .f (n f x)
 28, twenty-eight        := successor 27
 29, twenty-nine         := successor 28
 30, thirty              := successor 29
+31, thirty-one          := successor 30
 # TODO need a way to meta-programmatically define more numbers
 
 +                       := λm n f x.m f (n f x)
-+,  plus, add           := λm n    .m successor n
-#≡ # TODO assertions and proofs ?
++,  plus, add            ≡ λm n    .m successor n
 
 *                       := B
 ASSERT_EQ *, λm n f.m (n f)
-*, times, multiply      := λm n    .m (+ n) 0
-#≡ # TODO assertions and proofs ?
-POW                     := λbn     .n (* b) 1
-POW                     := λb n f  .n b f
-**, power, exponentiate := λb n    .n b
-#≡ # TODO assertions and proofs ?
+*, times, multiply       ≡ λm n    .m (+ n) 0
+**                      := λb n f  .n b f
+**, power, exponentiate  ≡ λb n    .n b
+**                       ≡ λbn     .n (* b) 1
 
 predecessor             := λn      .1st (n (Ψ successor) (pair 0 0))
-predecessor             := λn f x  .n (λg h.h (g f)) (λu.x) I
+predecessor              ≡ λn f x  .n (λg h.h (g f)) (λu.x) I
 
 -, minus, subtract      := λm n    .n predecessor m
 
