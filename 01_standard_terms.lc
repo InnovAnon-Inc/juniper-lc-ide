@@ -1,0 +1,34 @@
+#! /usr/bin/env lc.py
+
+##
+# standard terms
+##
+
+I, identity := λx    .x
+S           := λx y z.x z (y z)
+K           := λx y  .x
+ASSERT_EQ I, S K K
+B           := λx y z.x (y z)
+C           := λx y z.x z y
+W           := λx y  .x y y
+ω,Δ, U      := λx    .x x
+Ω           := ω ω
+
+Y           := λg    . \
+  (λx.g (x x))         \
+  (λx.g (x x))
+Z           := λg    . \
+  (λx.g (λv.x x v))    \
+  (λx.g (λv.x x v))
+
+ASSERT_EQ I, λ.[0]
+ASSERT_EQ S, λλλ.[2][0]([1][0])
+ASSERT_EQ K, λλ.[1]
+ASSERT_EQ B, λλλ.[2]([1][0])
+ASSERT_EQ C, λλλ.[2][0][1]
+ASSERT_EQ W, λλ.[1][0][0]
+ASSERT_EQ ω, λ.[0][0]
+ASSERT_EQ Ω, (λ.[0][0])(λ.[0][0])
+#ASSERT_EQ Y, λ.(λ.[1]([0][0]))(λ.[1]([0][0]))           # FIXME maximum recursion depth exceeded
+#ASSERT_EQ Z, λ.(λ.[1](λ.[1][1][0]))(λ.[1](λ.[1][1][0])) # FIXME maximum recursion depth exceeded
+

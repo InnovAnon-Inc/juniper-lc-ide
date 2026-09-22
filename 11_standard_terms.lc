@@ -1,0 +1,97 @@
+#! /usr/bin/env lc.py
+
+##
+# standard terms
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+INCLUDE "06_hol.lc"
+
+# --- AST Formulas for SKI Type Schemas ---
+VAR_A := MK_VAR 1
+VAR_B := MK_VAR 2
+
+# K1 Schema: A -> (B -> A)
+FORMULA_K1 := MK_IMP VAR_A (MK_IMP VAR_B VAR_A)
+
+# K2 Schema: A -> ((B -> A) -> A)
+FORMULA_K2 := MK_IMP VAR_A (MK_IMP (MK_IMP VAR_B VAR_A) VAR_A)
+
+# S1 Schema: (A -> ((B -> A) -> A)) -> ((A -> (B -> A)) -> (A -> A))
+FORMULA_S1 := MK_IMP FORMULA_K2 (MK_IMP FORMULA_K1 (MK_IMP VAR_A VAR_A))
+
+# Target Theorem: I (A -> A)
+THEOREM_IDENTITY := MK_IMP VAR_A VAR_A
+
+# Axiom Set containing SKI instances
+SKI_AXIOMS := cons FORMULA_K2 (cons FORMULA_S1 (cons FORMULA_K1 nil))
+
+# --- Proof Sequence (S K K Deduction) ---
+# Step 1: Cite K2 axiom [ A -> ((B -> A) -> A) ]
+STEP_1 := pair RULE_AXIOM (pair FORMULA_K2 nil)
+
+# Step 2: Cite S1 axiom [ (A -> ((B -> A) -> A)) -> ((A -> (B -> A)) -> (A -> A)) ]
+STEP_2 := pair RULE_AXIOM (pair FORMULA_S1 nil)
+
+# Step 3: Modus Ponens (Step 1, Step 2) -> [ (A -> (B -> A)) -> (A -> A) ]
+FORMULA_INTERMEDIATE := MK_IMP FORMULA_K1 THEOREM_IDENTITY
+STEP_3 := pair RULE_MP (pair FORMULA_INTERMEDIATE (pair FORMULA_K2 FORMULA_S1))
+
+# Step 4: Cite K1 axiom [ A -> (B -> A) ]
+STEP_4 := pair RULE_AXIOM (pair FORMULA_K1 nil)
+
+# Step 5: Modus Ponens (Step 4, Step 3) -> [ A -> A ]
+STEP_5 := pair RULE_MP (pair THEOREM_IDENTITY (pair FORMULA_K1 FORMULA_INTERMEDIATE))
+
+# Chain full proof
+PROOF_SKK := cons STEP_1 (cons STEP_2 (cons STEP_3 (cons STEP_4 (cons STEP_5 nil))))
+
+# --- Formal Verification ---
+MAIN_SKK_PROOF := VERIFY_PROOF SKI_AXIOMS PROOF_SKK
+ASSERT MAIN_SKK_PROOF
+
+
+
+
+
+
+
+
+
+# --- AST Representation of Reduction Transitions ---
+#VAR_OMEGA       := MK_VAR 100 # Term State: Omega
+#VAR_STEP_OMEGA  := MK_VAR 101 # Term State: Step(Omega)
+#VAR_STATIONARY  := MK_VAR 102 # Predicate: Non-Terminating Loop Invariant
+
+# --- AST Representation of Reduction Transitions ---
+VAR_OMEGA       := MK_VAR 3 # Changed from 100
+VAR_STEP_OMEGA  := MK_VAR 4 # Changed from 101
+VAR_STATIONARY  := MK_VAR 5 # Changed from 102
+
+# Axiom 1: Transition Step (Omega -> Step(Omega))
+AXIOM_TRANSITION := MK_IMP VAR_OMEGA VAR_STEP_OMEGA
+
+# Axiom 2: Loop Preservation (Step(Omega) -> Stationary)
+AXIOM_LOOP_PRESERVE := MK_IMP VAR_STEP_OMEGA VAR_STATIONARY
+
+# Base Axiom Set
+OMEGA_AXIOMS := cons AXIOM_TRANSITION (cons AXIOM_LOOP_PRESERVE (cons VAR_OMEGA nil))
+
+# --- Hilbert-Style Proof Sequence ---
+STEP_OM_1 := pair RULE_AXIOM (pair VAR_OMEGA nil)
+STEP_OM_2 := pair RULE_AXIOM (pair AXIOM_TRANSITION nil)
+# Step 3: Prove Step(Omega) holds after 1 reduction
+STEP_OM_3 := pair RULE_MP (pair VAR_STEP_OMEGA (pair VAR_OMEGA AXIOM_TRANSITION))
+
+STEP_OM_4 := pair RULE_AXIOM (pair AXIOM_LOOP_PRESERVE nil)
+# Step 5: Prove Stationary loop invariant holds for arbitrary step count n
+STEP_OM_5 := pair RULE_MP (pair VAR_STATIONARY (pair VAR_STEP_OMEGA AXIOM_LOOP_PRESERVE))
+
+PROOF_OMEGA := cons STEP_OM_1 (cons STEP_OM_2 (cons STEP_OM_3 (cons STEP_OM_4 (cons STEP_OM_5 nil))))
+
+MAIN_OMEGA_PROOF := VERIFY_PROOF OMEGA_AXIOMS PROOF_OMEGA
+ASSERT MAIN_OMEGA_PROOF

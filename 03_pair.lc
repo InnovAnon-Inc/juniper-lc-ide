@@ -1,0 +1,26 @@
+#! /usr/bin/env lc.py
+
+##
+# pair
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+
+pair         := λx y f  .f x y
+1st, first   := λp      .p ⊤
+2nd, second  := λp      .p ⊥
+head, car    := λl      .l K ⊥
+# TODO cdr ?
+tail         := λl      .l nil ⊥
+Φ            := λp      .pair (2nd p) (successor (2nd p))
+Ψ            := λf p    .pair (2nd p) (f         (2nd p))
+
+# TODO ∅
+nil          := ⊥
+NULL         := λp      .p (λx y.⊥)
+
+cons         := λh t c n.c h (t c n)
+=nil         := λl      .l (λh t.⊥) ⊤
+
+# TODO assertions

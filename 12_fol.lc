@@ -1,0 +1,150 @@
+#! /usr/bin/env lc.py
+
+##
+# 12_fol.lc - Extended First-Order Logic Operations & Formal Proof Verifications
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+INCLUDE "06_hol.lc"
+#INCLUDE "11_standard_terms.lc"
+
+# =====================================================================
+# 1. Extended Logical Operators & Equivalences
+# =====================================================================
+
+⇔, iff                     := λp q. and (implies p q) (implies q p)
+
+# =====================================================================
+# 2. Boolean Logic Assertions & Truth Table Validation
+# =====================================================================
+
+# --- XOR Assertions ---
+ASSERT not (xor true true)
+ASSERT xor true false
+ASSERT xor false true
+ASSERT not (xor false false)
+
+# --- IMPLIES Assertions ---
+ASSERT implies true true
+ASSERT not (implies true false)
+ASSERT implies false true
+ASSERT implies false false
+
+# --- IFF / Equivalence Assertions ---
+ASSERT iff true true
+ASSERT not (iff true false)
+ASSERT not (iff false true)
+ASSERT iff false false
+
+# --- De Morgan's Laws Assertions ---
+ASSERT_EQ (not (and true true)), (or (not true) (not true))
+ASSERT_EQ (not (and true false)), (or (not true) (not false))
+ASSERT_EQ (not (or true false)), (and (not true) (not false))
+ASSERT_EQ (not (or false false)), (and (not false) (not false))
+
+# --- Double Negation & Excluded Middle ---
+ASSERT_EQ (not (not true)), true
+ASSERT_EQ (not (not false)), false
+ASSERT (or true (not true))
+ASSERT (or false (not false))
+
+# =====================================================================
+# 3. Hilbert-Style Propositional FOL Formal Proofs
+# =====================================================================
+
+# --- Propositional Variables ---
+VAR_P := MK_VAR 1
+VAR_Q := MK_VAR 2
+VAR_R := MK_VAR 3
+
+## --- Axiom Schemas (Hilbert System / SKI-Compatible) ---
+## A1 Schema: P -> (Q -> P)
+#AXIOM_A1 := MK_IMP VAR_P (MK_IMP VAR_Q VAR_P)
+#
+## A2 Schema: (P -> (Q -> R)) -> ((P -> Q) -> (P -> R))
+#AXIOM_A2 := MK_IMP (MK_IMP VAR_P (MK_IMP VAR_Q VAR_R)) (MK_IMP (MK_IMP VAR_P VAR_Q) (MK_IMP VAR_P VAR_R))
+#
+## Instantiated Axiom A1 with Q = (P -> P)
+#AXIOM_A1_INST := MK_IMP VAR_P (MK_IMP (MK_IMP VAR_P VAR_P) VAR_P)
+#
+## Instantiated Axiom A2 with Q = (P -> P) and R = P
+#AXIOM_A2_INST := MK_IMP (MK_IMP VAR_P (MK_IMP (MK_IMP VAR_P VAR_P) VAR_P)) (MK_IMP (MK_IMP VAR_P (MK_IMP VAR_P VAR_P)) (MK_IMP VAR_P VAR_P))
+#
+## Target Theorem: P -> P (Law of Identity)
+#THEOREM_P_IMP_P := MK_IMP VAR_P VAR_P
+#
+## Axiom Context
+#FOL_AXIOMS := cons AXIOM_A1 (cons AXIOM_A2 (cons AXIOM_A1_INST (cons AXIOM_A2_INST nil)))
+#
+## --- Proof Chain: P -> P ---
+## Step 1: Cite A2 Instantiated
+#STEP_1 := pair RULE_AXIOM (pair AXIOM_A2_INST nil)
+#
+## Step 2: Cite A1 Instantiated
+#STEP_2 := pair RULE_AXIOM (pair AXIOM_A1_INST nil)
+#
+## Step 3: Modus Ponens (Step 2, Step 1) -> (P -> (P -> P)) -> (P -> P)
+#FORMULA_INT_1 := MK_IMP (MK_IMP VAR_P (MK_IMP VAR_P VAR_P)) THEOREM_P_IMP_P
+#STEP_3 := pair RULE_MP (pair FORMULA_INT_1 (pair AXIOM_A1_INST AXIOM_A2_INST))
+#
+## Step 4: Cite A1 Schema (P -> (P -> P))
+#STEP_4 := pair RULE_AXIOM (pair AXIOM_A1 nil)
+#
+## Step 5: Modus Ponens (Step 4, Step 3) -> (P -> P)
+#STEP_5 := pair RULE_MP (pair THEOREM_P_IMP_P (pair AXIOM_A1 FORMULA_INT_1))
+#
+#PROOF_IDENTITY := cons STEP_1 (cons STEP_2 (cons STEP_3 (cons STEP_4 (cons STEP_5 nil))))
+
+# --- Instantiated Axiom A1 with Q = P: P -> (P -> P) ---
+AXIOM_A1_P := MK_IMP VAR_P (MK_IMP VAR_P VAR_P)
+
+# --- Instantiated Axiom A1 with Q = (P -> P): P -> ((P -> P) -> P) ---
+AXIOM_A1_INST := MK_IMP VAR_P (MK_IMP (MK_IMP VAR_P VAR_P) VAR_P)
+
+# --- Instantiated Axiom A2 with Q = (P -> P) and R = P ---
+AXIOM_A2_INST := MK_IMP (MK_IMP VAR_P (MK_IMP (MK_IMP VAR_P VAR_P) VAR_P)) (MK_IMP (MK_IMP VAR_P (MK_IMP VAR_P VAR_P)) (MK_IMP VAR_P VAR_P))
+
+# Target Theorem: P -> P (Law of Identity)
+THEOREM_P_IMP_P := MK_IMP VAR_P VAR_P
+
+# Axiom Context
+FOL_AXIOMS := cons AXIOM_A1 (cons AXIOM_A2 (cons AXIOM_A1_P (cons AXIOM_A1_INST (cons AXIOM_A2_INST nil))))
+
+# --- Proof Chain: P -> P ---
+# Step 1: Cite A2 Instantiated
+STEP_1 := pair RULE_AXIOM (pair AXIOM_A2_INST nil)
+
+# Step 2: Cite A1 Instantiated
+STEP_2 := pair RULE_AXIOM (pair AXIOM_A1_INST nil)
+
+# Step 3: Modus Ponens (Step 2, Step 1) -> (P -> (P -> P)) -> (P -> P)
+FORMULA_INT_1 := MK_IMP (MK_IMP VAR_P (MK_IMP VAR_P VAR_P)) THEOREM_P_IMP_P
+STEP_3 := pair RULE_MP (pair FORMULA_INT_1 (pair AXIOM_A1_INST AXIOM_A2_INST))
+
+# Step 4: Cite A1 Schema Instance (P -> (P -> P))
+STEP_4 := pair RULE_AXIOM (pair AXIOM_A1_P nil)
+
+# Step 5: Modus Ponens (Step 4, Step 3) -> (P -> P)
+STEP_5 := pair RULE_MP (pair THEOREM_P_IMP_P (pair AXIOM_A1_P FORMULA_INT_1))
+
+PROOF_IDENTITY := cons STEP_1 (cons STEP_2 (cons STEP_3 (cons STEP_4 (cons STEP_5 nil))))
+
+# --- Verification ---
+VERIFICATION_RESULT := VERIFY_PROOF FOL_AXIOMS PROOF_IDENTITY
+ASSERT VERIFICATION_RESULT
+ASSERT (IS_PROVABLE THEOREM_P_IMP_P FOL_AXIOMS PROOF_IDENTITY)
+
+# --- Hypothetical Syllogism Axiom Setup: {P -> Q, Q -> R} ---
+FORMULA_P_Q := MK_IMP VAR_P VAR_Q
+FORMULA_Q_R := MK_IMP VAR_Q VAR_R
+
+SYLLOGISM_AXIOMS := cons FORMULA_P_Q (cons FORMULA_Q_R nil)
+
+HS_STEP_1 := pair RULE_AXIOM (pair FORMULA_P_Q nil)
+HS_STEP_2 := pair RULE_AXIOM (pair FORMULA_Q_R nil)
+
+ASSERT (1st (VERIFY_PROOF SYLLOGISM_AXIOMS (cons HS_STEP_1 (cons HS_STEP_2 nil))))

@@ -1,0 +1,185 @@
+#! /usr/bin/env lc.py
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+
+# --- AST Constructors ---
+TAG_VAR := 0
+TAG_IMP := 1
+TAG_EQ  := 2
+
+MK_VAR := \id .pair TAG_VAR id
+MK_IMP := \a b.pair TAG_IMP (pair a b)
+MK_EQ  := \a b.pair TAG_EQ  (pair a b)
+
+# --- AST Inspectors ---
+GET_TAG  := 1st
+GET_BODY := 2nd
+
+IS_VAR := \e.EQ_NUM (GET_TAG e) TAG_VAR
+IS_IMP := \e.EQ_NUM (GET_TAG e) TAG_IMP
+IS_EQ  := \e.EQ_NUM (GET_TAG e) TAG_EQ
+
+IS_SAME_FORMULA_REC := \self f1 f2. \
+  if (EQ_NUM (GET_TAG f1) (GET_TAG f2)) \
+    (if (IS_VAR f1) \
+      (EQ_NUM (GET_BODY f1) (GET_BODY f2)) \
+      (and (self (1st (GET_BODY f1)) (1st (GET_BODY f2))) \
+           (self (2nd (GET_BODY f1)) (2nd (GET_BODY f2))))) \
+    false
+
+IS_SAME_FORMULA := Y IS_SAME_FORMULA_REC
+
+# --- Check if Formula is in Axiom Set ---
+IS_AXIOM := \formula axioms. \
+  axioms (\h acc.or (IS_SAME_FORMULA formula h) acc) false
+
+# --- Modus Ponens Verifier ---
+# Given Premise 1 (A), Premise 2 (A -> B), and Target (B):
+# Validates that Premise 2 is an Implication, its antecedent matches A, and consequence matches B.
+VERIFY_MP := \p1 p2 target. \
+  if (IS_IMP p2) \
+    (and (IS_SAME_FORMULA p1 (1st (GET_BODY p2))) \
+         (IS_SAME_FORMULA target (2nd (GET_BODY p2)))) \
+    false
+
+# --- Single Step Checker ---
+# A step is a tuple: pair Rule_Type (pair Target_Formula Parameters)
+# Rule 0: Axiom Assertion (Parameters = Ignored)
+# Rule 1: Modus Ponens (Parameters = pair Premise1 Premise2)
+RULE_AXIOM := 0
+RULE_MP    := 1
+
+# --- 1. List Operations ---
+# Checks if a formula exists in a list (replacing IS_AXIOM)
+IN_LIST := \formula  lst. \
+  lst (\h  acc. or (IS_SAME_FORMULA formula h) acc) false
+
+# --- 2. Step Validator ---
+# Now requires 'history' to prove premises exist before applying them.
+CHECK_STEP := \step  history. \
+  step (\rule  payload. \
+    payload (\target  params. \
+      if (EQ_NUM rule RULE_AXIOM) \
+        (IN_LIST target history) \
+        (if (EQ_NUM rule RULE_MP) \
+          (and (IN_LIST (1st params) history) \
+               (and (IN_LIST (2nd params) history) \
+                    (VERIFY_MP (1st params) (2nd params) target))) \
+          false)))
+
+GET_STEP_FORMULA := \step. 1st (2nd step)
+
+# --- 3. Stateful Step Processor ---
+# Takes the threaded state (pair is_valid history) and the current step.
+# If valid, it adds the step's conclusion to the history. If invalid, it short-circuits.
+PROCESS_STEP := \state  step. \
+  state (\is_valid  history. \
+    if is_valid \
+      (if (CHECK_STEP step history) \
+        (pair true (cons (GET_STEP_FORMULA step) history)) \
+        (pair false history)) \
+      (pair false history))
+
+# --- 4. The Multi-Step Proof Verifier ---
+# Initializes state with (true, axioms) and extracts the final boolean flag.
+VERIFY_PROOF := \axioms  proof. \
+  1st (foldl PROCESS_STEP (pair true axioms) proof)
+
+
+
+
+
+# --- AST Substitution Mechanism ---
+# Replaces occurrences of a specific variable ID with a given term within an AST formula.
+SUBST_REC := \self. \target_id. \subst_term. \expr. \
+  if (IS_VAR expr) \
+    (if (EQ_NUM (GET_BODY expr) target_id) subst_term expr) \
+    (if (IS_IMP expr) \
+      (MK_IMP (self target_id subst_term (1st (GET_BODY expr))) \
+              (self target_id subst_term (2nd (GET_BODY expr)))) \
+      (if (IS_EQ expr) \
+        (MK_EQ (self target_id subst_term (1st (GET_BODY expr))) \
+               (self target_id subst_term (2nd (GET_BODY expr)))) \
+        expr))
+
+SUBST := Y SUBST_REC
+
+# --- Theorem Extraction from Proof Steps ---
+
+# Corrected LAST_STEP for Church-encoded lists using a right fold accumulator
+LAST_STEP := \l. l (\h. \acc. if (=nil acc) h acc) nil
+
+# Extracts the final theorem established by a complete proof
+GET_PROOF_THEOREM := \proof. GET_STEP_FORMULA (LAST_STEP proof)
+
+# --- Provability Predicate ---
+# Checks whether a given formula is provable using the provided axiom set and proof
+IS_PROVABLE := \formula. \axioms. \proof. \
+  and (VERIFY_PROOF axioms proof) \
+      (IS_SAME_FORMULA formula (GET_PROOF_THEOREM proof))
+
+# --- Verification of Reflexivity Provability ---
+#ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
+
+
+
+
+
+## --- Multi-Step Proof Example ---
+#
+## Suppose we have an implication axiom or theorem:
+#THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
+#
+## Step 1: Assert an axiom or prerequisite theorem
+#STEP_1 := pair RULE_AXIOM (pair AXIOM_REFLEXIVE nil)
+#
+## Step 2: Apply Modus Ponens or chain steps using cons
+#PROOF_MULTI := cons STEP_1 (cons STEP_2 nil)
+#
+## Verify the multi-step proof against the axiom set
+#MAIN_MULTI := VERIFY_PROOF AXIOM_SET PROOF_MULTI
+#ASSERT MAIN_MULTI
+## --- Valid Multi-Step Proof Example ---
+#
+## Define an implication to serve as a test theorem: (x=x) -> (x=x)
+#THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
+#
+## We inject the implication into our testing axioms
+#MY_AXIOMS := cons THEOREM_IMP (cons AXIOM_REFLEXIVE nil)
+#
+## Step 1: Cite the Reflexivity Axiom (x = x)
+#STEP_1 := pair RULE_AXIOM (pair AXIOM_REFLEXIVE nil)
+#
+## Step 2: Cite the Implication Axiom (x = x -> x = x)
+#STEP_2 := pair RULE_AXIOM (pair THEOREM_IMP nil)
+#
+## Step 3: Modus Ponens (Premise 1: STEP_1, Premise 2: STEP_2, Target: x = x)
+#STEP_3 := pair RULE_MP (pair AXIOM_REFLEXIVE (pair AXIOM_REFLEXIVE THEOREM_IMP))
+#
+## Construct the sequential proof
+#PROOF_MULTI := cons STEP_1 (cons STEP_2 (cons STEP_3 nil))
+#
+## Verify
+#MAIN_MULTI := VERIFY_PROOF MY_AXIOMS PROOF_MULTI
+#ASSERT MAIN_MULTI
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

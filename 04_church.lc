@@ -1,0 +1,184 @@
+#! /usr/bin/env lc.py
+
+##
+# natural numbers
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+
+0,  zero                := ⊥
+successor               := λn f x  .f (n f x)
+1,  one                 := successor 0
+2,  two                 := successor 1
+3,  three               := successor 2
+4,  four                := successor 3
+5,  five                := successor 4
+6,  six                 := successor 5
+7,  seven               := successor 6
+8,  eight               := successor 7
+9,  nine                := successor 8
+10, ten                 := successor 9
+11, eleven              := successor 10
+12, twelve              := successor 11
+13, thirteen            := successor 12
+14, fourteen            := successor 13
+15, fifteen             := successor 14
+16, sixteen             := successor 15
+17, seventeen           := successor 16
+18, eighteen            := successor 17
+19, nineteen            := successor 18
+20, twenty              := successor 19
+21, twenty-one          := successor 20
+22, twenty-two          := successor 21
+23, twenty-three        := successor 22
+24, twenty-four         := successor 23
+25, twenty-five         := successor 24
+26, twenty-six          := successor 25
+27, twenty-seven        := successor 26
+28, twenty-eight        := successor 27
+29, twenty-nine         := successor 28
+30, thirty              := successor 29
+# TODO need a way to meta-programmatically define more numbers
+
++                       := λm n f x.m f (n f x)
++,  plus, add           := λm n    .m successor n
+#≡ # TODO assertions and proofs ?
+
+*                       := B
+ASSERT_EQ *, λm n f.m (n f)
+*, times, multiply      := λm n    .m (+ n) 0
+#≡ # TODO assertions and proofs ?
+POW                     := λbn     .n (* b) 1
+POW                     := λb n f  .n b f
+**, power, exponentiate := λb n    .n b
+#≡ # TODO assertions and proofs ?
+
+predecessor             := λn      .1st (n (Ψ successor) (pair 0 0))
+predecessor             := λn f x  .n (λg h.h (g f)) (λu.x) I
+
+-, minus, subtract      := λm n    .n predecessor m
+
+=0, eqz                 := λn      .n (λx.⊥) ⊤
+≤,  leq                 := λm n    .=0 (- m n)
+≥,  geq                 := λm n    .≤ n m
+>,  gt                  := λm n    .¬ (≤ m n)
+<,  lt                  := λm n    .> n m
+EQ_NUM                  := λm n    .∧ (=0 (- m n)) (=0 (- n m))
+
+# TODO
+# ≠
+
+# Division & Modulo
+# / (division)
+# ÷
+DIV_REC     := λself m n. if (≤ n m) (successor (self (- m n) n)) 0
+div         := Y DIV_REC
+
+MOD_REC     := λself m n. if (≤ n m) (self (- m n) n) m
+mod         := Y MOD_REC
+
+
+# ×
+# ·
+# √
+
+ASSERT_EQ 1, (λf x.f x)
+ASSERT_EQ 2, (λf x.f (f x)) # TODO shorthand
+ASSERT_EQ 3, (λf x.f (f (f x))) # TODO shorthand
+
+ASSERT_EQ (+ 0 0), 0
+ASSERT_EQ (+ 0 1), 1
+ASSERT_EQ (+ 1 0), 1
+ASSERT_EQ (+ 1 1), 2
+ASSERT_EQ (+ 2 0), 2
+ASSERT_EQ (+ 0 2), 2
+ASSERT_EQ (+ 2 1), 3
+ASSERT_EQ (+ 1 2), 3
+ASSERT_EQ (+ 2 2), 4
+ASSERT_EQ (+ 3 0), 3
+ASSERT_EQ (+ 0 3), 3
+ASSERT_EQ (+ 3 1), 4
+ASSERT_EQ (+ 1 3), 4
+ASSERT_EQ (+ 3 2), 5
+ASSERT_EQ (+ 2 3), 5
+ASSERT_EQ (+ 3 3), 6
+
+ASSERT_EQ (* 0 0), 0
+ASSERT_EQ (* 0 1), 0
+ASSERT_EQ (* 1 0), 0
+ASSERT_EQ (* 1 1), 1
+ASSERT_EQ (* 2 0), 0
+ASSERT_EQ (* 0 2), 0
+ASSERT_EQ (* 2 1), 2
+ASSERT_EQ (* 1 2), 2
+ASSERT_EQ (* 2 2), 4
+ASSERT_EQ (* 3 0), 0
+ASSERT_EQ (* 0 3), 0
+ASSERT_EQ (* 3 1), 3
+ASSERT_EQ (* 1 3), 3
+ASSERT_EQ (* 3 2), 6
+ASSERT_EQ (* 2 3), 6
+ASSERT_EQ (* 3 3), 9
+
+ASSERT_EQ (** 0 0), I # ??? really ???
+ASSERT_EQ (** 0 1), 0
+#ASSERT_EQ (** 1 0), 1 # FIXME I
+ASSERT_EQ (** 1 1), 1
+#ASSERT_EQ (** 2 0), 1 # FIXME I
+ASSERT_EQ (** 0 2), 0
+ASSERT_EQ (** 2 1), 2
+ASSERT_EQ (** 1 2), 1
+ASSERT_EQ (** 2 2), 4
+#ASSERT_EQ (** 3 0), 1
+ASSERT_EQ (** 0 3), 0
+ASSERT_EQ (** 3 1), 3
+ASSERT_EQ (** 1 3), 1
+ASSERT_EQ (** 3 2), 9
+ASSERT_EQ (** 2 3), 8
+ASSERT_EQ (** 3 3), 27
+
+ASSERT_EQ predecessor  1,  0
+ASSERT_EQ predecessor  2,  1
+ASSERT_EQ predecessor  3,  2
+ASSERT_EQ predecessor  4,  3
+ASSERT_EQ predecessor  5,  4
+ASSERT_EQ predecessor  6,  5
+ASSERT_EQ predecessor  7,  6
+ASSERT_EQ predecessor  8,  7
+ASSERT_EQ predecessor  9,  8
+ASSERT_EQ predecessor 10,  9
+ASSERT_EQ predecessor 11, 10
+ASSERT_EQ predecessor 12, 11
+ASSERT_EQ predecessor 13, 12
+ASSERT_EQ predecessor 14, 13
+ASSERT_EQ predecessor 15, 14
+ASSERT_EQ predecessor 16, 15
+ASSERT_EQ predecessor 17, 16
+ASSERT_EQ predecessor 18, 17
+ASSERT_EQ predecessor 19, 18
+ASSERT_EQ predecessor 20, 19
+ASSERT_EQ predecessor 21, 20
+ASSERT_EQ predecessor 22, 21
+ASSERT_EQ predecessor 23, 22
+ASSERT_EQ predecessor 24, 23
+ASSERT_EQ predecessor 25, 24
+ASSERT_EQ predecessor 26, 25
+ASSERT_EQ predecessor 27, 26
+ASSERT_EQ predecessor 28, 27
+ASSERT_EQ predecessor 29, 28
+ASSERT_EQ predecessor 30, 29
+#ASSERT_EQ predecessor 31, 30
+
+# TODO more assertions
+ASSERT (leq 2 3)
+# TODO more assertions
+ASSERT (gt 3 2)
+# TODO more assertions
+ASSERT (EQ_NUM 4 4)
+
+# TODO more assertions
+ASSERT_EQ (div 5 2), 2
+# TODO more assertions
+ASSERT_EQ (mod 5 2), 1

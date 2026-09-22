@@ -1,0 +1,43 @@
+#! /usr/bin/env lc.py
+
+##
+# F.O.L.
+##
+
+INCLUDE "01_standard_terms.lc"
+
+⊤,  true   := K
+⊥,  false  := λ     .I
+¬,  not    := λb    .b ⊥ ⊤
+∧,  and    := λp q  .p q ⊥
+∨,  or     := λp q  .p ⊤ q
+
+⊻, xor     := λp q  . \
+  ∧                   \
+  (∨ p q)             \
+  (∨ (¬ p) (¬ q))
+⇒, implies := λp q  .∨ (¬ p) q
+⇔, iff     := λp q  .∧ (⇒ p q) (⇒ q p)
+
+if         := λb t f.b t f
+
+ASSERT true
+ASSERT_EQ true, λλ.[1]
+ASSERT_EQ false, λλ.[0]
+# TODO assert true is not equal to false
+ASSERT (not false)
+ASSERT not (not true)
+ASSERT and true true
+ASSERT not (and true false)
+ASSERT not (and false true)
+ASSERT not (and false false)
+ASSERT or true true
+ASSERT or true false
+ASSERT or false true
+ASSERT not (or false false)
+
+# TODO assertions for xor
+# TODO assertions for implies
+
+ASSERT_EQ (if true  1 2), 1
+ASSERT_EQ (if false 1 2), 2

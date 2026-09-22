@@ -7,17 +7,16 @@ from typing import Dict, List, Tuple, Optional, Set, Any
 from lark import Lark, Transformer, v_args
 
 # =====================================================================
-# 1. Grammar Definition with Chained Lambda, Native De Bruijn & INCLUDE Support
+# 1. Grammar Definition with Chained Lambda & Native De Bruijn Support
 # =====================================================================
 
 LC_GRAMMAR = r"""
     start: (_NEWLINE | statement)*
 
-    statement: ident_list ASSIGN expr           -> assign
-             | "ASSERT" expr                    -> assert_expr
-             | "ASSERT_EQ" expr "," expr        -> assert_eq
-             | "INCLUDE" (STRING | IDENT)       -> include_stmt
-             | expr                             -> eval_expr
+    statement: ident_list ASSIGN expr   -> assign
+             | "ASSERT" expr            -> assert_expr
+             | "ASSERT_EQ" expr "," expr -> assert_eq
+             | expr                     -> eval_expr
 
     ident_list: IDENT ("," IDENT)*
 
@@ -141,13 +140,6 @@ class LCTransformer(Transformer):
         return (meta.line, "ASSERT_EQ", left, right)
 
     @v_args(meta=True, inline=True)
-    def include_stmt(self, meta, path_tok):
-        p = str(path_tok)
-        if (p.startswith('"') and p.endswith('"')) or (p.startswith("'") and p.endswith("'")):
-            p = p[1:-1]
-        return (meta.line, "INCLUDE", p)
-
-    @v_args(meta=True, inline=True)
     def eval_expr(self, meta, expr):
         return (meta.line, "EVAL", expr)
 
@@ -158,6 +150,7 @@ class LCTransformer(Transformer):
         return res
 
     def anon_abs_chain(self, *args):
+        # args contains N LAMBDA tokens, 1 DOT token, and body
         body = args[-1]
         num_lambdas = len(args) - 2
         for _ in range(num_lambdas):
@@ -275,6 +268,7 @@ def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
     elif name == "READ_LINE":
         prompt_val = args[0]
         line = input(f"{prompt_val}> ")
+        # Return index identifier or identity representing input
         return DBVar(get_free_var_index(line))
 
     elif name == "EXEC_CMD":
@@ -333,28 +327,9 @@ def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
 
     return args[-1] if args else DBVar(0)
 
-#def beta_reduce_step(term: DBTerm) -> Tuple[DBTerm, bool]:
-#    if isinstance(term, DBApp):
-#        if isinstance(term.fun, DBAbs):
-#            reduced = db_substitute(term.fun.body, term.arg, 0)
-#            return reduced, True
-#        elif isinstance(term.fun, DBBuiltin):
-#            builtin = term.fun
-#            new_args = builtin.args + [term.arg]
-#            if len(new_args) == builtin.arity:
-#                result = execute_builtin_effect(builtin.name, new_args)
-#                return result, True
-#            else:
-#                return DBBuiltin(builtin.name, builtin.arity, new_args), True
-#        else:
-#            new_fun, reduced = beta_reduce_step(term.fun)
-#            if reduced:
-#                return DBApp(new_fun, term.arg), True
-#    return term, False
 def beta_reduce_step(term: DBTerm) -> Tuple[DBTerm, bool]:
     if isinstance(term, DBApp):
         if isinstance(term.fun, DBAbs):
-            # Reduce argument slightly or substitute directly
             reduced = db_substitute(term.fun.body, term.arg, 0)
             return reduced, True
         elif isinstance(term.fun, DBBuiltin):
@@ -369,15 +344,9 @@ def beta_reduce_step(term: DBTerm) -> Tuple[DBTerm, bool]:
             new_fun, reduced = beta_reduce_step(term.fun)
             if reduced:
                 return DBApp(new_fun, term.arg), True
-            # Fallback: reduce argument if function is already in normal form
-            new_arg, arg_reduced = beta_reduce_step(term.arg)
-            if arg_reduced:
-                return DBApp(term.fun, new_arg), True
     return term, False
 
-#def normalize(term: DBTerm, max_steps: int = 10000) -> DBTerm:
-#def normalize(term: DBTerm, max_steps: int = 100000) -> DBTerm:
-def normalize(term: DBTerm, max_steps: int = 1000000) -> DBTerm:
+def normalize(term: DBTerm, max_steps: int = 10000) -> DBTerm:
     curr = term
     for _ in range(max_steps):
         curr, reduced = beta_reduce_step(curr)
@@ -498,7 +467,7 @@ def debruijn_to_str(
     return str(term)
 
 # =====================================================================
-# 6. Execution Engine with Recursive Inclusion
+# 6. Execution Engine
 # =====================================================================
 
 def execute_program(
@@ -506,15 +475,8 @@ def execute_program(
     code: str,
     env: Dict[str, DBTerm],
     declared_terms: Dict[str, DBTerm],
-    quiet: bool = False,
-    visited_files: Optional[Set[str]] = None
+    quiet: bool = False
 ) -> Tuple[List[str], Dict[str, DBTerm], Dict[str, DBTerm]]:
-    if visited_files is None:
-        visited_files = set()
-
-    if filename and filename != "<stdin>" and os.path.exists(filename):
-        visited_files.add(os.path.realpath(filename))
-
     parser = Lark(LC_GRAMMAR, parser="lalr", propagate_positions=True)
 
     try:
@@ -538,38 +500,7 @@ def execute_program(
         line_no, action = stmt[0], stmt[1]
 
         try:
-            if action == "INCLUDE":
-                inc_path = stmt[2]
-                if filename and filename != "<stdin>" and os.path.exists(filename):
-                    base_dir = os.path.dirname(os.path.abspath(filename))
-                else:
-                    base_dir = os.getcwd()
-
-                resolved_path = inc_path if os.path.isabs(inc_path) else os.path.join(base_dir, inc_path)
-                canonical_path = os.path.realpath(resolved_path)
-
-                if canonical_path in visited_files:
-                    if not quiet:
-                        print(f"# [INCLUDE] Skipping already included file: {inc_path}", file=sys.stderr)
-                elif not os.path.exists(canonical_path):
-                    print(f"\n❌ INCLUDE ERROR at {filename}:{line_no}: File not found '{inc_path}' ({canonical_path})", file=sys.stderr)
-                    sys.exit(1)
-                else:
-                    visited_files.add(canonical_path)
-                    with open(canonical_path, "r", encoding="utf-8") as f:
-                        included_code = f.read()
-
-                    inc_lines, env, declared_terms = execute_program(
-                        canonical_path,
-                        included_code,
-                        env,
-                        declared_terms,
-                        quiet=quiet,
-                        visited_files=visited_files
-                    )
-                    output_lines.extend(inc_lines)
-
-            elif action == "ASSERT":
+            if action == "ASSERT":
                 expr = stmt[2]
                 db_term = surface_to_debruijn(expr, env)
                 evaluated = normalize(db_term)

@@ -1,0 +1,147 @@
+#! /usr/bin/env lc.py
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"   # TODO assertions
+INCLUDE "04_church.lc" # TODO assertions
+
+##
+# High-Level Lisp-Like Constructs & Sequencing
+##
+
+# Bind local variable: (let val (\var. body))
+let             := **
+ASSERT_EQ let, λval body.body val
+
+# Recursive local binding using Y-combinator fixpoint: (letrec (\self. builder) (\f. body))
+letrec          := λf_builder body. body (Y f_builder)
+
+# Sequential execution / evaluation sequence (PROGN / DO): evaluates x then y
+seq, do         := ⊥
+ASSERT_EQ seq, λx y.y
+
+# Conditional Multi-Branch Cascade (COND)
+# Evaluates conditions sequentially; returns matching branch payload or default fallback
+cond2           := λc1 v1 c2 v2 default. \
+  if c1                                  \
+    v1                                   \
+    (if c2 v2 default)
+cond3           := λc1 v1 c2 v2 c3 v3 default. \
+  if c1                                        \
+    v1                                         \
+    (if c2                                     \
+      v2                                       \
+      (if c3 v3 default))
+cond4           := λc1 v1 c2 v2 c3 v3 c4 v4 default. \
+  if c1                                              \
+    v1                                               \
+    (if c2                                           \
+      v2                                             \
+      (if c3                                         \
+        v3                                           \
+        (if c4 v4 default)))
+
+##
+# Looping Primitives
+##
+
+# while Loop: repeats step_fn on state while (cond_fn state) evaluates to true
+# WHILE_REC := \self cond step state. if (cond state) (self cond step (step state)) state
+WHILE_REC       := λself cond step state. \
+  if (cond state) \
+    (self cond step (step state)) \
+    state
+
+while           := Y WHILE_REC
+
+# FOR_RANGE Loop: iterates index from start to end (inclusive), threading state
+# FOR_RANGE_REC := \self curr end step_fn state. if (LEQ curr end) (self (successor curr) end step_fn (step_fn state curr)) state
+FOR_RANGE_REC   := λself curr end step_fn state. \
+  if (≤ curr end) \
+    (self (successor curr) end step_fn (step_fn state curr)) \
+    state
+
+FOR_RANGE       := Y FOR_RANGE_REC
+
+# repeat: Applies a unary function f to state n times sequentially
+repeat          := if
+ASSERT_EQ repeat, λn f init.n f init
+
+# TODO other pythonic itertools
+
+##
+# Higher-Order List Iterators & Combinators
+##
+
+# Left fold for Church lists: foldl f init [a, b, c] -> f (f (f init a) b) c
+foldl := \f. \init. \lst. \
+  lst (\elem. \acc_func. \curr_acc. \
+    acc_func (f curr_acc elem) \
+  ) I init
+
+# Right Fold: foldr f init list
+foldr           := pair
+ASSERT_EQ foldr, λf init lst.lst f init
+
+# map: applies f to every element in list
+map             := λf lst. lst (λh acc. cons (f h) acc) nil
+
+# filter: retains elements where predicate p holds true
+filter          := λp lst. lst (λh acc. if (p h) (cons h acc) acc) nil
+
+# length: computes total element count in a Church list
+length          := λlst. lst (λh acc. successor acc) 0
+
+# reverse: reverses element order of a Church list
+reverse         := λlst. foldl (λacc elem. cons elem acc) nil lst
+
+# TODO reduce, etc
+
+##
+# Assertions & Verification Suite for High-Level Constructs
+##
+
+# --- LET & LETREC Assertions ---
+ASSERT_EQ (let 5 (λx. + x 2)), 7
+ASSERT_EQ (letrec (λself n. if (=0 n) 0 (+ n (self (predecessor n)))) (λsum. sum 4)), 10
+
+# --- COND Assertions ---
+ASSERT_EQ (cond3 false 100 false 200 true 300 400), 300
+ASSERT_EQ (cond3 false 100 false 200 false 300 400), 400
+
+# --- WHILE Loop Sanity Checks ---
+# Test 1: Countdown loop from 3 to 0
+ASSERT_EQ (while (λst. ¬ (=0 st)) predecessor 3), 0
+
+# Test 2: Accumulate sum of numbers (countdown state tuple: PAIR counter accumulator)
+# Sum numbers 3 + 2 + 1 = 6
+TEST_WHILE_STEP := λst. pair (predecessor (1st st)) (+ (2nd st) (1st st))
+TEST_WHILE_COND := λst. ¬ (=0 (1st st))
+TEST_WHILE_RES  := while TEST_WHILE_COND TEST_WHILE_STEP (pair 3 0)
+ASSERT_EQ (2nd TEST_WHILE_RES), 6
+
+# --- FOR_RANGE Loop Sanity Checks ---
+# Sum numbers 1 to 4: 1 + 2 + 3 + 4 = 10
+TEST_FOR_RES := FOR_RANGE 1 4 (λacc i. + acc i) 0
+ASSERT_EQ TEST_FOR_RES, 10
+
+# --- MAP, FILTER, LENGTH & REVERSE Assertions ---
+TEST_LIST := cons 1 (cons 2 (cons 3 nil))
+
+# Verify LENGTH
+ASSERT_EQ (length TEST_LIST), 3
+
+# Verify MAP (increment each element by 1: [1,2,3] -> [2,3,4])
+TEST_MAP_RES := map (λx. + x 1) TEST_LIST
+ASSERT_EQ (length TEST_MAP_RES), 3
+ASSERT_EQ (head TEST_MAP_RES), 2
+
+# Verify FILTER (keep elements > 1)
+TEST_FILTER_RES := filter (λx. gt x 1) TEST_LIST
+ASSERT_EQ (length TEST_FILTER_RES), 2
+ASSERT_EQ (head TEST_FILTER_RES), 2
+
+# Verify REVERSE ([1,2,3] -> [3,2,1])
+TEST_REV_RES := reverse TEST_LIST
+ASSERT_EQ (head TEST_REV_RES), 3
+
