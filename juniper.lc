@@ -94,112 +94,6 @@ set_difference      := λs1 s2 elem. ∧ (s1 elem) (¬ (s2 elem))
 
 
 
-## --- Terms ---
-#VAR_X := MK_VAR (successor 0)
-#VAR_Y := MK_VAR (successor (successor 0))
-#
-## --- Axiom 1: Reflexivity of Equality (x = x) ---
-#AXIOM_REFLEXIVE := MK_EQ VAR_X VAR_X
-#
-## --- Axiom 2: Zero is not the Successor of any number (S(x) = 0 -> false) ---
-## Represented structurally as Implication: S(x) = 0 -> x != x
-#S_X := MK_VAR (successor (successor (successor 0))) # S(x) term
-#AXIOM_ZERO_SUCC := MK_IMP (MK_EQ S_X (MK_VAR 0)) (MK_EQ VAR_X VAR_Y)
-#
-## --- Full Axiom List ---
-#AXIOM_SET := cons AXIOM_REFLEXIVE (cons AXIOM_ZERO_SUCC nil)
-#
-#
-#
-#
-#
-#
-#
-#
-## --- Target Theorem: x = x ---
-#THEOREM_REFLEXIVE := MK_EQ VAR_X VAR_X
-#
-## --- Step 1: Assert AXIOM_REFLEXIVE ---
-#STEP_1 := pair RULE_AXIOM (pair THEOREM_REFLEXIVE nil)
-#
-## --- Proof Sequence ---
-#PROOF_1 := cons STEP_1 nil
-#
-## --- FINAL EVALUATION ---
-## Running this term reduces down purely to true (\x.\y.x)
-#MAIN := VERIFY_PROOF AXIOM_SET PROOF_1
-#
-#MAIN
-#ASSERT MAIN
-
-
-
-
-
-
-
-
-
-
-
-
-## --- Substitution Assertions & Tests ---
-#TEST_VAR_ID     := successor 0
-#TEST_TARGET_VAL := MK_VAR (successor (successor 0))
-#TEST_FORMULA    := MK_EQ (MK_VAR TEST_VAR_ID) (MK_VAR TEST_VAR_ID)
-#
-## Perform substitution: replace variable 1 with VAR_Y in (var 1 = var 1)
-#TEST_SUBST_RES  := SUBST TEST_VAR_ID TEST_TARGET_VAL TEST_FORMULA
-#EXPECTED_RES    := MK_EQ TEST_TARGET_VAL TEST_TARGET_VAL
-#
-## Verify structural match of the substitution result
-#ASSERT (IS_SAME_FORMULA TEST_SUBST_RES EXPECTED_RES)
-#
-#ASSERT (IS_PROVABLE THEOREM_REFLEXIVE AXIOM_SET PROOF_1)
-#
-#
-#
-#
-#
-### --- Multi-Step Proof Example ---
-#
-## Define an implication to serve as a test theorem: (x=x) -> (x=x)
-#THEOREM_IMP := MK_IMP AXIOM_REFLEXIVE AXIOM_REFLEXIVE
-#
-## We inject the implication into our testing axioms
-#MY_AXIOMS := cons THEOREM_IMP (cons AXIOM_REFLEXIVE nil)
-#
-## Step 1: Cite the Reflexivity Axiom (x = x)
-#STEP_1 := pair RULE_AXIOM (pair AXIOM_REFLEXIVE nil)
-#
-## Step 2: Cite the Implication Axiom (x = x -> x = x)
-#STEP_2 := pair RULE_AXIOM (pair THEOREM_IMP nil)
-#
-## Step 3: Modus Ponens (Premise 1: STEP_1, Premise 2: STEP_2, Target: x = x)
-#STEP_3 := pair RULE_MP (pair AXIOM_REFLEXIVE (pair AXIOM_REFLEXIVE THEOREM_IMP))
-#
-## Construct the sequential proof
-#PROOF_MULTI := cons STEP_1 (cons STEP_2 (cons STEP_3 nil))
-#
-## Verify
-#MAIN_MULTI := VERIFY_PROOF MY_AXIOMS PROOF_MULTI
-#ASSERT MAIN_MULTI
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # --- Meta-Circular Compiler: AST for De Bruijn Terms ---
@@ -466,11 +360,17 @@ APP := λf a. λv a p. p f a
 # SIZE(Var i)   = 1
 # SIZE(Abs b)   = 1 + SIZE(b)
 # SIZE(App f a) = 1 + SIZE(f) + SIZE(a)
+#SIZE := Y (λself term. \
+#  term \
+#    (λi. 1) \
+#    (λb. ADD 1 (self b)) \
+#    (λf a. ADD 1 (ADD (self f) (self a))) \
+#)
 SIZE := Y (λself term. \
   term \
     (λi. 1) \
-    (λb. ADD 1 (self b)) \
-    (λf a. ADD 1 (ADD (self f) (self a))) \
+    (λb. + 1 (self b)) \
+    (λf a. + 1 (+ (self f) (self a))) \
 )
 
 
