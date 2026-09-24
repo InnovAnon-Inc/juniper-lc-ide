@@ -1,3 +1,45 @@
-I want to add any relevant assertions and proofs to this 23_resugar.lc.
-see the 1*_*.lc files to see what I mean about proofs.
-the 2*_*.lc files are supposed to implement the resugaring, etc., seen in lc-old.py
+## 1. Meta-Circular Compilation & Interpreter Architecture
+
+* Transition the Python-based `lc.py` reference interpreter into a fully self-hosting, pure lambda calculus implementation (`lc.lc`).
+
+
+* Optimize De Bruijn index manipulation, shifting, and beta-reduction evaluation loops to maintain performance on hardware-constrained systems.
+
+
+* Implement robust beta-equivalence verification (`≡`) for re-sugarings, AST transformations, and automated complexity tracking.
+
+
+
+## 2. Standard Library & Mathematical Foundations
+
+* Expand `stdlib.lc` to include rigorous definitions for standard sets (integers, rationals, reals, complex numbers) alongside calculus and geometry proofs.
+
+
+* Implement low-level data layouts including IEEE floating-point standards, two's-complement integers, and foundational bit-twiddling operations.
+
+
+* Build out comprehensive modules for linear algebra, projective geometry, statistics, probability, and a computer algebra system with formal proof checking.
+
+
+
+## 3. Visual Data Structures & Bubble Notation IDE
+
+* Design a web-based IDE frontend incorporating Fruit of Life-style bubble notation for interactive lambda expression manipulation.
+
+
+* Implement self-rendering visual data structures that dynamically update graphical representations when evaluated or modified.
+
+
+* Expand the `lc.py` graphics and audio engine hooks to support generative animations, rasterization algorithms, and Web Audio synthesis.
+
+
+
+## 4. Ubiquitous Deployment Targets
+
+* Extend system primitive handlers (`SOCKET`, `EXECVE`, `PIPE`) to function seamlessly across terminal shells, browser runtimes, and user-space applications.
+
+
+* Build low-level bindings for kernel-space execution, UEFI/BIOS bootloaders, and physical Turing book printing pipelines.
+
+
+* Implement automatic multi-threading, process spawning, and networking socket multiplexing using Church-encoded streams.

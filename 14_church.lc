@@ -10,8 +10,8 @@ INCLUDE "03_pair.lc"
 INCLUDE "04_church.lc"
 INCLUDE "05_map_reduce.lc"
 INCLUDE "06_hol.lc"
-INCLUDE "12_fol.lc"
-INCLUDE "13_pair.lc"
+#INCLUDE "12_fol.lc"
+#INCLUDE "13_pair.lc"
 
 # =====================================================================
 # 1. AST Terms & Variables for Peano Arithmetic Schemas

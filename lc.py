@@ -728,7 +728,7 @@ def execute_program(
                 target, expr = stmt[2], stmt[3]
                 for name in target:
                     if name in declared_terms:
-                        print(f"\n❌ REDEFINITION ERROR: '{name}' is already defined. Use '≡' (triple equals/redefine) to explicitly override.", file=sys.stderr)
+                        print(f"\n❌ REDEFINITION ERROR at {filename}:{line_no}: '{name}' is already defined. Use '≡' (triple equals/redefine) to explicitly override.", file=sys.stderr)
                         sys.exit(1)
 
                 db_term = surface_to_debruijn(expr, env)
