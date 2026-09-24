@@ -1,0 +1,100 @@
+#! /usr/bin/env lc.py
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"     
+INCLUDE "04_church.lc"   
+INCLUDE "05_map_reduce.lc"
+INCLUDE "06_hol.lc"      
+INCLUDE "11_standard_terms.lc"
+INCLUDE "12_fol.lc"
+INCLUDE "13_pair.lc"
+INCLUDE "14_church.lc"
+INCLUDE "15_map_reduce.lc"
+INCLUDE "16_hol.lc"
+
+# --- Meta-Circular Compiler: AST for De Bruijn Terms ---
+TAG_DB_VAR := 0
+TAG_DB_ABS := 1
+TAG_DB_APP := 2
+
+MK_DB_VAR := \idx. pair TAG_DB_VAR idx
+MK_DB_ABS := \body. pair TAG_DB_ABS body
+MK_DB_APP := \fun. \arg. pair TAG_DB_APP (pair fun arg)
+
+IS_DB_VAR := \t. EQ_NUM (first t) TAG_DB_VAR
+IS_DB_ABS := \t. EQ_NUM (first t) TAG_DB_ABS
+IS_DB_APP := \t. EQ_NUM (first t) TAG_DB_APP
+
+DB_VAR_INDEX := second
+DB_ABS_BODY  := second
+DB_APP_FUN   := \t. first (second t)
+DB_APP_ARG   := \t. second (second t)
+
+# --- Meta-Circular Compiler: Structural Equality ---
+DB_EQUAL_REC := \self. \t1. \t2. \
+  if (IS_DB_VAR t1) \
+    (and (IS_DB_VAR t2) (EQ_NUM (second t1) (second t2))) \
+    (if (IS_DB_ABS t1) \
+      (and (IS_DB_ABS t2) (self (second t1) (second t2))) \
+      (if (IS_DB_APP t1) \
+        (and (IS_DB_APP t2) \
+             (and (self (first (second t1)) (first (second t2))) \
+                  (self (second (second t1)) (second (second t2))))) \
+        false))
+
+DB_EQUAL := Y DB_EQUAL_REC
+
+# =====================================================================
+# 1. Runtime Assertions & Unit Tests for De Bruijn AST Constructors
+# =====================================================================
+
+# Test Variable AST Construction & Inspectors
+TEST_DB_V := MK_DB_VAR 5
+ASSERT (IS_DB_VAR TEST_DB_V)
+ASSERT_EQ (DB_VAR_INDEX TEST_DB_V), 5
+
+# Test Abstraction AST Construction & Inspectors
+TEST_DB_A := MK_DB_ABS TEST_DB_V
+ASSERT (IS_DB_ABS TEST_DB_A)
+ASSERT_EQ (DB_VAR_INDEX (DB_ABS_BODY TEST_DB_A)), 5
+
+# Test Application AST Construction & Inspectors
+TEST_DB_P := MK_DB_APP TEST_DB_A TEST_DB_V
+ASSERT (IS_DB_APP TEST_DB_P)
+ASSERT (IS_DB_ABS (DB_APP_FUN TEST_DB_P))
+ASSERT (IS_DB_VAR (DB_APP_ARG TEST_DB_P))
+
+# Test Structural Equality (DB_EQUAL)
+TEST_DB_V2 := MK_DB_VAR 5
+TEST_DB_V3 := MK_DB_VAR 6
+ASSERT (DB_EQUAL TEST_DB_V TEST_DB_V2)
+ASSERT (not (DB_EQUAL TEST_DB_V TEST_DB_V3))
+ASSERT (DB_EQUAL TEST_DB_P (MK_DB_APP TEST_DB_A TEST_DB_V2))
+
+# =====================================================================
+# 2. Formal Proofs & Hilbert-Style Axioms for AST Structural Equality
+# =====================================================================
+
+#VAR_AST_X := MK_VAR 40
+#VAR_AST_Y := MK_VAR 41
+VAR_AST_X := MK_VAR 10
+VAR_AST_Y := MK_VAR 11
+
+# Axiom 1: AST Reflexivity of Equality (x = x)
+AXIOM_AST_REFLEX := MK_EQ VAR_AST_X VAR_AST_X
+
+# Axiom 2: AST Symmetry Schema ((x = y) -> (y = x))
+AXIOM_AST_SYMMETRY := MK_IMP (MK_EQ VAR_AST_X VAR_AST_Y) (MK_EQ VAR_AST_Y VAR_AST_X)
+
+# Target Theorem: Reflexivity via Axiom
+THEOREM_AST_REFLEX := MK_EQ VAR_AST_X VAR_AST_X
+
+AST_AXIOMS := cons AXIOM_AST_REFLEX (cons AXIOM_AST_SYMMETRY nil)
+
+AST_STEP_1 := pair RULE_AXIOM (pair AXIOM_AST_REFLEX nil)
+PROOF_AST_EQUAL := cons AST_STEP_1 nil
+
+# Verify proofs using FOL/HOL proof engine (`VERIFY_PROOF` and `IS_PROVABLE`)
+ASSERT (VERIFY_PROOF AST_AXIOMS PROOF_AST_EQUAL) # FIXME
+ASSERT (IS_PROVABLE THEOREM_AST_REFLEX AST_AXIOMS PROOF_AST_EQUAL)

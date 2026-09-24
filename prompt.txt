@@ -1,0 +1,3 @@
+I want to add any relevant assertions and proofs to this 23_resugar.lc.
+see the 1*_*.lc files to see what I mean about proofs.
+the 2*_*.lc files are supposed to implement the resugaring, etc., seen in lc-old.py

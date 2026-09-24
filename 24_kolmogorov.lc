@@ -1,0 +1,79 @@
+#! /usr/bin/env lc.py
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"       # TODO assertions
+INCLUDE "04_church.lc"     # TODO assertions
+INCLUDE "05_map_reduce.lc" # TODO assertions, FIXME ?
+INCLUDE "06_hol.lc"        # TODO assertions
+INCLUDE "11_standard_terms.lc"
+INCLUDE "12_fol.lc"
+INCLUDE "13_pair.lc"
+INCLUDE "14_church.lc"
+INCLUDE "15_map_reduce.lc"
+INCLUDE "16_hol.lc"
+INCLUDE "23_resugar.lc"
+
+# --- AST Node Count Metric ---
+DB_NODE_COUNT_REC := \self. \t. \
+  if (IS_DB_VAR t) 1 \
+    (if (IS_DB_ABS t) (successor (self (second t))) \
+      (if (IS_DB_APP t) \
+        (successor (+ (self (first (second t))) (self (second (second t))))) \
+        1))
+
+DB_NODE_COUNT := Y DB_NODE_COUNT_REC
+DB_SIZE := DB_NODE_COUNT
+
+# --- AST Depth Metric ---
+DB_DEPTH_REC := \self. \t. \
+  if (IS_DB_VAR t) 1 \
+    (if (IS_DB_ABS t) (successor (self (second t))) \
+      (if (IS_DB_APP t) \
+        (successor (max (self (first (second t))) (self (second (second t))))) \
+        1))
+
+DB_DEPTH := Y DB_DEPTH_REC
+
+# --- Static Time & Space Complexity Predictor ---
+ANALYZE_STATIC_COMPLEXITY := \term. \
+  let (nodes) (DB_SIZE term) ( \
+  let (depth) (DB_DEPTH term) ( \
+    if (leq nodes 15) \
+      (pair "O(1)" "O(1)") \
+      (if (gt depth 50) \
+        (pair "O(2^n) [Deep Recursion]" (concat "O(" (to_string depth) ")")) \
+        (pair (concat "O(n) [Nodes: " (to_string nodes) "]") (concat "O(" (to_string depth) ")")) \
+      ) \
+  ))
+
+# --- Kolmogorov Complexity K(x) Approximation ---
+KOLMOGOROV_APPROX := \term. \
+  let (nodes) (DB_SIZE term) \
+  nodes
+
+# --- Single Beta-Reduction Step with Step Counter ---
+STEP_COUNT_REDUCE_REC := \self t steps. \
+  if (IS_DB_APP t) \
+    (( \fun arg. \
+         if (IS_DB_ABS fun) \
+           (pair (DB_SUBSTITUTE (second fun) arg 0) (successor steps)) \
+           (( \res. \
+                if (second res) \
+                  (pair (MK_DB_APP (first res) arg) (second res)) \
+                  (pair t steps) \
+           ) (self fun steps)) \
+    ) (first (second t)) (second (second t))) \
+    (pair t steps)
+
+STEP_COUNT_REDUCE := Y STEP_COUNT_REDUCE_REC
+
+# --- Compute Normal Form and Total Beta-Step Count ---
+EVAL_TIME_REC := \self t steps. \
+  (( \res. \
+       if (> (second res) steps) \
+         (self (first res) (second res)) \
+         (pair t steps) \
+  ) (STEP_COUNT_REDUCE t steps))
+
+EVAL_TIME := \t. EVAL_TIME_REC t 0
