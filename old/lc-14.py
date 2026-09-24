@@ -6,21 +6,28 @@ import math
 from typing import Dict, List, Tuple, Optional, Set, Any
 from lark import Lark, Transformer, v_args
 
+# TODO SyntaxWarning: "\." is an invalid escape sequence. Such sequences will not work in the future. Did you mean "\\."? A raw string is also an option.
+#   IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^.\w\u0080-\uFFFF]+/
+
+# TODO want to be able to replace builtin resugaring and complexity analysis with meta-circular version
+
+# TODO INCLUDE ... AS ... namespacing. e.g, INCLUDE "math.lc" imports < (lt) but INCLUDE "math.lc" as m imports m:<
+# TODO disallow re-assignment using `:=`; differentiate triple equals as a redefine operator
+
 # =====================================================================
-# 1. Grammar Definition with Chained Lambda, Native De Bruijn & Colon Namespacing
+# 1. Grammar Definition with Chained Lambda, Native De Bruijn & INCLUDE Support
 # =====================================================================
 
 LC_GRAMMAR = r"""
     start: (_NEWLINE | statement)*
 
-    statement: ident_list _ASSIGN expr          -> assign
-             | ident_list _REDEFINE expr        -> redefine
-             | _ASSERT expr                   -> assert_expr
-             | _ASSERT_EQ expr _COMMA expr    -> assert_eq
-             | _INCLUDE (STRING | IDENT) (_AS IDENT)? -> include_stmt
-             | expr                            -> eval_expr
+    statement: ident_list ASSIGN expr            -> assign
+             | "ASSERT" expr                     -> assert_expr
+             | "ASSERT_EQ" expr "," expr         -> assert_eq
+             | "INCLUDE" (STRING | IDENT)        -> include_stmt
+             | expr                              -> eval_expr
 
-    ident_list: IDENT (_COMMA IDENT)*
+    ident_list: IDENT ("," IDENT)*
 
     ?expr: abstraction
          | application
@@ -32,25 +39,18 @@ LC_GRAMMAR = r"""
 
     ?application: atom+
 
-    ?atom: IDENT               -> var
-         | INT                 -> int_lit
-         | BRACKETED_INT       -> debruijn
-         | STRING              -> string_lit
+    ?atom: IDENT                 -> var
+         | INT                   -> int_lit
+         | BRACKETED_INT         -> debruijn
+         | STRING                -> string_lit
          | "(" expr ")"
 
     LAMBDA: "\\" | "λ"
     DOT: "."
-    _ASSIGN: ":="
-    _REDEFINE: "≡"
-    _ASSERT: "ASSERT"
-    _ASSERT_EQ: "ASSERT_EQ"
-    _INCLUDE: "INCLUDE"
-    _AS: "AS"
-    _COMMA: ","
+    ASSIGN: ":=" | "≡"
     BRACKETED_INT: /\[\d+\]/
 
-    # Allow colons in identifiers for namespaced symbols (while preserving := assignment)
-    IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
+    IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^\w\u0080-\uFFFF]+/
     CONTINUATION: /\\\r?\n/
 
     %import common.INT
@@ -61,6 +61,7 @@ LC_GRAMMAR = r"""
     %ignore CONTINUATION
     %ignore /#.*/
 """
+# TODO beware \x.x and math.< ambiguity
 
 # =====================================================================
 # 2. De Bruijn Core AST & Complexity Metrics
@@ -120,27 +121,40 @@ class SApp(SurfaceAST):
 BUILTIN_TABLE: Dict[str, int] = {
     "PRINT": 1,
     "READ_LINE": 1,
-    "OPEN": 2,     # (path_str, flags_int) -> fd
-    "CLOSE": 1,    # (fd_int) -> status
-    "PIPE": 1,     # (dummy) -> Church pair (read_fd, write_fd)
-    "DUP2": 2,     # (oldfd, newfd) -> newfd
-    "FORK": 1,     # (dummy) -> pid (0 in child, child_pid in parent)
-    "EXECVE": 3,   # (path, args_list, env_list)
+    "EXEC_CMD": 1,
     "FD_READ": 2,
     "FD_WRITE": 2,
-    # Network Sockets & Server Primitives
-    "SOCKET": 2,   # (family_int, type_int) -> socket_fd
-    "BIND": 3,     # (socket_fd, host_str, port_int) -> status
-    "LISTEN": 2,   # (socket_fd, backlog_int) -> status
-    "ACCEPT": 1,   # (socket_fd) -> Church pair (client_fd, client_addr)
-    "CONNECT": 3,  # (socket_fd, host_str, port_int) -> status
-    # Geometry & Audio
     "PAGE": 1,
     "LINE": 2,
     "ARC": 2,
     "INTERSECT": 2,
     "SEND_AUDIO": 1,
 }
+# TODO integrate these changes
+#BUILTIN_TABLE: Dict[str, int] = {
+#    "PRINT": 1,
+#    "READ_LINE": 1,
+#    "OPEN": 2,       # (path_str, flags_int) -> fd
+#    "CLOSE": 1,      # (fd_int) -> status
+#    "PIPE": 1,       # (dummy) -> Church pair (read_fd, write_fd)
+#    "DUP2": 2,       # (oldfd, newfd) -> newfd
+#    "FORK": 1,       # (dummy) -> pid (0 in child, child_pid in parent)
+#    "EXECVE": 3,     # (path, args_list, env_list)
+#    "FD_READ": 2,
+#    "FD_WRITE": 2,
+#    # Network Sockets & Server Primitives
+#    "SOCKET": 2,     # (family_int, type_int) -> socket_fd
+#    "BIND": 3,       # (socket_fd, host_str, port_int) -> status
+#    "LISTEN": 2,     # (socket_fd, backlog_int) -> status
+#    "ACCEPT": 1,     # (socket_fd) -> Church pair (client_fd, client_addr)
+#    "CONNECT": 3,    # (socket_fd, host_str, port_int) -> status
+#    # Geometry & Audio
+#    "PAGE": 1,
+#    "LINE": 2,
+#    "ARC": 2,
+#    "INTERSECT": 2,
+#    "SEND_AUDIO": 1, # TODO speaker, mic & cams
+#}
 
 @v_args(inline=True)
 class LCTransformer(Transformer):
@@ -149,12 +163,8 @@ class LCTransformer(Transformer):
     def params(self, *idents): return [str(i) for i in idents]
 
     @v_args(meta=True, inline=True)
-    def assign(self, meta, names, expr):
+    def assign(self, meta, names, assign_op, expr):
         return (meta.line, "ASSIGN", names, expr)
-
-    @v_args(meta=True, inline=True)
-    def redefine(self, meta, names, expr):
-        return (meta.line, "REDEFINE", names, expr)
 
     @v_args(meta=True, inline=True)
     def assert_expr(self, meta, expr):
@@ -164,15 +174,12 @@ class LCTransformer(Transformer):
     def assert_eq(self, meta, left, right):
         return (meta.line, "ASSERT_EQ", left, right)
 
-    @v_args(meta=True)
-    def include_stmt(self, meta, children):
-        path_tok = children[0]
-        alias_tok = children[1] if len(children) > 1 else None
+    @v_args(meta=True, inline=True) # TODO want to be able to replace the builtin include with a metacircular one that uses our FD_READ primitive
+    def include_stmt(self, meta, path_tok):
         p = str(path_tok)
         if (p.startswith('"') and p.endswith('"')) or (p.startswith("'") and p.endswith("'")):
             p = p[1:-1]
-        alias = str(alias_tok) if alias_tok is not None else None
-        return (meta.line, "INCLUDE", p, alias)
+        return (meta.line, "INCLUDE", p)
 
     @v_args(meta=True, inline=True)
     def eval_expr(self, meta, expr):
@@ -293,7 +300,7 @@ def db_substitute(term: DBTerm, value: DBTerm, index: int = 0) -> DBTerm:
 GRAPHICS_STATE: Dict[str, Any] = {"papers": {}}
 
 def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
-    """Executes hardware, stdio, subprocess, socket, file descriptor, and audio/geometry effects."""
+    """Executes hardware, stdio, subprocess, audio, and relational geometry/bubble effects."""
     if name == "PRINT":
         val = args[0]
         print(f"[STDIO PRINT] {val}")
@@ -304,92 +311,7 @@ def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
         line = input(f"{prompt_val}> ")
         return DBVar(get_free_var_index(line))
 
-    elif name == "OPEN":
-        path = str(args[0]).strip('"')
-        try:
-            flags = int(str(args[1]))
-            fd = os.open(path, flags, 0o644)
-            return DBVar(get_free_var_index(str(fd)))
-        except Exception as e:
-            print(f"[OPEN ERROR] {e}", file=sys.stderr)
-            return DBVar(get_free_var_index("-1"))
-
-    elif name == "CLOSE":
-        try:
-            fd = int(str(args[0]))
-            os.close(fd)
-            return DBVar(get_free_var_index("0"))
-        except Exception as e:
-            print(f"[CLOSE ERROR] {e}", file=sys.stderr)
-            return DBVar(get_free_var_index("-1"))
-
-    elif name == "PIPE":
-        try:
-            r, w = os.pipe()
-            pair_repr = f"(\\f. f [{r}] [{w}])"
-            parsed_pair = LCTransformer().transform(Lark(LC_GRAMMAR).parse(pair_repr))[0][2]
-            return surface_to_debruijn(parsed_pair, {})
-        except Exception as e:
-            return DBVar(get_free_var_index("-1"))
-
-    elif name == "DUP2":
-        try:
-            oldfd, newfd = int(str(args[0])), int(str(args[1]))
-            res_fd = os.dup2(oldfd, newfd)
-            return DBVar(get_free_var_index(str(res_fd)))
-        except Exception as e:
-            return DBVar(get_free_var_index("-1"))
-
-    elif name == "FORK":
-        try:
-            pid = os.fork()
-            return DBVar(get_free_var_index(str(pid)))
-        except Exception as e:
-            return DBVar(get_free_var_index("-1"))
-
-    elif name == "EXECVE":
-        path = str(args[0]).strip('"')
-        print(f"[EXECVE] {path}")
-        return DBVar(get_free_var_index("0"))
-
-    elif name == "FD_READ":
-        fd_num = int(str(args[0]))
-        try:
-            data = os.read(fd_num, 1024)
-            return DBVar(get_free_var_index(data.decode("utf-8", errors="ignore")))
-        except Exception:
-            return DBVar(0)
-
-    elif name == "FD_WRITE":
-        fd_num = int(str(args[0]))
-        data_term = args[1]
-        try:
-            os.write(fd_num, str(data_term).encode("utf-8"))
-            return data_term
-        except Exception:
-            return data_term
-
-    elif name == "SOCKET":
-        print(f"[SOCKET] Creating socket")
-        return DBVar(get_free_var_index("3"))
-
-    elif name == "BIND":
-        print(f"[BIND]")
-        return DBVar(get_free_var_index("0"))
-
-    elif name == "LISTEN":
-        print(f"[LISTEN]")
-        return DBVar(get_free_var_index("0"))
-
-    elif name == "ACCEPT":
-        print(f"[ACCEPT]")
-        return DBVar(get_free_var_index("4"))
-
-    elif name == "CONNECT":
-        print(f"[CONNECT]")
-        return DBVar(get_free_var_index("0"))
-
-    elif name == "EXEC_CMD":
+    elif name == "EXEC_CMD": # FIXME this *is* the system shell: need dup2, close, open builtins, then do redirection, etc. ourselves
         cmd_term = args[0]
         cmd_str = str(cmd_term)
         try:
@@ -400,6 +322,24 @@ def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
         except Exception as e:
             print(f"[SHELL ERROR] {e}", file=sys.stderr)
             return DBVar(0)
+
+    # TODO sockets & networking
+
+    elif name == "FD_READ":
+        fd_num, num_bytes = args[0], args[1]
+        try:
+            data = os.read(int(str(fd_num)), 1024)
+            return DBVar(get_free_var_index(data.decode("utf-8", errors="ignore")))
+        except Exception:
+            return DBVar(0)
+
+    elif name == "FD_WRITE":
+        fd_num, data_term = args[0], args[1]
+        try:
+            os.write(int(str(fd_num)), str(data_term).encode("utf-8"))
+            return data_term
+        except Exception:
+            return data_term
 
     elif name == "PAGE":
         paper_id = str(args[0])
@@ -422,7 +362,9 @@ def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
         print(f"[GEOMETRY INTERSECT] Relational geometric intersection between ({g1}) and ({g2})")
         return DBApp(args[0], args[1])
 
-    elif name == "SEND_AUDIO":
+    # TODO cam support
+
+    elif name == "SEND_AUDIO": # TODO mic & speakers
         audio_spec = str(args[0])
         print(f"[AUDIO EMIT / SYNTH] Generating acoustic buffer frame: {audio_spec}")
         return args[0]
@@ -491,7 +433,7 @@ def db_depth(term: DBTerm) -> int:
 def analyze_complexity(term: DBTerm) -> Tuple[str, str, int]:
     nodes = db_node_count(term)
     depth = db_depth(term)
-    kolmogorov_k = nodes
+    kolmogorov_k = nodes  # K(x) approximation via structural node size[cite: 38]
     
     if nodes <= 15:
         time_c, space_c = "O(1)", "O(1)"
@@ -600,7 +542,7 @@ def debruijn_to_str(
     return str(term)
 
 # =====================================================================
-# 6. Execution Engine with Recursive Inclusion & Colon Namespacing
+# 6. Execution Engine with Recursive Inclusion & Metadata Annotation
 # =====================================================================
 
 def execute_program(
@@ -628,7 +570,7 @@ def execute_program(
 
     all_defined_symbols = set()
     for stmt in statements:
-        if stmt[1] in ("ASSIGN", "REDEFINE"):
+        if stmt[1] == "ASSIGN":
             all_defined_symbols.update(stmt[2])
 
     if not quiet:
@@ -641,7 +583,7 @@ def execute_program(
 
         try:
             if action == "INCLUDE":
-                inc_path, alias = stmt[2], stmt[3]
+                inc_path = stmt[2]
                 if filename and filename != "<stdin>" and os.path.exists(filename):
                     base_dir = os.path.dirname(os.path.abspath(filename))
                 else:
@@ -661,26 +603,14 @@ def execute_program(
                     with open(canonical_path, "r", encoding="utf-8") as f:
                         included_code = f.read()
 
-                    inc_lines, sub_env, sub_declared = execute_program(
+                    inc_lines, env, declared_terms = execute_program(
                         canonical_path,
                         included_code,
-                        dict(env),
-                        dict(declared_terms),
+                        env,
+                        declared_terms,
                         quiet=quiet,
                         visited_files=visited_files
                     )
-
-                    # Use colon namespacing if an alias is specified
-                    if alias:
-                        for name, term in sub_declared.items():
-                            if name not in declared_terms:
-                                namespaced_name = f"{alias}:{name}"
-                                env[namespaced_name] = term
-                                declared_terms[namespaced_name] = term
-                    else:
-                        env.update(sub_env)
-                        declared_terms.update(sub_declared)
-
                     output_lines.extend(inc_lines)
 
             elif action == "ASSERT":
@@ -726,49 +656,26 @@ def execute_program(
 
             elif action == "ASSIGN":
                 target, expr = stmt[2], stmt[3]
-                for name in target:
-                    if name in declared_terms:
-                        print(f"\n❌ REDEFINITION ERROR: '{name}' is already defined. Use '≡' (triple equals/redefine) to explicitly override.", file=sys.stderr)
-                        sys.exit(1)
-
                 db_term = surface_to_debruijn(expr, env)
+
                 exclude_set = set(target)
                 pretty = debruijn_to_str(db_term, declared_terms, exclude_names=exclude_set, all_defined_symbols=all_defined_symbols)
                 time_c, space_c, k_approx = analyze_complexity(db_term)
 
                 names_str = ", ".join(target)
                 line_out = f"{names_str} := {pretty}"
+                
+                # Automatically embed complexity annotations for meta-circular analysis
                 annotated_meta = f"# [K(x): {k_approx} | Time: {time_c} | Space: {space_c}]"
-                output_lines.extend([annotated_meta, line_out])
-
+                output_lines.append(annotated_meta)
+                output_lines.append(line_out)
+                
                 if not quiet:
-                    print(f"{annotated_meta}\n{line_out}")
+                    print(annotator := f"{annotated_meta}\n{line_out}")
 
                 for name in target:
                     env[name] = db_term
                     declared_terms[name] = db_term
-
-            elif action == "REDEFINE":
-                target, expr = stmt[2], stmt[3]
-                db_term = surface_to_debruijn(expr, env)
-
-                for name in target:
-                    if name in declared_terms:
-                        print(f"# [META-CIRCULAR NOTICE] Redefining '{name}' via ≡. Pending meta-circular beta-equivalence verification...", file=sys.stderr)
-                    env[name] = db_term
-                    declared_terms[name] = db_term
-
-                exclude_set = set(target)
-                pretty = debruijn_to_str(db_term, declared_terms, exclude_names=exclude_set, all_defined_symbols=all_defined_symbols)
-                time_c, space_c, k_approx = analyze_complexity(db_term)
-
-                names_str = ", ".join(target)
-                line_out = f"{names_str} ≡ {pretty}"
-                annotated_meta = f"# [K(x): {k_approx} | Time: {time_c} | Space: {space_c}]"
-                output_lines.extend([annotated_meta, line_out])
-
-                if not quiet:
-                    print(f"{annotated_meta}\n{line_out}")
 
             elif action == "EVAL":
                 expr = stmt[2]
@@ -805,3 +712,153 @@ if __name__ == "__main__":
         for path in sys.argv[1:]:
             with open(path, "r", encoding="utf-8") as f:
                 execute_program(path, f.read(), global_env, global_declared)
+
+
+
+# TODO integrate these changes
+
+"""
+statement: ident_list ASSIGN expr          -> assign
+         | ident_list REDEFINE expr        -> redefine
+         | "ASSERT" expr                   -> assert_expr
+         | "ASSERT_EQ" expr "," expr       -> assert_eq
+         | "INCLUDE" (STRING | IDENT) ("AS" IDENT)? -> include_stmt
+         | expr                            -> eval_expr
+
+ASSIGN: ":="
+REDEFINE: "≡"
+
+# Allow dots in identifiers for namespaced symbols like math.<
+IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^.\w\u0080-\uFFFF]+/
+"""
+
+# TODO integrate these changes
+
+"""
+elif action == "INCLUDE":
+    inc_path, alias = stmt[2], stmt[3] # (path, optional_alias)
+    # ... resolution logic ...
+
+    inc_lines, sub_env, sub_declared = execute_program(
+        canonical_path, included_code, dict(env), dict(declared_terms),
+        quiet=quiet, visited_files=visited_files
+    )
+
+    # If an alias is provided, prefix and merge only the newly introduced bindings
+    if alias:
+        for name, term in sub_declared.items():
+            if name not in declared_terms: # only new bindings from the module
+                namespaced_name = f"{alias}.{name}"
+                env[namespaced_name] = term
+                declared_terms[namespaced_name] = term
+    else:
+        env.update(sub_env)
+        declared_terms.update(sub_declared)
+
+    output_lines.extend(inc_lines)
+"""
+
+# TODO integrate these changes
+
+"""
+BUILTIN_TABLE: Dict[str, int] = {
+    "PRINT": 1,
+    "READ_LINE": 1,
+    "OPEN": 2,     # (path_str, flags_int) -> fd
+    "CLOSE": 1,    # (fd_int) -> status
+    "PIPE": 1,     # (dummy) -> Church pair (read_fd, write_fd)
+    "DUP2": 2,     # (oldfd, newfd) -> newfd
+    "FORK": 1,     # (dummy) -> pid (0 in child, child_pid in parent)
+    "EXECVE": 3,   # (path, args_list, env_list)
+    "FD_READ": 2,
+    "FD_WRITE": 2,
+    # ... geometry & audio ...
+}
+"""
+
+# TODO integrate these changes
+
+"""
+def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
+    if name == "OPEN":
+        path = str(args[0]).strip('"')
+        flags = int(str(args[1])) # e.g., os.O_RDONLY, os.O_CREAT | os.O_WRONLY
+        try:
+            fd = os.open(path, flags, 0o644)
+            return DBVar(get_free_var_index(str(fd)))
+        except Exception as e:
+            print(f"[OPEN ERROR] {e}", file=sys.stderr)
+            return DBVar(get_free_var_index("-1"))
+
+    elif name == "CLOSE":
+        fd = int(str(args[0]))
+        try:
+            os.close(fd)
+            return DBVar(get_free_var_index("0"))
+        except Exception as e:
+            return DBVar(get_free_var_index("-1"))
+
+    elif name == "PIPE":
+        try:
+            r, w = os.pipe()
+            # Return a Church-encoded pair: \f. f r w
+            # For simplicity in output representation, we encode as a pair application
+            pair_repr = f"(\\f. f [{r}] [{w}])"
+            return surface_to_debruijn(LCTransformer().transform(Lark(LC_GRAMMAR).parse(pair_repr))[0][2], {})
+        except Exception as e:
+            return DBVar(get_free_var_index("-1"))
+
+    elif name == "DUP2":
+        oldfd, newfd = int(str(args[0])), int(str(args[1]))
+        try:
+            res_fd = os.dup2(oldfd, newfd)
+            return DBVar(get_free_var_index(str(res_fd)))
+        except Exception as e:
+            return DBVar(get_free_var_index("-1"))
+
+    elif name == "FORK":
+        try:
+            pid = os.fork()
+            return DBVar(get_free_var_index(str(pid)))
+        except Exception as e:
+            return DBVar(get_free_var_index("-1"))
+
+    # ... existing handlers ...
+"""
+
+# TODO integrate these changes
+
+"""
+elif action == "ASSIGN":
+    target, expr = stmt[2], stmt[3]
+    for name in target:
+        if name in declared_terms:
+            print(f"\n❌ REDEFINITION ERROR: '{name}' is already defined. Use '≡' (triple equals) to explicitly override.", file=sys.stderr)
+            sys.exit(1)
+
+    db_term = surface_to_debruijn(expr, env)
+    # ... process complexity, print, and save to env/declared_terms ...
+
+elif action == "REDEFINE":
+    target, expr = stmt[2], stmt[3]
+    db_term = surface_to_debruijn(expr, env)
+
+    for name in target:
+        if name in declared_terms:
+            print(f"# [META-CIRCULAR NOTICE] Redefining '{name}' via ≡. Pending meta-circular beta-equivalence proof verification...", file=sys.stderr)
+
+        env[name] = db_term
+        declared_terms[name] = db_term
+
+    # Format output for redefinition
+    exclude_set = set(target)
+    pretty = debruijn_to_str(db_term, declared_terms, exclude_names=exclude_set, all_defined_symbols=all_defined_symbols)
+    time_c, space_c, k_approx = analyze_complexity(db_term)
+
+    names_str = ", ".join(target)
+    line_out = f"{names_str} ≡ {pretty}"
+    annotated_meta = f"# [K(x): {k_approx} | Time: {time_c} | Space: {space_c}]"
+    output_lines.extend([annotated_meta, line_out])
+    if not quiet:
+        print(f"{annotated_meta}\n{line_out}")
+"""

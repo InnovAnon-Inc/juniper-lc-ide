@@ -1,0 +1,17 @@
+#! /usr/bin/env lc.py
+
+# Initialize TCP Stream Socket (AF_INET=2, SOCK_STREAM=1)
+server_fd := SOCKET 2 1
+
+# Bind to localhost on port 8080
+unused0 := BIND server_fd "127.0.0.1" 8080
+
+# Listen with a backlog of 5
+unused1 := LISTEN server_fd 5
+
+PRINT "Lambda server listening on port 8080..."
+
+# Accept incoming client connection
+client_pair := ACCEPT server_fd
+
+client_pair

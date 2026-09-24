@@ -16,7 +16,7 @@ INCLUDE "06_hol.lc"
 # 1. Extended Logical Operators & Equivalences
 # =====================================================================
 
-⇔, iff                     := λp q. and (implies p q) (implies q p)
+#⇔, iff                     := λp q. and (implies p q) (implies q p)
 
 # =====================================================================
 # 2. Boolean Logic Assertions & Truth Table Validation
