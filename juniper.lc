@@ -42,7 +42,12 @@ INCLUDE "13_pair.lc"
 INCLUDE "14_church.lc"
 INCLUDE "15_map_reduce.lc"
 INCLUDE "16_hol.lc"
-INCLUDE "21_eval.lc"
+INCLUDE "21_ast.lc"
+INCLUDE "22_eval.lc"
+INCLUDE "23_resugar.lc"
+INCLUDE "24_kolmogorov.lc"
+INCLUDE "25_bootstrap.lc"
+
 
 # TODO define standard sets, such as ints, rationals, reals, complex, etc
 # TODO prove math up to calculus

@@ -13,11 +13,11 @@ from lark import Lark, Transformer, v_args
 LC_GRAMMAR = r"""
     start: (_NEWLINE | statement)*
 
-    statement: ident_list ASSIGN expr            -> assign
-             | "ASSERT" expr                     -> assert_expr
-             | "ASSERT_EQ" expr "," expr         -> assert_eq
-             | "INCLUDE" (STRING | IDENT)        -> include_stmt
-             | expr                              -> eval_expr
+    statement: ident_list ASSIGN expr           -> assign
+             | "ASSERT" expr                    -> assert_expr
+             | "ASSERT_EQ" expr "," expr        -> assert_eq
+             | "INCLUDE" (STRING | IDENT)       -> include_stmt
+             | expr                             -> eval_expr
 
     ident_list: IDENT ("," IDENT)*
 
@@ -25,7 +25,7 @@ LC_GRAMMAR = r"""
          | application
 
     abstraction: LAMBDA params DOT expr -> named_abs
-               | LAMBDA+ DOT expr       -> anon_abs_chain
+               | LAMBDA+ DOT expr        -> anon_abs_chain
 
     params: IDENT+
 
@@ -55,7 +55,7 @@ LC_GRAMMAR = r"""
 """
 
 # =====================================================================
-# 2. De Bruijn Core AST & Complexity Metrics
+# 2. De Bruijn Core AST
 # =====================================================================
 
 class DBTerm: pass
@@ -109,17 +109,20 @@ class SApp(SurfaceAST):
 # 3. Surface Transformer & Conversion to De Bruijn
 # =====================================================================
 
-BUILTIN_TABLE: Dict[str, int] = {
-    "PRINT": 1,
-    "READ_LINE": 1,
-    "EXEC_CMD": 1,
+BUILTIN_TABLE: Dict[str, int] = { # TODO need to handle sockets, too
+    "PRINT": 1, # TODO can't just use fd_write ?
+    "READ_LINE": 1, # TODO can't just use fd_read ?
+    "EXEC_CMD": 1, # FIXME need shell-like power to redirect file descriptors between subprocesses ==> need direct access to low level operations like dup2, open, close, etc
     "FD_READ": 2,
     "FD_WRITE": 2,
+    #"NEW_PAPER": 1,
     "PAGE": 1,
+    #"DRAW_LINE": 2,
     "LINE": 2,
+    #"DRAW_ARC": 2,
     "ARC": 2,
     "INTERSECT": 2,
-    "SEND_AUDIO": 1,
+    "SEND_AUDIO": 1, # TODO and recieve audio, too (mic)
 }
 
 @v_args(inline=True)
@@ -266,7 +269,7 @@ def db_substitute(term: DBTerm, value: DBTerm, index: int = 0) -> DBTerm:
 GRAPHICS_STATE: Dict[str, Any] = {"papers": {}}
 
 def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
-    """Executes hardware, stdio, subprocess, audio, and relational geometry/bubble effects."""
+    """Executes hardware, stdio, subprocess, audio, and relational geometry effects."""
     if name == "PRINT":
         val = args[0]
         print(f"[STDIO PRINT] {val}")
@@ -305,17 +308,20 @@ def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
         except Exception:
             return data_term
 
+    #elif name == "NEW_PAPER":
     elif name == "PAGE":
         paper_id = str(args[0])
         GRAPHICS_STATE["papers"][paper_id] = []
-        print(f"[GEOMETRY / BUBBLE NOTATION] Initialized context page: '{paper_id}'")
+        print(f"[GEOMETRY] Initialized paper context: '{paper_id}'")
         return args[0]
 
+    #elif name == "DRAW_LINE":
     elif name == "LINE":
         p1, p2 = str(args[0]), str(args[1])
-        print(f"[GEOMETRY DRAW LINE] Straightedge segment through ({p1}) and ({p2})")
+        print(f"[GEOMETRY DRAW LINE] Straightedge line passing through ({p1}) and ({p2})")
         return DBApp(args[0], args[1])
 
+    #elif name == "DRAW_ARC":
     elif name == "ARC":
         center, radius = str(args[0]), str(args[1])
         print(f"[GEOMETRY DRAW ARC] Compass arc centered at ({center}) with radius ({radius})")
@@ -323,19 +329,38 @@ def execute_builtin_effect(name: str, args: List[DBTerm]) -> DBTerm:
 
     elif name == "INTERSECT":
         g1, g2 = str(args[0]), str(args[1])
-        print(f"[GEOMETRY INTERSECT] Relational geometric intersection between ({g1}) and ({g2})")
+        print(f"[GEOMETRY INTERSECT] Relational intersection between ({g1}) and ({g2})")
         return DBApp(args[0], args[1])
 
     elif name == "SEND_AUDIO":
         audio_spec = str(args[0])
-        print(f"[AUDIO EMIT / SYNTH] Generating acoustic buffer frame: {audio_spec}")
+        print(f"[AUDIO EMIT] Generating signal / buffer frame: {audio_spec}")
         return args[0]
 
     return args[-1] if args else DBVar(0)
 
+#def beta_reduce_step(term: DBTerm) -> Tuple[DBTerm, bool]:
+#    if isinstance(term, DBApp):
+#        if isinstance(term.fun, DBAbs):
+#            reduced = db_substitute(term.fun.body, term.arg, 0)
+#            return reduced, True
+#        elif isinstance(term.fun, DBBuiltin):
+#            builtin = term.fun
+#            new_args = builtin.args + [term.arg]
+#            if len(new_args) == builtin.arity:
+#                result = execute_builtin_effect(builtin.name, new_args)
+#                return result, True
+#            else:
+#                return DBBuiltin(builtin.name, builtin.arity, new_args), True
+#        else:
+#            new_fun, reduced = beta_reduce_step(term.fun)
+#            if reduced:
+#                return DBApp(new_fun, term.arg), True
+#    return term, False
 def beta_reduce_step(term: DBTerm) -> Tuple[DBTerm, bool]:
     if isinstance(term, DBApp):
         if isinstance(term.fun, DBAbs):
+            # Reduce argument slightly or substitute directly
             reduced = db_substitute(term.fun.body, term.arg, 0)
             return reduced, True
         elif isinstance(term.fun, DBBuiltin):
@@ -350,11 +375,14 @@ def beta_reduce_step(term: DBTerm) -> Tuple[DBTerm, bool]:
             new_fun, reduced = beta_reduce_step(term.fun)
             if reduced:
                 return DBApp(new_fun, term.arg), True
+            # Fallback: reduce argument if function is already in normal form
             new_arg, arg_reduced = beta_reduce_step(term.arg)
             if arg_reduced:
                 return DBApp(term.fun, new_arg), True
     return term, False
 
+#def normalize(term: DBTerm, max_steps: int = 10000) -> DBTerm:
+#def normalize(term: DBTerm, max_steps: int = 100000) -> DBTerm:
 def normalize(term: DBTerm, max_steps: int = 1000000) -> DBTerm:
     curr = term
     for _ in range(max_steps):
@@ -375,36 +403,8 @@ def normalize(term: DBTerm, max_steps: int = 1000000) -> DBTerm:
     return curr
 
 # =====================================================================
-# 5. Complexity Analysis & Idempotent Resugaring
+# 5. Structural Equivalence & Resugaring
 # =====================================================================
-
-def db_node_count(term: DBTerm) -> int:
-    if isinstance(term, DBVar): return 1
-    if isinstance(term, DBAbs): return 1 + db_node_count(term.body)
-    if isinstance(term, DBApp): return 1 + db_node_count(term.fun) + db_node_count(term.arg)
-    if isinstance(term, DBBuiltin): return 1 + sum(db_node_count(a) for a in term.args)
-    return 1
-
-def db_depth(term: DBTerm) -> int:
-    if isinstance(term, DBVar): return 1
-    if isinstance(term, DBAbs): return 1 + db_depth(term.body)
-    if isinstance(term, DBApp): return 1 + max(db_depth(term.fun), db_depth(term.arg))
-    if isinstance(term, DBBuiltin): return 1 + (max((db_depth(a) for a in term.args), default=0))
-    return 1
-
-def analyze_complexity(term: DBTerm) -> Tuple[str, str, int]:
-    nodes = db_node_count(term)
-    depth = db_depth(term)
-    kolmogorov_k = nodes  # K(x) approximation via structural node size[cite: 38]
-    
-    if nodes <= 15:
-        time_c, space_c = "O(1)", "O(1)"
-    elif depth > 50:
-        time_c, space_c = "O(2^n) [Deep Recursion]", f"O({depth})"
-    else:
-        time_c, space_c = f"O(n) [Nodes: {nodes}]", f"O({depth})"
-        
-    return time_c, space_c, kolmogorov_k
 
 def db_equal(t1: DBTerm, t2: DBTerm) -> bool:
     if type(t1) != type(t2): return False
@@ -504,7 +504,7 @@ def debruijn_to_str(
     return str(term)
 
 # =====================================================================
-# 6. Execution Engine with Recursive Inclusion & Metadata Annotation
+# 6. Execution Engine with Recursive Inclusion
 # =====================================================================
 
 def execute_program(
@@ -583,7 +583,7 @@ def execute_program(
                 true_term = env.get("TRUE", env.get("⊤"))
                 if not true_term or not db_equal(evaluated, true_term):
                     print(f"\n❌ ASSERTION FAILED at {filename}:{line_no}", file=sys.stderr)
-                    print(f"    Got: {debruijn_to_str(evaluated, declared_terms, all_defined_symbols=all_defined_symbols)}", file=sys.stderr)
+                    print(f"   Got: {debruijn_to_str(evaluated, declared_terms, all_defined_symbols=all_defined_symbols)}", file=sys.stderr)
                     sys.exit(1)
 
                 pretty_expr = debruijn_to_str(db_term, declared_terms, all_defined_symbols=all_defined_symbols)
@@ -603,8 +603,8 @@ def execute_program(
 
                 if not db_equal(red_left, red_right):
                     print(f"\n❌ ASSERT_EQ FAILED at {filename}:{line_no}", file=sys.stderr)
-                    print(f"    Left:  {debruijn_to_str(red_left, declared_terms)}", file=sys.stderr)
-                    print(f"    Right: {debruijn_to_str(red_right, declared_terms)}", file=sys.stderr)
+                    print(f"   Left:  {debruijn_to_str(red_left, declared_terms)}", file=sys.stderr)
+                    print(f"   Right: {debruijn_to_str(red_right, declared_terms)}", file=sys.stderr)
                     sys.exit(1)
 
                 pretty_left = debruijn_to_str(db_left, declared_terms, all_defined_symbols=all_defined_symbols)
@@ -622,18 +622,12 @@ def execute_program(
 
                 exclude_set = set(target)
                 pretty = debruijn_to_str(db_term, declared_terms, exclude_names=exclude_set, all_defined_symbols=all_defined_symbols)
-                time_c, space_c, k_approx = analyze_complexity(db_term)
 
                 names_str = ", ".join(target)
                 line_out = f"{names_str} := {pretty}"
-                
-                # Automatically embed complexity annotations for meta-circular analysis
-                annotated_meta = f"# [K(x): {k_approx} | Time: {time_c} | Space: {space_c}]"
-                output_lines.append(annotated_meta)
                 output_lines.append(line_out)
-                
                 if not quiet:
-                    print(annotator := f"{annotated_meta}\n{line_out}")
+                    print(line_out)
 
                 for name in target:
                     env[name] = db_term
@@ -646,13 +640,11 @@ def execute_program(
 
                 pretty_in = debruijn_to_str(db_term, declared_terms, all_defined_symbols=all_defined_symbols)
                 pretty_res = debruijn_to_str(evaluated, declared_terms, all_defined_symbols=all_defined_symbols)
-                time_c, space_c, k_approx = analyze_complexity(evaluated)
 
-                line_out = pretty_res
+                line_out = pretty_in
                 output_lines.append(line_out)
                 if not quiet:
                     print(f"# Eval ({filename}:{line_no}): {pretty_in}", file=sys.stderr)
-                    print(f"# Complexity -> K(x): {k_approx}, Time: {time_c}, Space: {space_c}", file=sys.stderr)
                     print(f"# Result → {pretty_res}", file=sys.stderr)
                     print(line_out)
 
