@@ -1,4 +1,4 @@
-#! /usr/bin/env lc.py
+#! /usr/bin/env lc
 
 ##
 # 15_map_reduce.lc - Formal Proofs and Theorems for List Combinators

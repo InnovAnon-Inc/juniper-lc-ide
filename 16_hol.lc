@@ -1,4 +1,4 @@
-#! /usr/bin/env lc.py
+#! /usr/bin/env lc
 
 ##
 # 16_hol.lc - Higher-Order Logic Formal Proofs: Gödel's Incompleteness & Halting Problem

@@ -1,4 +1,4 @@
-#! /usr/bin/env lc.py
+#! /usr/bin/env lc
 
 ##
 # 14_church.lc - Peano Axioms, Formal Proofs, and Church Arithmetic Verification

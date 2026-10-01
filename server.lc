@@ -1,4 +1,4 @@
-#! /usr/bin/env lc.py
+#! /usr/bin/env lc
 
 # Initialize TCP Stream Socket (AF_INET=2, SOCK_STREAM=1)
 server_fd := SOCKET 2 1
