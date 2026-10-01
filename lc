@@ -1,0 +1,37 @@
+#! /usr/bin/env bash
+set -euxo nounset -o pipefail
+(( UID ))
+#(( ! $# ))
+
+I=/usr/local/bin
+
+[[ -x "$0" ]] ||
+chmod -v +x "$0"
+
+[[ "$0" = "$I/lc" ]] ||
+sudo install -v "$0" "$I"
+
+[[ "$0" = "$I/lc" ]] ||
+exec "$I/lc" "$@"
+
+P=juniper-lc-ide
+D="$HOME/$P"
+E="$D/lc.py"
+V="$HOME/venv"
+
+[[ -e "$D" ]] ||
+env -C "$HOME" \
+git clone "https://github.com/InnovAnon-Inc/$P.git"
+
+env -C "$D" \
+git pull
+
+[[ -x "$E" ]]
+
+[[ -d "$V" ]] ||
+python -m venv "$V"
+
+[[ -n "${VIRTUAL_ENV:-}" ]] ||
+. "$V/bin/activate"
+
+exec "$E" "$@"
