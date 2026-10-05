@@ -608,8 +608,8 @@ def debruijn_to_str(
 def preprocess_source(code: str) -> str:
     """
     Preprocesses source code to:
-    1. Support indentation-based line continuation (indented lines continue the previous logical line).
-    2. Support explicit backslash continuations (`\\`).
+    1. Support indentation-based line continuation.
+    2. Support explicit backslashes, trailing dots, and assignments for multi-line expressions.
     3. Strip comments and blank lines.
     """
     lines = code.splitlines()
@@ -636,9 +636,11 @@ def preprocess_source(code: str) -> str:
             current_logical_line += " " + stripped
             continue
 
-        if stripped.endswith('\\'):
+        # Automatically treat lines ending with \, ., or := as continuations
+        if stripped.endswith('\\') or stripped.endswith('.') or stripped.endswith(':='):
             explicit_cont = True
-            stripped = stripped[:-1].strip()
+            if stripped.endswith('\\'):
+                stripped = stripped[:-1].strip()
             if current_logical_line and (has_indent or not current_logical_line):
                 current_logical_line += " " + stripped
             else:
