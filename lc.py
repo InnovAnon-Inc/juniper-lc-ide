@@ -52,7 +52,9 @@ LC_GRAMMAR = r"""
     # Allow colons in identifiers for namespaced symbols (while preserving := assignment)
     #IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
     # Allow colons in identifiers for namespaced symbols and ensure hyphen is a literal
-    IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[-+*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
+    #IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[-+*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
+    # Ensure reserved language operators (:=, ≡, λ, \) are excluded from identifier matching
+    IDENT: /(?!(?::=|≡|\.|\(|\)))(?![\\λ])[-+*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
     CONTINUATION: /\\\r?\n/
 
     %import common.INT
@@ -661,13 +663,15 @@ def preprocess_source(code: str) -> str:
 
     return "\n".join(processed_lines)
 
+MODULE_EXPORTS_CACHE: Dict[str, Dict[str, DBTerm]] = {}
+
 def execute_program(
     filename: str,
     code: str,
     env: Dict[str, DBTerm],
     declared_terms: Dict[str, DBTerm],
     quiet: bool = False,
-    visited_files: Optional[Set[str]] = None
+    visited_files: Optional[Set[str]] = None,
 ) -> Tuple[List[str], Dict[str, DBTerm], Dict[str, DBTerm]]:
     if visited_files is None:
         visited_files = set()
@@ -700,26 +704,70 @@ def execute_program(
         line_no, action = stmt[0], stmt[1]
 
         try:
+#            if action == "INCLUDE":
+#                inc_path, alias = stmt[2], stmt[3]
+#                if filename and filename != "<stdin>" and os.path.exists(filename):
+#                    base_dir = os.path.dirname(os.path.abspath(filename))
+#                else:
+#                    base_dir = os.getcwd()
+#
+#                resolved_path = inc_path if os.path.isabs(inc_path) else os.path.join(base_dir, inc_path)
+#                canonical_path = os.path.realpath(resolved_path)
+#
+#                if canonical_path in visited_files:
+#                    if not quiet:
+#                        print(f"# [INCLUDE] Skipping already included file: {inc_path}", file=sys.stderr)
+#                elif not os.path.exists(canonical_path):
+#                    print(f"\n❌ INCLUDE ERROR at {filename}:{line_no}: File not found '{inc_path}' ({canonical_path})", file=sys.stderr)
+#                    sys.exit(1)
+#                else:
+#                    visited_files.add(canonical_path)
+#                    with open(canonical_path, "r", encoding="utf-8") as f:
+#                        included_code = f.read()
+#
+#                    inc_lines, sub_env, sub_declared = execute_program(
+#                        canonical_path,
+#                        included_code,
+#                        dict(env),
+#                        dict(declared_terms),
+#                        quiet=quiet,
+#                        visited_files=visited_files
+#                    )
+#
+#                    # Use colon namespacing if an alias is specified
+#                    if alias:
+#                        for name, term in sub_declared.items():
+#                            if name not in declared_terms:
+#                                namespaced_name = f"{alias}:{name}"
+#                                env[namespaced_name] = term
+#                                declared_terms[namespaced_name] = term
+#                    else:
+#                        env.update(sub_env)
+#                        declared_terms.update(sub_declared)
+#
+#                    output_lines.extend(inc_lines)
             if action == "INCLUDE":
                 inc_path, alias = stmt[2], stmt[3]
-                if filename and filename != "<stdin>" and os.path.exists(filename):
-                    base_dir = os.path.dirname(os.path.abspath(filename))
-                else:
-                    base_dir = os.getcwd()
-
+                base_dir = os.path.dirname(os.path.abspath(filename)) if (filename and filename != "<stdin>" and os.path.exists(filename)) else os.getcwd()
                 resolved_path = inc_path if os.path.isabs(inc_path) else os.path.join(base_dir, inc_path)
                 canonical_path = os.path.realpath(resolved_path)
 
                 if canonical_path in visited_files:
                     if not quiet:
-                        print(f"# [INCLUDE] Skipping already included file: {inc_path}", file=sys.stderr)
-                elif not os.path.exists(canonical_path):
+                        print(f"# [INCLUDE] Skipping circular include: {inc_path}", file=sys.stderr)
+                    continue
+
+                if not os.path.exists(canonical_path):
                     print(f"\n❌ INCLUDE ERROR at {filename}:{line_no}: File not found '{inc_path}' ({canonical_path})", file=sys.stderr)
                     sys.exit(1)
-                else:
-                    visited_files.add(canonical_path)
+
+                # Parse and evaluate file once to populate export cache
+                if canonical_path not in MODULE_EXPORTS_CACHE:
                     with open(canonical_path, "r", encoding="utf-8") as f:
                         included_code = f.read()
+
+                    sub_active = set(visited_files)
+                    sub_active.add(canonical_path)
 
                     inc_lines, sub_env, sub_declared = execute_program(
                         canonical_path,
@@ -727,21 +775,24 @@ def execute_program(
                         dict(env),
                         dict(declared_terms),
                         quiet=quiet,
-                        visited_files=visited_files
+                        visited_files=sub_active
                     )
 
-                    # Use colon namespacing if an alias is specified
-                    if alias:
-                        for name, term in sub_declared.items():
-                            if name not in declared_terms:
-                                namespaced_name = f"{alias}:{name}"
-                                env[namespaced_name] = term
-                                declared_terms[namespaced_name] = term
-                    else:
-                        env.update(sub_env)
-                        declared_terms.update(sub_declared)
-
+                    MODULE_EXPORTS_CACHE[canonical_path] = sub_declared
                     output_lines.extend(inc_lines)
+
+                cached_exports = MODULE_EXPORTS_CACHE[canonical_path]
+
+                # Populate caller's environment according to local alias rule
+                if alias:
+                    for name, term in cached_exports.items():
+                        namespaced_name = f"{alias}:{name}"
+                        env[namespaced_name] = term
+                        declared_terms[namespaced_name] = term
+                else:
+                    for name, term in cached_exports.items():
+                        env[name] = term
+                        declared_terms[name] = term
 
             elif action == "ASSERT":
                 expr = stmt[2]

@@ -1,0 +1,206 @@
+#! /usr/bin/env lc
+
+##
+# ricart_agrawala.lc
+# Standard Library Module: Ricart-Agrawala Distributed Mutual Exclusion
+#
+# Implements the "talking stick" protocol for distributed critical section access.
+# Nodes coordinate without a central authority using Lamport clocks, request
+# broadcasts, tie-breaking priority rules, and deferred reply queues.
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+
+##
+# 1. State & Message Encodings
+##
+
+# States of a Distributed Node
+STATE_RELEASED   := 0   # Node does not need the Critical Section (CS)
+STATE_REQUESTING := 1   # Node is waiting for replies to enter CS
+STATE_HELD       := 2   # Node is currently inside CS
+
+# Message Types
+MSG_REQUEST      := 0   # Broadcast requesting access to CS
+MSG_REPLY        := 1   # Permission granted to requester
+
+# Node tuple layout: PAIR id (PAIR state (PAIR clock (PAIR req_ts (PAIR def_q replies_needed))))
+MK_NODE          := λid st clk req_ts def_q rep_cnt.
+    pair id (pair st (pair clk (pair req_ts (pair def_q rep_cnt))))
+
+NODE_ID          := λn. 1st n
+NODE_STATE       := λn. 1st (2nd n)
+NODE_CLOCK       := λn. 1st (2nd (2nd n))
+NODE_REQ_TS      := λn. 1st (2nd (2nd (2nd n)))
+NODE_DEF_Q       := λn. 1st (2nd (2nd (2nd (2nd n))))
+NODE_REP_CNT     := λn. 2nd (2nd (2nd (2nd (2nd n))))
+
+# Message tuple layout: PAIR msg_type (PAIR sender_id req_timestamp)
+MK_MSG           := λm_type sender_id req_ts.
+    pair m_type (pair sender_id req_ts)
+
+MSG_TYPE         := λm. 1st m
+MSG_SENDER       := λm. 1st (2nd m)
+MSG_TS           := λm. 2nd (2nd m)
+
+
+##
+# 2. Priority Rules & Clock Mechanics
+##
+
+# Ricart-Agrawala Priority Order:
+# Node A has priority over Node B if:
+#   1. Timestamp_A < Timestamp_B, OR
+#   2. Timestamp_A == Timestamp_B AND Node_ID_A < Node_ID_B (tie-breaker)
+HAS_PRIORITY     := λts_a id_a ts_b id_b.
+    ∨ (< ts_a ts_b) (∧ (EQ_NUM ts_a ts_b) (< id_a id_b))
+
+# Node J evaluates whether to DEFER sending a reply to incoming request from Node K
+SHOULD_DEFER     := λnode_j k_id k_ts.
+    ∨ (EQ_NUM (NODE_STATE node_j) STATE_HELD)
+      (∧ (EQ_NUM (NODE_STATE node_j) STATE_REQUESTING)
+         (HAS_PRIORITY (NODE_REQ_TS node_j) (NODE_ID node_j) k_ts k_id))
+
+
+##
+# 3. Protocol Transitions & Message Handlers
+##
+
+# Transition 1: Node I requests Critical Section
+# Increments clock, updates state to REQUESTING, and sets expected replies to (ClusterSize - 1)
+REQUEST_CS       := λnode cluster_size.
+    λnew_clk.
+        MK_NODE (NODE_ID node)
+                STATE_REQUESTING
+                new_clk
+                new_clk
+                (NODE_DEF_Q node)
+                (predecessor cluster_size)
+    (successor (NODE_CLOCK node))
+
+# Transition 2: Process incoming REQUEST at Node J from Node K
+# Returns PAIR (Updated Node J) (Optional Instant REPLY message or NULL)
+HANDLE_REQUEST   := λnode_j msg_k.
+    λk_id k_ts updated_clk.
+        if (SHOULD_DEFER node_j k_id k_ts)
+            # Defer reply: append k_id to deferred queue
+            pair (MK_NODE (NODE_ID node_j)
+                          (NODE_STATE node_j)
+                          updated_clk
+                          (NODE_REQ_TS node_j)
+                          (cons k_id (NODE_DEF_Q node_j))
+                          (NODE_REP_CNT node_j))
+                 nil
+            # Immediate reply granted to K
+            pair (MK_NODE (NODE_ID node_j)
+                          (NODE_STATE node_j)
+                          updated_clk
+                          (NODE_REQ_TS node_j)
+                          (NODE_DEF_Q node_j)
+                          (NODE_REP_CNT node_j))
+                 (MK_MSG MSG_REPLY (NODE_ID node_j) 0)
+    (MSG_SENDER msg_k)
+    (MSG_TS msg_k)
+    (successor (max (NODE_CLOCK node_j) (MSG_TS msg_k)))
+
+# Transition 3: Process incoming REPLY at Node I
+# Decrements reply counter; if replies reach 0, transitions state to HELD (enters CS)
+HANDLE_REPLY     := λnode_i msg_reply.
+    λrem_replies.
+        MK_NODE (NODE_ID node_i)
+                (if (=0 rem_replies) STATE_HELD (NODE_STATE node_i))
+                (NODE_CLOCK node_i)
+                (NODE_REQ_TS node_i)
+                (NODE_DEF_Q node_i)
+                rem_replies
+    (predecessor (NODE_REP_CNT node_i))
+
+# Transition 4: Node I releases Critical Section
+# Returns PAIR (Updated Node I with state RELEASED and empty queue) (List of deferred node IDs to notify)
+RELEASE_CS       := λnode_i.
+    pair (MK_NODE (NODE_ID node_i)
+                  STATE_RELEASED
+                  (NODE_CLOCK node_i)
+                  0
+                  nil
+                  0)
+         (NODE_DEF_Q node_i)
+
+
+##
+# 4. Verification Suite & Simulation
+##
+
+# Cluster Setup: 3 Nodes (ID 0, ID 1, ID 2) initialized to STATE_RELEASED
+NODE_0 := MK_NODE 0 STATE_RELEASED 0 0 nil 0
+NODE_1 := MK_NODE 1 STATE_RELEASED 0 0 nil 0
+NODE_2 := MK_NODE 2 STATE_RELEASED 0 0 nil 0
+
+# --- Test 1: Priority Verification ---
+# Node 0 (ts 1) has priority over Node 1 (ts 2)
+ASSERT (HAS_PRIORITY 1 0 2 1)
+# Tie-breaker: Node 0 (ts 1) has priority over Node 1 (ts 1) because ID 0 < ID 1
+ASSERT (HAS_PRIORITY 1 0 1 1)
+ASSERT (not (HAS_PRIORITY 1 1 1 0))
+
+# --- Test 2: Node 0 Requests CS ---
+# Cluster size = 3 (needs 2 replies to enter CS)
+N0_REQ := REQUEST_CS NODE_0 3
+ASSERT_EQ (NODE_STATE N0_REQ), STATE_REQUESTING
+ASSERT_EQ (NODE_CLOCK N0_REQ), 1
+ASSERT_EQ (NODE_REP_CNT N0_REQ), 2
+
+# --- Test 3: Concurrent Request Collision (Node 1 also requests CS) ---
+N1_REQ := REQUEST_CS NODE_1 3
+ASSERT_EQ (NODE_STATE N1_REQ), STATE_REQUESTING
+ASSERT_EQ (NODE_CLOCK N1_REQ), 1
+
+# --- Test 4: Node 1 processes Node 0's Request ---
+# Node 0 request message: (MSG_REQUEST, sender=0, ts=1)
+MSG_REQ_0 := MK_MSG MSG_REQUEST 0 1
+
+# Node 1 receives MSG_REQ_0. Since Node 0 (ts 1, id 0) has priority over Node 1 (ts 1, id 1),
+# Node 1 does NOT defer and grants an immediate REPLY to Node 0.
+RES_N1_HANDLES_0 := HANDLE_REQUEST N1_REQ MSG_REQ_0
+N1_POST_0        := 1st RES_N1_HANDLES_0
+REPLY_FOR_0      := 2nd RES_N1_HANDLES_0
+
+ASSERT_EQ (MSG_TYPE REPLY_FOR_0), MSG_REPLY
+ASSERT_EQ (NODE_STATE N1_POST_0), STATE_REQUESTING
+
+# --- Test 5: Node 0 processes Node 1's Request ---
+# Node 1 request message: (MSG_REQUEST, sender=1, ts=1)
+MSG_REQ_1 := MK_MSG MSG_REQUEST 1 1
+
+# Node 0 receives MSG_REQ_1. Since Node 0 has priority, Node 0 DEFERS reply to Node 1.
+RES_N0_HANDLES_1 := HANDLE_REQUEST N0_REQ MSG_REQ_1
+N0_POST_1        := 1st RES_N0_HANDLES_1
+DEFERRED_REPLY   := 2nd RES_N0_HANDLES_1
+
+ASSERT (=nil DEFERRED_REPLY)  # Reply deferred!
+ASSERT_EQ (head (NODE_DEF_Q N0_POST_1)), 1  # Node 1 queued in Node 0's deferred queue
+
+# --- Test 6: Neutral Node 2 Grants Reply to Node 0 ---
+RES_N2_HANDLES_0 := HANDLE_REQUEST NODE_2 MSG_REQ_0
+REPLY_FROM_2     := 2nd RES_N2_HANDLES_0
+ASSERT_EQ (MSG_TYPE REPLY_FROM_2), MSG_REPLY
+
+# --- Test 7: Node 0 Collects Both Replies and Enters CS ---
+N0_STEP1 := HANDLE_REPLY N0_POST_1 REPLY_FOR_0  # 1 reply left
+ASSERT_EQ (NODE_STATE N0_STEP1), STATE_REQUESTING
+ASSERT_EQ (NODE_REP_CNT N0_STEP1), 1
+
+N0_IN_CS := HANDLE_REPLY N0_STEP1 REPLY_FROM_2   # 0 replies left -> ENTERS CS!
+ASSERT_EQ (NODE_STATE N0_IN_CS), STATE_HELD
+
+# --- Test 8: Node 0 Exits CS and Flushes Deferred Queue to Node 1 ---
+RELEASE_RES := RELEASE_CS N0_IN_CS
+N0_RELEASED := 1st RELEASE_RES
+DEFERRED_LIST := 2nd RELEASE_RES
+
+ASSERT_EQ (NODE_STATE N0_RELEASED), STATE_RELEASED
+ASSERT_EQ (head DEFERRED_LIST), 1  # Node 1 receives unblocked reply permission!

@@ -53,11 +53,11 @@ INCLUDE "25_bootstrap.lc"
 #
 ##
 
-∈, set_member       := λs elem. s elem
-∪, set_union        := λs1 s2 elem. ∨ (s1 elem) (s2 elem)
-∩, set_intersection := λs1 s2 elem. ∧ (s1 elem) (s2 elem)
-# ∖ (set difference)
-set_difference      := λs1 s2 elem. ∧ (s1 elem) (¬ (s2 elem))
+#∈, set_member       := λs elem. s elem
+#∪, set_union        := λs1 s2 elem. ∨ (s1 elem) (s2 elem)
+#∩, set_intersection := λs1 s2 elem. ∧ (s1 elem) (s2 elem)
+## ∖ (set difference)
+#set_difference      := λs1 s2 elem. ∧ (s1 elem) (¬ (s2 elem))
 
 # TODO
 # ∉

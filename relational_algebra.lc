@@ -1,0 +1,172 @@
+#! /usr/bin/env lc
+
+##
+# relational_algebra.lc
+# Standard Library Module: Pure Relational Algebra (RA) Primitives
+#
+# Relations are represented as characteristic functions (λtuple. Bool).
+# Tuples are represented as functional structures or Church pairs.
+##
+
+INCLUDE "set_theory.lc"
+
+##
+# 1. Fundamental Relational Operators
+##
+
+# σ (Selection): Filters tuples in relation R satisfying predicate P
+# Mathematical syntax: σ_{P}(R)
+σ, select := λpred rel t.
+    ∧ (rel t) (pred t)
+
+## π (Projection): Projects relation R onto a transformed attribute domain
+## Mathematical syntax: π_{attributes}(R)
+#π, project := λproj_fn rel t_out.
+#    ∃ t_in. ∧ (rel t_in) (EQ t_out (proj_fn t_in))
+
+# ρ (Rename): Renames attributes/schema of relation R via a mapping function
+# Mathematical syntax: ρ_{A → B}(R)
+ρ, rename := λmapper rel t.
+    rel (mapper t)
+
+# δ (Duplicate Elimination): Identity operation under set characteristic functions
+# Mathematical syntax: δ(R)
+δ, duplicate_elimination := λrel.
+    rel
+
+
+##
+# 2. Primitive Set-Theoretic Operators
+##
+
+# ∪ (Union): R ∪ S
+∪, rel_union := λr1 r2 t.
+    ∨ (r1 t) (r2 t)
+
+# ∩ (Intersection): R ∩ S
+∩, rel_intersect := λr1 r2 t.
+    ∧ (r1 t) (r2 t)
+
+# ∖ (Set Difference): R ∖ S
+∖, rel_difference := λr1 r2 t.
+    ∧ (r1 t) (¬ (r2 t))
+
+# × (Cartesian Product): R × S
+# Pairs every tuple in R with every tuple in S -> PAIR t1 t2
+×, cartesian_product := λr1 r2 pair_t.
+    ∧ (r1 (p:1st pair_t)) (r2 (p:2nd pair_t))
+
+
+##
+# 3. Join Variants
+##
+
+# ⋈ (Theta Join): R ⋈_θ S
+# Filters the Cartesian product of R and S by join condition θ
+⋈, theta_join := λr1 r2 theta pair_t.
+    ∧ (× r1 r2 pair_t) (theta (p:1st pair_t) (p:2nd pair_t))
+
+# ⋈ (Natural Join / Equi-Join): R ⋈ S
+# Theta join where condition verifies equality across matching key attributes
+natural_join := λr1 r2 key_fn pair_t.
+    ⋈ r1 r2 (λt1 t2. EQ (key_fn t1) (key_fn t2)) pair_t
+
+## ⋉ (Left Semi-Join): R ⋉_θ S
+## Returns tuples in R for which there exists at least one matching tuple in S
+#⋉, left_semijoin := λr1 r2 theta t1.
+#    ∧ (r1 t1) (∃ t2. ∧ (r2 t2) (theta t1 t2))
+#
+## ⋊ (Right Semi-Join): R ⋊_θ S
+## Returns tuples in S for which there exists at least one matching tuple in R
+#⋊, right_semijoin := λr1 r2 theta t2.
+#    ∧ (r2 t2) (∃ t1. ∧ (r1 t1) (theta t1 t2))
+#
+## ▷ (Anti-Join / Anti-Semi-Join): R ▷_θ S
+## Returns tuples in R for which NO matching tuple exists in S
+#▷, anti_join := λr1 r2 theta t1.
+#    ∧ (r1 t1) (¬ (∃ t2. ∧ (r2 t2) (theta t1 t2)))
+#
+# ⟕ (Left Outer Join): R ⟕_θ S
+# Preserves all tuples from R; pairs with matching S tuples or NULL token
+# Represented here via Church Option/Either encoding
+NULL_VAL := λx. FALSE
+⟕, left_outer_join := λr1 r2 theta pair_t.
+    ∨ (⋈ r1 r2 theta pair_t)
+      (∧ (▷ r1 r2 theta (p:1st pair_t)) (EQ (p:2nd pair_t) NULL_VAL))
+
+# ⟖ (Right Outer Join): R ⟖_θ S
+⟖, right_outer_join := λr1 r2 theta pair_t.
+    ∨ (⋈ r1 r2 theta pair_t)
+      (∧ (▷ r2 r1 (λx y. theta y x) (p:2nd pair_t)) (EQ (p:1st pair_t) NULL_VAL))
+
+# ⟗ (Full Outer Join): R ⟗_θ S
+⟗, full_outer_join := λr1 r2 theta pair_t.
+    ∨ (⟕ r1 r2 theta pair_t)
+      (⟖ r1 r2 theta pair_t)
+#
+#
+###
+## 4. Division & Aggregation Operators
+###
+#
+## ÷ (Relational Division): R ÷ S
+## Returns tuples t1 in R such that for EVERY tuple t2 in S, (t1, t2) ∈ R
+## Mathematical definition: R ÷ S = { t1 | ∀ t2 ∈ S, (t1, t2) ∈ R }
+#÷, divide := λr1 r2 t1.
+#    ∀ t2. (r2 t2) → (r1 (PAIR t1 t2))
+#
+## γ (Aggregation / Grouping): G_γ_{f(A)}(R)
+## Groups relation R by group_key function and applies aggregator predicate
+#γ, aggregate := λgroup_key agg_pred rel group_val.
+#    ∃ t. ∧ (rel t) (∧ (EQ group_val (group_key t)) (agg_pred rel group_val))
+#
+#
+###
+## 5. Formal Verification & Unit Tests
+###
+#
+## Schema Encoding for Test Relations:
+## Student relation: PAIR student_id course_id
+## Course requirement relation: course_id
+#
+#S1 := PAIR 1 101   # Student 1 takes Course 101
+#S2 := PAIR 1 102   # Student 1 takes Course 102
+#S3 := PAIR 2 101   # Student 2 takes Course 101
+#
+#C1 := 101          # Course 101
+#C2 := 102          # Course 102
+#
+## Relation StudentCourses (R)
+#R_STUDENT_COURSES := λt. ∨ (EQ t S1) (∨ (EQ t S2) (EQ t S3))
+#
+## Relation RequiredCourses (S) - requires both 101 and 102
+#S_REQUIRED_COURSES := λc. ∨ (EQ c C1) (EQ c C2)
+#
+## --- Test 1: Selection (σ) ---
+## Filter courses for Student 1
+#IS_STUDENT_1 := λt. EQ (p:1st t) 1
+#STUDENT_1_REL := σ IS_STUDENT_1 R_STUDENT_COURSES
+#ASSERT (STUDENT_1_REL S1)
+#ASSERT (STUDENT_1_REL S2)
+#ASSERT (¬ (STUDENT_1_REL S3))
+#
+## --- Test 2: Projection (π) ---
+## Extract student IDs who took courses
+#PROJECT_STUDENTS := π (λt. p:1st t) R_STUDENT_COURSES
+#ASSERT (PROJECT_STUDENTS 1)
+#ASSERT (PROJECT_STUDENTS 2)
+#ASSERT (¬ (PROJECT_STUDENTS 3))
+#
+## --- Test 3: Anti-Join (▷) ---
+## Find student records in R that do NOT equal course 102
+#THETA_IS_102 := λt c. EQ (p:2nd t) 102
+#NON_102_STUDENTS := ▷ R_STUDENT_COURSES S_REQUIRED_COURSES THETA_IS_102
+#ASSERT (NON_102_STUDENTS S1)
+#ASSERT (NON_102_STUDENTS S3)
+#ASSERT (¬ (NON_102_STUDENTS S2))
+#
+## --- Test 4: Relational Division (÷) ---
+## Find students who have taken ALL required courses (Student 1 has taken both 101 & 102; Student 2 has only taken 101)
+#QUALIFIED_STUDENTS := ÷ R_STUDENT_COURSES S_REQUIRED_COURSES
+#ASSERT (QUALIFIED_STUDENTS 1)
+#ASSERT (¬ (QUALIFIED_STUDENTS 2))

@@ -1,0 +1,128 @@
+#! /usr/bin/env lc
+
+##
+# set_theory.lc
+# Standard Library Module: Pure Set Theory Primitives & Quantifiers
+#
+# Sets are represented as characteristic functions (λelem. Bool).
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc" AS p # FIXME lc.py bug? pair defines a different ∅; namespacing it here affects it in 05_map_reduce assertion circa line 19
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+
+##
+# 1. Fundamental Set Definitions & Membership
+##
+
+# ∅, empty_set: Set containing no elements (always returns false)
+∅, empty_set            := λelem. ⊥
+
+# 𝕌, universal_set: Set containing all elements in universe (always returns true)
+𝕌, universal_set        := λelem. ⊤
+
+# ∈ (Element of / Membership)
+∈, set_member          := λs elem. s elem
+
+# ∉ (Not an element of)
+∉, set_not_member      := λs elem. ¬ (s elem)
+
+
+##
+# 2. Set Combinators (Binary Operations)
+##
+
+# ∪ (Set Union): x ∈ (S1 ∪ S2) ⇔ (x ∈ S1) ∨ (x ∈ S2)
+∪, set_union           := λs1 s2 elem. ∨ (s1 elem) (s2 elem)
+
+# ∩ (Set Intersection): x ∈ (S1 ∩ S2) ⇔ (x ∈ S1) ∧ (x ∈ S2)
+∩, set_intersection    := λs1 s2 elem. ∧ (s1 elem) (s2 elem)
+
+# ∖ (Set Difference / Relative Complement): x ∈ (S1 ∖ S2) ⇔ (x ∈ S1) ∧ (x ∉ S2)
+∖, set_difference      := λs1 s2 elem. ∧ (s1 elem) (¬ (s2 elem))
+
+# ⊖, △ (Symmetric Difference): x ∈ (S1 ⊖ S2) ⇔ (x ∈ S1) ⊻ (x ∈ S2)
+⊖, △, sym_difference   := λs1 s2 elem. ⊻ (s1 elem) (s2 elem)
+
+
+##
+# 3. Quantifiers & Set Inclusion over Bounded Domains / Enumerable Sets
+##
+
+# Bounded Quantifiers using Church list traversals over a domain D
+# ∀ (Universal Quantifier): ∀ x ∈ Domain, Predicate(x)
+∀, for_all             := λdomain pred. all pred domain
+
+# ∃ (Existential Quantifier): ∃ x ∈ Domain, Predicate(x)
+∃, exists              := λdomain pred. any pred domain
+
+# ∃! (Uniqueness Quantifier): ∃! x ∈ Domain, Predicate(x)
+# True if exactly one element in the domain satisfies the predicate
+∃!, exists_unique      := λdomain pred.
+    EQ_NUM 1 (length (filter pred domain))
+
+# ⊆ (Subset / Subset or Equal): S1 ⊆ S2 ⇔ ∀ x ∈ Domain, (x ∈ S1 ⇒ x ∈ S2)
+⊆, subset_eq           := λdomain s1 s2.
+    ∀ domain (λx. ⇒ (s1 x) (s2 x))
+
+# ⊂, ⊊ (Strict / Proper Subset): S1 ⊊ S2 ⇔ (S1 ⊆ S2) ∧ ¬(S2 ⊆ S1)
+⊂, ⊊, strict_subset    := λdomain s1 s2.
+    ∧ (⊆ domain s1 s2) (¬ (⊆ domain s2 s1))
+
+# ⊇ (Superset or Equal): S1 ⊇ S2 ⇔ S2 ⊆ S1
+⊇, superset_eq         := λdomain s1 s2.
+    ⊆ domain s2 s1
+
+# ⊃, ⊋ (Strict / Proper Superset): S1 ⊊ S2 ⇔ S2 ⊊ S1
+⊃, ⊋, strict_superset  := λdomain s1 s2.
+    ⊂ domain s2 s1
+
+
+##
+# 4. Verification Suite & Unit Tests
+##
+
+# Define two test sets over Natural Numbers:
+# EVENS = {0, 2, 4, 6, ...}
+# ODDS  = {1, 3, 5, 7, ...}
+EVENS := λx. =0 (mod x 2)
+ODDS  := λx. ¬ (EVENS x)
+
+# Finite Domain D = [0, 1, 2, 3, 4]
+DOMAIN_0_4 := cons 0 (cons 1 (cons 2 (cons 3 (cons 4 nil))))
+
+# --- Membership Verification ---
+ASSERT (∈ EVENS 0)
+ASSERT (∈ EVENS 2)
+ASSERT (∉ EVENS 1)
+ASSERT (∉ EVENS 3)
+
+# --- Union & Intersection Verification ---
+ALL_NUMS := ∪ EVENS ODDS
+NO_NUMS  := ∩ EVENS ODDS
+
+ASSERT (∈ ALL_NUMS 0)
+ASSERT (∈ ALL_NUMS 1)
+ASSERT (∉ NO_NUMS 0)
+ASSERT (∉ NO_NUMS 1)
+
+# --- Symmetric Difference Verification ---
+# (EVENS ⊖ ALL_NUMS) should contain exactly the ODDS
+DIFF_SET := ⊖ EVENS ALL_NUMS
+ASSERT (∈ DIFF_SET 1)
+ASSERT (∉ DIFF_SET 2)
+
+# --- Quantifiers & Subsets ---
+# Set A = {0, 2}
+SET_A := λx. ∨ (EQ_NUM x 0) (EQ_NUM x 2)
+
+# SET_A ⊆ EVENS is true on DOMAIN_0_4
+ASSERT (⊆ DOMAIN_0_4 SET_A EVENS)
+ASSERT (⊂ DOMAIN_0_4 SET_A EVENS)
+ASSERT (¬ (⊆ DOMAIN_0_4 EVENS SET_A))
+
+# Unique Existential Quantification: Exactly one number in DOMAIN_0_4 equals 3
+ASSERT (∃! DOMAIN_0_4 (λx. EQ_NUM x 3))
+ASSERT (¬ (∃! DOMAIN_0_4 (λx. EVENS x)))  # Multiple evens exist (0, 2, 4)
