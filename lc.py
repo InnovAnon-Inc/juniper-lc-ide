@@ -606,36 +606,51 @@ def debruijn_to_str(
 def preprocess_source(code: str) -> str:
     """
     Preprocesses source code to:
-    1. Ignore explicit backslash continuations (`\\`) by stripping them.
-    2. Strip trailing whitespace and ignore blank lines.
+    1. Support indentation-based line continuation (indented lines continue the previous logical line).
+    2. Support explicit backslash continuations (`\\`).
+    3. Strip comments and blank lines.
     """
     lines = code.splitlines()
     processed_lines = []
     current_logical_line = ""
+    explicit_cont = False
 
     for line in lines:
         if '#' in line:
             line = line.split('#')[0]
 
-        stripped = line.strip()
-        if not stripped:
+        if not line.strip():
             continue
 
-        # Handle explicit backslash continuation if present
+        stripped = line.strip()
+        has_indent = line[0].isspace() or line.startswith('\t')
+
+        if explicit_cont:
+            if stripped.endswith('\\'):
+                explicit_cont = True
+                stripped = stripped[:-1].strip()
+            else:
+                explicit_cont = False
+            current_logical_line += " " + stripped
+            continue
+
         if stripped.endswith('\\'):
+            explicit_cont = True
             stripped = stripped[:-1].strip()
-            if current_logical_line:
+            if current_logical_line and (has_indent or not current_logical_line):
                 current_logical_line += " " + stripped
             else:
+                if current_logical_line:
+                    processed_lines.append(current_logical_line)
                 current_logical_line = stripped
             continue
 
-        if current_logical_line:
+        if has_indent and current_logical_line:
             current_logical_line += " " + stripped
-            processed_lines.append(current_logical_line)
-            current_logical_line = ""
         else:
-            processed_lines.append(stripped)
+            if current_logical_line:
+                processed_lines.append(current_logical_line)
+            current_logical_line = stripped
 
     if current_logical_line:
         processed_lines.append(current_logical_line)
