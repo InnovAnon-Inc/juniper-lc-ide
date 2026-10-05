@@ -1,0 +1,7 @@
+# **`33_ieee_float.lc` (Floating-Point Numbers & Bit Twiddling)**
+# **Purpose**: Real-number operations, scientific math, and hardware-adjacent floating-point representation.
+# **Contents**:
+# IEEE 754 bit-field layout (`sign`, `exponent`, `mantissa`).
+# Bitwise ops: `bit_and`, `bit_or`, `bit_xor`, `bit_not`, `shift_left`, `shift_right`.
+# `f_add`, `f_sub`, `f_mul`, `f_div`, `f_sqrt`, `f_sin`, `f_cos`.
+

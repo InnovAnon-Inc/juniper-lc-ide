@@ -1,0 +1,7 @@
+# **`36_stats_prob.lc` (Statistics & Probability Distributions)**
+# **Purpose**: Data analysis, probability modeling, and random distributions.
+# **Contents**:
+# `mean`, `median`, `variance`, `std_dev`, `covariance`.
+# Pseudo-random number generators (`lcg_rand`, `random_range`).
+# Probability functions (uniform, normal, binomial distributions).
+

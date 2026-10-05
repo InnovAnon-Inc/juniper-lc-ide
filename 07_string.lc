@@ -1,0 +1,9 @@
+# **`07_string.lc` (String Encodings & Manipulation)**
+# **Purpose**: High-level text manipulation for everyday programs, formatting, and CLI output.
+# **Contents**:
+# `CHAR`: Church numeral / ASCII character representation.
+# `STRING`: Church list of `CHAR` elements.
+# `str_concat`, `str_split`, `str_join`, `str_substr`, `str_contains`.
+# `to_string`: Conversion functions for Church numerals, booleans, and pairs.
+# `sprintf` / interpolation helpers for basic formatted printing.
+

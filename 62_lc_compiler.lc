@@ -1,0 +1,7 @@
+# **`62_lc_compiler.lc` (Self-Hosting Compiler `lc.lc` & Transpilers)**
+# **Purpose**: Compiles `.lc` files directly to C, JavaScript (browser/Node), WASM, or native binary output.
+# **Contents**:
+# AST transformation pipelines (alpha-renaming, De Bruijn indexing, closure conversion).
+# Target backends: `emit_js` (for browser runtimes), `emit_c` (for kernel/UEFI/BIOS), `emit_wasm`.
+# Full self-hosting entry point replacing `lc.py` with `lc.lc`.
+

@@ -1,0 +1,7 @@
+# **`34_linear_algebra.lc` (Vectors, Matrices, & Transforms)**
+# **Purpose**: Matrix math for 2D/3D graphics, physics simulations, and statistics.
+# **Contents**:
+# `VEC2`, `VEC3`, `VEC4` vector constructors and dot/cross product (`dot_prod`, `cross_prod`).
+# Matrix structures: `MAT2`, `MAT3`, `MAT4`, `mat_mul`, `mat_transpose`, `mat_determinant`, `mat_inverse`.
+# Vector normalization, distance, and 3D projection transformations.
+

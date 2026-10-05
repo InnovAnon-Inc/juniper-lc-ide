@@ -18,7 +18,8 @@ INCLUDE "05_map_reduce.lc"
 ##
 
 # ∅, empty_set: Set containing no elements (always returns false)
-∅, empty_set            := λelem. ⊥
+#∅, empty_set            := λelem. ⊥
+empty_set               ≡  ∅
 
 # 𝕌, universal_set: Set containing all elements in universe (always returns true)
 𝕌, universal_set        := λelem. ⊤

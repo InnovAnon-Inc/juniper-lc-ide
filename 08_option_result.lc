@@ -1,0 +1,7 @@
+# **`08_option_result.lc` (Error Handling & Safe Operations)**
+# **Purpose**: Eliminates crashes and undefined behaviors for beginner programs using monadic containers.
+# **Contents**:
+# `SOME`, `NONE`, `is_some`, `is_none`, `unwrap_or`.
+# `OK`, `ERR`, `is_ok`, `is_err`, `match_result`.
+# `and_then` / `map_option` / `map_result` monadic chaining.
+

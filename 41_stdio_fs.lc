@@ -1,0 +1,8 @@
+# **`41_stdio_fs.lc` (File I/O, Streams, & File Systems)**
+# **Purpose**: Standard input/output, file reading/writing, and file path manipulation for shell scripts and CLI applications.
+# **Contents**:
+# Safe abstractions over `OPEN`, `CLOSE`, `FD_READ`, `FD_WRITE`, `PIPE`, `DUP2`.
+# `read_file_to_string`, `write_string_to_file`, `append_file`.
+# Buffered stream wrappers (`stdin_stream`, `stdout_stream`, `stderr_stream`).
+# Path helpers: `path_join`, `path_basename`, `path_dirname`.
+

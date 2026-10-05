@@ -1,0 +1,7 @@
+# **`32_rational.lc` (Exact Fraction Arithmetic)**
+# **Purpose**: Arbitrary-precision exact arithmetic without rounding errors.
+# **Contents**:
+# Fraction pair encoding: `PAIR numerator denominator` in reduced form using GCD.
+# `gcd`, `lcm` helpers.
+# `q_add`, `q_sub`, `q_mul`, `q_div`, `q_simplify`, `q_to_string`.
+

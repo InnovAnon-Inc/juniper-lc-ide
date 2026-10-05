@@ -1,0 +1,7 @@
+# **`43_net_http.lc` (Networking, Sockets, & Web Servers)**
+# **Purpose**: Socket communication, client requests, and HTTP server routing (`server.lc`).
+# **Contents**:
+# Low-level socket bindings (`SOCKET`, `BIND`, `LISTEN`, `ACCEPT`, `CONNECT`).
+# High-level HTTP request/response parsers (`parse_http_req`, `build_http_res`).
+# Router definition DSL: `GET`, `POST`, `route_match`, `serve_http`.
+

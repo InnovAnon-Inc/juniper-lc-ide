@@ -1,0 +1,7 @@
+# **`09_dict_map.lc` (Key-Value Dictionaries & Hash Tables)**
+# **Purpose**: Easy-to-use key-value lookup structures without manually composing pairs.
+# **Contents**:
+# Association lists (`assoc_list`) and functional Trie / Radix tree dictionaries.
+# `dict_empty`, `dict_insert`, `dict_get`, `dict_remove`, `dict_keys`, `dict_values`.
+# `dict_merge` for combining environment dictionaries.
+

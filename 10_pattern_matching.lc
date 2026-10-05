@@ -1,0 +1,7 @@
+# **`10_pattern_matching.lc` (Algebraic Data Types & Destructuring)**
+# **Purpose**: Clean conditional branching over complex data structures for readable code.
+# **Contents**:
+# `MATCH`, `CASE`, `DEFAULT` combinators.
+# Scott-encoded and Church-encoded variant destructors.
+# Tuple destructuring macros (`let_pair`, `let_triple`).
+

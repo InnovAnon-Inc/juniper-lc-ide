@@ -8,7 +8,8 @@
 # Tuples are represented as functional structures or Church pairs.
 ##
 
-INCLUDE "set_theory.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "set_theory.lc" AS st
 
 ##
 # 1. Fundamental Relational Operators

@@ -1,0 +1,7 @@
+# **`52_raster_font.lc` (Rasterization Engine & Font Definition)**
+# **Purpose**: Pure functional pixel rendering, unicode glyph definitions, and font generation.
+# **Contents**:
+# Framebuffer canvas abstractions (`make_canvas`, `set_pixel`, `get_pixel`).
+# Vector-to-raster scanline conversion algorithms.
+# Unicode symbol path definitions and font rendering engine (`render_text_to_canvas`).
+

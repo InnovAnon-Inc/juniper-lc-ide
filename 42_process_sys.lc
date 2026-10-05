@@ -1,0 +1,8 @@
+# **`42_process_sys.lc` (Process Spawning, Threads, & Shell Execution)**
+# **Purpose**: Process control, multi-threading, pipeline piping, and system execution to enable using LC as a system shell.
+# **Contents**:
+# Wrappers over `FORK`, `EXECVE`, `EXEC_CMD`.
+# `spawn_process`, `wait_pid`, `pipe_processes`.
+# Environment variable access (`get_env`, `set_env`).
+# Command line argument parsing (`parse_argv`).
+

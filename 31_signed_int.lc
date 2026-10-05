@@ -1,0 +1,7 @@
+# **`31_signed_int.lc` (Two's-Complement & Signed Arithmetic)**
+# **Purpose**: Extends Church numerals to full signed integer calculations.
+# **Contents**:
+# Signed integer representations (sign-magnitude and two's complement pair encoding `PAIR sign magnitude`).
+# `s_plus`, `s_minus`, `s_times`, `s_div`, `s_negate`, `s_abs`.
+# Signed comparisons (`s_leq`, `s_lt`, `s_gt`, `s_geq`).
+

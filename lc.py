@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import sys
 import os
 import subprocess
@@ -663,47 +664,47 @@ def preprocess_source(code: str) -> str:
 
     return "\n".join(processed_lines)
 
-MODULE_EXPORTS_CACHE: Dict[str, Dict[str, DBTerm]] = {}
+#MODULE_EXPORTS_CACHE: Dict[str, Dict[str, DBTerm]] = {}
 
-def execute_program(
-    filename: str,
-    code: str,
-    env: Dict[str, DBTerm],
-    declared_terms: Dict[str, DBTerm],
-    quiet: bool = False,
-    visited_files: Optional[Set[str]] = None,
-) -> Tuple[List[str], Dict[str, DBTerm], Dict[str, DBTerm]]:
-    if visited_files is None:
-        visited_files = set()
-
-    if filename and filename != "<stdin>" and os.path.exists(filename):
-        visited_files.add(os.path.realpath(filename))
-
-    code = preprocess_source(code)
-
-    parser = Lark(LC_GRAMMAR, parser="lalr", propagate_positions=True)
-
-    try:
-        tree = parser.parse(code)
-        statements = LCTransformer().transform(tree)
-    except Exception as e:
-        print(f"\n❌ PARSE ERROR in {filename}:\n{e}", file=sys.stderr)
-        sys.exit(1)
-
-    all_defined_symbols = set()
-    for stmt in statements:
-        if stmt[1] in ("ASSIGN", "REDEFINE"):
-            all_defined_symbols.update(stmt[2])
-
-    if not quiet:
-        print(f"=== Evaluating: {filename} ===", file=sys.stderr)
-
-    output_lines: List[str] = []
-
-    for stmt in statements:
-        line_no, action = stmt[0], stmt[1]
-
-        try:
+#def execute_program(
+#    filename: str,
+#    code: str,
+#    env: Dict[str, DBTerm],
+#    declared_terms: Dict[str, DBTerm],
+#    quiet: bool = False,
+#    visited_files: Optional[Set[str]] = None,
+#) -> Tuple[List[str], Dict[str, DBTerm], Dict[str, DBTerm]]:
+#    if visited_files is None:
+#        visited_files = set()
+#
+#    if filename and filename != "<stdin>" and os.path.exists(filename):
+#        visited_files.add(os.path.realpath(filename))
+#
+#    code = preprocess_source(code)
+#
+#    parser = Lark(LC_GRAMMAR, parser="lalr", propagate_positions=True)
+#
+#    try:
+#        tree = parser.parse(code)
+#        statements = LCTransformer().transform(tree)
+#    except Exception as e:
+#        print(f"\n❌ PARSE ERROR in {filename}:\n{e}", file=sys.stderr)
+#        sys.exit(1)
+#
+#    all_defined_symbols = set()
+#    for stmt in statements:
+#        if stmt[1] in ("ASSIGN", "REDEFINE"):
+#            all_defined_symbols.update(stmt[2])
+#
+#    if not quiet:
+#        print(f"=== Evaluating: {filename} ===", file=sys.stderr)
+#
+#    output_lines: List[str] = []
+#
+#    for stmt in statements:
+#        line_no, action = stmt[0], stmt[1]
+#
+#        try:
 #            if action == "INCLUDE":
 #                inc_path, alias = stmt[2], stmt[3]
 #                if filename and filename != "<stdin>" and os.path.exists(filename):
@@ -746,13 +747,218 @@ def execute_program(
 #                        declared_terms.update(sub_declared)
 #
 #                    output_lines.extend(inc_lines)
+##            if action == "INCLUDE":
+##                inc_path, alias = stmt[2], stmt[3]
+##                base_dir = os.path.dirname(os.path.abspath(filename)) if (filename and filename != "<stdin>" and os.path.exists(filename)) else os.getcwd()
+##                resolved_path = inc_path if os.path.isabs(inc_path) else os.path.join(base_dir, inc_path)
+##                canonical_path = os.path.realpath(resolved_path)
+##
+##                if canonical_path in visited_files:
+##                    if not quiet:
+##                        print(f"# [INCLUDE] Skipping circular include: {inc_path}", file=sys.stderr)
+##                    continue
+##
+##                if not os.path.exists(canonical_path):
+##                    print(f"\n❌ INCLUDE ERROR at {filename}:{line_no}: File not found '{inc_path}' ({canonical_path})", file=sys.stderr)
+##                    sys.exit(1)
+##
+##                # Parse and evaluate file once to populate export cache
+##                if canonical_path not in MODULE_EXPORTS_CACHE:
+##                    with open(canonical_path, "r", encoding="utf-8") as f:
+##                        included_code = f.read()
+##
+##                    sub_active = set(visited_files)
+##                    sub_active.add(canonical_path)
+##
+##                    inc_lines, sub_env, sub_declared = execute_program(
+##                        canonical_path,
+##                        included_code,
+##                        dict(env),
+##                        dict(declared_terms),
+##                        quiet=quiet,
+##                        visited_files=sub_active
+##                    )
+##
+##                    MODULE_EXPORTS_CACHE[canonical_path] = sub_declared
+##                    output_lines.extend(inc_lines)
+##
+##                cached_exports = MODULE_EXPORTS_CACHE[canonical_path]
+##
+##                # Populate caller's environment according to local alias rule
+##                if alias:
+##                    for name, term in cached_exports.items():
+##                        namespaced_name = f"{alias}:{name}"
+##                        env[namespaced_name] = term
+##                        declared_terms[namespaced_name] = term
+##                else:
+##                    for name, term in cached_exports.items():
+##                        env[name] = term
+##                        declared_terms[name] = term
+#
+#            elif action == "ASSERT":
+#                expr = stmt[2]
+#                db_term = surface_to_debruijn(expr, env)
+#                evaluated = normalize(db_term)
+#
+#                true_term = env.get("TRUE", env.get("⊤"))
+#                if not true_term or not db_equal(evaluated, true_term):
+#                    print(f"\n❌ ASSERTION FAILED at {filename}:{line_no}", file=sys.stderr)
+#                    print(f"    Got: {debruijn_to_str(evaluated, declared_terms, all_defined_symbols=all_defined_symbols)}", file=sys.stderr)
+#                    sys.exit(1)
+#
+#                pretty_expr = debruijn_to_str(db_term, declared_terms, all_defined_symbols=all_defined_symbols)
+#                line_out = f"ASSERT {pretty_expr}"
+#                output_lines.append(line_out)
+#                if not quiet:
+#                    print(line_out)
+#                    print(f"✓ ASSERTION PASSED (Line {line_no})", file=sys.stderr)
+#
+#            elif action == "ASSERT_EQ":
+#                left_ast, right_ast = stmt[2], stmt[3]
+#                db_left = surface_to_debruijn(left_ast, env)
+#                db_right = surface_to_debruijn(right_ast, env)
+#
+#                red_left = normalize(db_left)
+#                red_right = normalize(db_right)
+#
+#                if not db_equal(red_left, red_right):
+#                    print(f"\n❌ ASSERT_EQ FAILED at {filename}:{line_no}", file=sys.stderr)
+#                    print(f"    Left:  {debruijn_to_str(red_left, declared_terms)}", file=sys.stderr)
+#                    print(f"    Right: {debruijn_to_str(red_right, declared_terms)}", file=sys.stderr)
+#                    sys.exit(1)
+#
+#                pretty_left = debruijn_to_str(db_left, declared_terms, all_defined_symbols=all_defined_symbols)
+#                pretty_right = debruijn_to_str(db_right, declared_terms, all_defined_symbols=all_defined_symbols)
+#
+#                line_out = f"ASSERT_EQ {pretty_left}, {pretty_right}"
+#                output_lines.append(line_out)
+#                if not quiet:
+#                    print(line_out)
+#                    print(f"✓ ASSERT_EQ PASSED (Line {line_no})", file=sys.stderr)
+#
+#            elif action == "ASSIGN":
+#                target, expr = stmt[2], stmt[3]
+#                for name in target:
+#                    if name in declared_terms:
+#                        print(f"\n❌ REDEFINITION ERROR at {filename}:{line_no}: '{name}' is already defined. Use '≡' (triple equals/redefine) to explicitly override.", file=sys.stderr)
+#                        sys.exit(1)
+#
+#                db_term = surface_to_debruijn(expr, env)
+#                exclude_set = set(target)
+#                pretty = debruijn_to_str(db_term, declared_terms, exclude_names=exclude_set, all_defined_symbols=all_defined_symbols)
+#                time_c, space_c, k_approx = analyze_complexity(db_term)
+#
+#                names_str = ", ".join(target)
+#                line_out = f"{names_str} := {pretty}"
+#                annotated_meta = f"# [K(x): {k_approx} | Time: {time_c} | Space: {space_c}]"
+#                output_lines.extend([annotated_meta, line_out])
+#
+#                if not quiet:
+#                    print(f"{annotated_meta}\n{line_out}")
+#
+#                for name in target:
+#                    env[name] = db_term
+#                    declared_terms[name] = db_term
+#
+#            elif action == "REDEFINE":
+#                target, expr = stmt[2], stmt[3]
+#                db_term = surface_to_debruijn(expr, env)
+#
+#                for name in target:
+#                    if name in declared_terms:
+#                        print(f"# [META-CIRCULAR NOTICE] Redefining '{name}' via ≡. Pending meta-circular beta-equivalence verification...", file=sys.stderr)
+#                    env[name] = db_term
+#                    declared_terms[name] = db_term
+#
+#                exclude_set = set(target)
+#                pretty = debruijn_to_str(db_term, declared_terms, exclude_names=exclude_set, all_defined_symbols=all_defined_symbols)
+#                time_c, space_c, k_approx = analyze_complexity(db_term)
+#
+#                names_str = ", ".join(target)
+#                line_out = f"{names_str} ≡ {pretty}"
+#                annotated_meta = f"# [K(x): {k_approx} | Time: {time_c} | Space: {space_c}]"
+#                output_lines.extend([annotated_meta, line_out])
+#
+#                if not quiet:
+#                    print(f"{annotated_meta}\n{line_out}")
+#
+#            elif action == "EVAL":
+#                expr = stmt[2]
+#                db_term = surface_to_debruijn(expr, env)
+#                evaluated = normalize(db_term)
+#
+#                pretty_in = debruijn_to_str(db_term, declared_terms, all_defined_symbols=all_defined_symbols)
+#                pretty_res = debruijn_to_str(evaluated, declared_terms, all_defined_symbols=all_defined_symbols)
+#                time_c, space_c, k_approx = analyze_complexity(evaluated)
+#
+#                line_out = pretty_res
+#                output_lines.append(line_out)
+#                if not quiet:
+#                    print(f"# Eval ({filename}:{line_no}): {pretty_in}", file=sys.stderr)
+#                    print(f"# Complexity -> K(x): {k_approx}, Time: {time_c}, Space: {space_c}", file=sys.stderr)
+#                    print(f"# Result → {pretty_res}", file=sys.stderr)
+#                    print(line_out)
+#
+#        except RecursionError:
+#            print(f"\n💥 CRASH: Maximum Recursion Depth Exceeded (Divergent Term?)", file=sys.stderr)
+#            sys.exit(1)
+#        except Exception as e:
+#            print(f"\n💥 CRASH: Unexpected Error: {e}", file=sys.stderr)
+#            sys.exit(1)
+#
+#    return output_lines, env, declared_terms
+MODULE_EXPORTS_CACHE: Dict[str, Dict[str, DBTerm]] = {}
+
+def execute_program(
+    filename: str,
+    code: str,
+    env: Dict[str, DBTerm],
+    declared_terms: Dict[str, DBTerm],
+    quiet: bool = False,
+    active_includes: Optional[Set[str]] = None,
+) -> Tuple[List[str], Dict[str, DBTerm], Dict[str, DBTerm]]:
+    if active_includes is None:
+        active_includes = set()
+
+    if filename and filename != "<stdin>" and os.path.exists(filename):
+        active_includes.add(os.path.realpath(filename))
+
+    code = preprocess_source(code)
+    parser = Lark(LC_GRAMMAR, parser="lalr", propagate_positions=True)
+
+    try:
+        tree = parser.parse(code)
+        statements = LCTransformer().transform(tree)
+    except Exception as e:
+        print(f"\n❌ PARSE ERROR in {filename}:\n{e}", file=sys.stderr)
+        sys.exit(1)
+
+    all_defined_symbols = set()
+    for stmt in statements:
+        if stmt[1] in ("ASSIGN", "REDEFINE"):
+            all_defined_symbols.update(stmt[2])
+
+    if not quiet:
+        print(f"=== Evaluating: {filename} ===", file=sys.stderr)
+
+    output_lines: List[str] = []
+
+    for stmt in statements:
+        line_no, action = stmt[0], stmt[1]
+
+        try:
             if action == "INCLUDE":
                 inc_path, alias = stmt[2], stmt[3]
-                base_dir = os.path.dirname(os.path.abspath(filename)) if (filename and filename != "<stdin>" and os.path.exists(filename)) else os.getcwd()
+                if filename and filename != "<stdin>" and os.path.exists(filename):
+                    base_dir = os.path.dirname(os.path.abspath(filename))
+                else:
+                    base_dir = os.getcwd()
+
                 resolved_path = inc_path if os.path.isabs(inc_path) else os.path.join(base_dir, inc_path)
                 canonical_path = os.path.realpath(resolved_path)
 
-                if canonical_path in visited_files:
+                # 1. Prevent circular inclusion loops (A -> B -> A)
+                if canonical_path in active_includes:
                     if not quiet:
                         print(f"# [INCLUDE] Skipping circular include: {inc_path}", file=sys.stderr)
                     continue
@@ -761,21 +967,21 @@ def execute_program(
                     print(f"\n❌ INCLUDE ERROR at {filename}:{line_no}: File not found '{inc_path}' ({canonical_path})", file=sys.stderr)
                     sys.exit(1)
 
-                # Parse and evaluate file once to populate export cache
+                # 2. Evaluate and cache exports once if not already cached
                 if canonical_path not in MODULE_EXPORTS_CACHE:
                     with open(canonical_path, "r", encoding="utf-8") as f:
                         included_code = f.read()
 
-                    sub_active = set(visited_files)
+                    sub_active = set(active_includes)
                     sub_active.add(canonical_path)
 
                     inc_lines, sub_env, sub_declared = execute_program(
                         canonical_path,
                         included_code,
-                        dict(env),
-                        dict(declared_terms),
+                        {},  # Isolated clean environment for module evaluation
+                        {},
                         quiet=quiet,
-                        visited_files=sub_active
+                        active_includes=sub_active
                     )
 
                     MODULE_EXPORTS_CACHE[canonical_path] = sub_declared
@@ -783,7 +989,7 @@ def execute_program(
 
                 cached_exports = MODULE_EXPORTS_CACHE[canonical_path]
 
-                # Populate caller's environment according to local alias rule
+                # 3. Bind exports into caller's scope using caller's specific alias
                 if alias:
                     for name, term in cached_exports.items():
                         namespaced_name = f"{alias}:{name}"
@@ -906,7 +1112,6 @@ def execute_program(
             sys.exit(1)
 
     return output_lines, env, declared_terms
-
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:

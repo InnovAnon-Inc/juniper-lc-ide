@@ -1,0 +1,8 @@
+# **`51_geometry_draw.lc` (2D Canvas & Vector Graphics)**
+# **Purpose**: Primitive drawing routines for generative art, charts, and visual layouts.
+# **Contents**:
+# Wrappers over `PAGE`, `LINE`, `ARC`, `INTERSECT`.
+# `draw_rect`, `draw_circle`, `draw_polygon`, `draw_bezier`.
+# Euclidean and Bjorklund polygon generators (`euclidean_polygon`, `bjorklund_pattern`).
+# Cyclotomic polygon generation for geometric proofs and UI widgets.
+

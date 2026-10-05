@@ -1,0 +1,7 @@
+# **`35_cas.lc` (Computer Algebra System & Symbolic Calculus)**
+# **Purpose**: Symbolic differentiation, expression simplification, and mathematical proof checking.
+# **Contents**:
+# AST constructors for math expressions (`ADD`, `MUL`, `POW`, `VAR`, `CONST`).
+# `differentiate` (symbolic derivative $\frac{d}{dx}$), `integrate_polynomial`.
+# `simplify_expr` (combining terms, zero elimination).
+

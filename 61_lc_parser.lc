@@ -1,0 +1,7 @@
+# **`61_lc_parser.lc` (Pure LC Grammar Parser)**
+# **Purpose**: Replaces Python's `Lark` parser with a self-contained parser written entirely in Lambda Calculus.
+# **Contents**:
+# Parser combinators (`p_char`, `p_string`, `p_many`, `p_choice`, `p_chain`).
+# Tokenizer for `.lc` source code (identifiers, lambdas, numbers, string literals).
+# Surface AST parser generating `21_ast.lc` representations.
+
