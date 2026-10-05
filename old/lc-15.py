@@ -603,45 +603,6 @@ def debruijn_to_str(
 # 6. Execution Engine with Recursive Inclusion & Colon Namespacing
 # =====================================================================
 
-def preprocess_source(code: str) -> str:
-    """
-    Preprocesses source code to:
-    1. Ignore explicit backslash continuations (`\\`) by stripping them.
-    2. Strip trailing whitespace and ignore blank lines.
-    """
-    lines = code.splitlines()
-    processed_lines = []
-    current_logical_line = ""
-
-    for line in lines:
-        if '#' in line:
-            line = line.split('#')[0]
-
-        stripped = line.strip()
-        if not stripped:
-            continue
-
-        # Handle explicit backslash continuation if present
-        if stripped.endswith('\\'):
-            stripped = stripped[:-1].strip()
-            if current_logical_line:
-                current_logical_line += " " + stripped
-            else:
-                current_logical_line = stripped
-            continue
-
-        if current_logical_line:
-            current_logical_line += " " + stripped
-            processed_lines.append(current_logical_line)
-            current_logical_line = ""
-        else:
-            processed_lines.append(stripped)
-
-    if current_logical_line:
-        processed_lines.append(current_logical_line)
-
-    return "\n".join(processed_lines)
-
 def execute_program(
     filename: str,
     code: str,
@@ -655,8 +616,6 @@ def execute_program(
 
     if filename and filename != "<stdin>" and os.path.exists(filename):
         visited_files.add(os.path.realpath(filename))
-
-    code = preprocess_source(code)
 
     parser = Lark(LC_GRAMMAR, parser="lalr", propagate_positions=True)
 
@@ -846,4 +805,3 @@ if __name__ == "__main__":
         for path in sys.argv[1:]:
             with open(path, "r", encoding="utf-8") as f:
                 execute_program(path, f.read(), global_env, global_declared)
-
