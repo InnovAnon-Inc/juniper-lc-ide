@@ -50,7 +50,9 @@ LC_GRAMMAR = r"""
     BRACKETED_INT: /\[\d+\]/
 
     # Allow colons in identifiers for namespaced symbols (while preserving := assignment)
-    IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
+    #IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[+\-*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
+    # Allow colons in identifiers for namespaced symbols and ensure hyphen is a literal
+    IDENT: /(?!(?::=|\.|\(|\))\b)(?![\\λ])[-+*\/<>=!&|~%^:\w\u0080-\uFFFF]+/
     CONTINUATION: /\\\r?\n/
 
     %import common.INT
