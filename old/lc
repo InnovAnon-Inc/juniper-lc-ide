@@ -16,7 +16,7 @@ exec "$I/lc" "$@"
 
 P=juniper-lc-ide
 D="$HOME/$P"
-E="$D/lc.py"
+E="$D/juniper_lc/lc.py"
 V="$HOME/venv"
 
 [[ -e "$D" ]] ||

@@ -1,0 +1,57 @@
+[build-system]
+requires = [
+    "Cython",
+    "setuptools>=61.0.0",
+    "setuptools-scm>=8.0",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "juniper_lc"
+dynamic = [
+    "dependencies",
+    "version",
+]
+description = "TODO description"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    { name = "InnovAnon, Inc." },
+]
+
+[project.scripts]
+lc = "juniper_lc.lc:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = [
+    ".",
+]
+exclude = [
+    "build*",
+    "dist*",
+    "tests*",
+    "logs*",
+    "__pycache__*",
+    ".models*",
+    ".*",
+]
+
+[tool.setuptools.package-data]
+"*" = [
+    "*.pyx",
+    "*.pyd",
+    "*.pxd",
+    "*.cpp",
+    "*.h",
+    "*.ico",
+    "*.html",
+    "*.lc",
+]
+
+[tool.setuptools_scm]
+write_to = "version.py"

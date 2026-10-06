@@ -955,6 +955,13 @@ def execute_program(
                     base_dir = os.getcwd()
 
                 resolved_path = inc_path if os.path.isabs(inc_path) else os.path.join(base_dir, inc_path)
+
+                # Fallback to installed stdlib directory if not found locally
+                if not os.path.exists(resolved_path):
+                    pkg_stdlib = os.path.join(os.path.dirname(__file__), "stdlib", inc_path)
+                    if os.path.exists(pkg_stdlib):
+                        resolved_path = pkg_stdlib
+
                 canonical_path = os.path.realpath(resolved_path)
 
                 # 1. Prevent circular inclusion loops (A -> B -> A)
@@ -1113,7 +1120,7 @@ def execute_program(
 
     return output_lines, env, declared_terms
 
-if __name__ == "__main__":
+def main():
     if len(sys.argv) > 1:
         global_env: Dict[str, DBTerm] = {}
         global_declared: Dict[str, DBTerm] = {}
@@ -1122,3 +1129,5 @@ if __name__ == "__main__":
             with open(path, "r", encoding="utf-8") as f:
                 execute_program(path, f.read(), global_env, global_declared)
 
+if __name__ == "__main__":
+    main()
