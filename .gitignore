@@ -3,3 +3,4 @@
 build/
 version.py
 __pycache__/
+*.so
