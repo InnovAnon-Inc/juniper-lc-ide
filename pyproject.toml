@@ -21,6 +21,16 @@ authors = [
     { name = "InnovAnon, Inc." },
 ]
 
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+# Declare test requirements as an optional extra
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov",  # Optional: for test coverage reports
+]
+
 [project.scripts]
 lc = "juniper_lc.lc:main"
 
@@ -55,3 +65,10 @@ exclude = [
 
 [tool.setuptools_scm]
 write_to = "version.py"
+
+# Configure pytest directly in pyproject.toml
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short"
