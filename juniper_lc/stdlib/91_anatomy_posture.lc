@@ -1,0 +1,31 @@
+INCLUDE "90_vector_kinematics.lc" AS vk
+
+# Anatomical Reference Frame: PAIR spine_vector (PAIR facing_vector hand_orientation)
+MK_BODY_FRAME := λspine facing hand. pair spine (pair facing hand)
+BODY_SPINE    := λb. 1st b
+BODY_FACING   := λb. 1st (2nd b)
+
+# Anatomical Orientations & Joint Angles
+# Supine: Lying horizontal face-up.
+# Spine is perpendicular to gravity; Front-facing vector points directly UP (+Z).
+IS_SUPINE     := λbody_frame.
+    ∧ (vk:IS_PARALLEL (BODY_FACING body_frame) vk:UP_VEC)
+      (EQ_NUM (vk:DOT_PRODUCT (BODY_SPINE body_frame) vk:GRAVITY_VEC) 0)
+
+# Prone: Lying horizontal face-down.
+IS_PRONE      := λbody_frame.
+    ∧ (vk:IS_PARALLEL (BODY_FACING body_frame) vk:GRAVITY_VEC)
+      (EQ_NUM (vk:DOT_PRODUCT (BODY_SPINE body_frame) vk:GRAVITY_VEC) 0)
+
+# Joint Encoding: PAIR joint_id (PAIR parent_id relative_angle_xyz)
+MK_JOINT      := λid parent angle_vec. pair id (pair parent angle_vec)
+
+# Anatomical Landmarks
+HEAD          := 0
+NECK          := 1
+SHOULDER_R    := 2
+ELBOW_R       := 3
+WRIST_R       := 4
+HIP_R         := 5
+KNEE_R        := 6
+ANKLE_R       := 7

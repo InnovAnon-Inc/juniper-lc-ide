@@ -1,0 +1,30 @@
+INCLUDE "01_standard_terms.lc"
+INCLUDE "03_pair.lc"
+
+# 3D Vector Encoding: PAIR x (PAIR y z)
+VECTOR3D      := λx y z. pair x (pair y z)
+VEC_X         := λv. 1st v
+VEC_Y         := λv. 1st (2nd v)
+VEC_Z         := λv. 2nd (2nd v)
+
+# Vector Arithmetic Operations
+VEC_ADD       := λv1 v2. 
+    VECTOR3D (+ (VEC_X v1) (VEC_X v2))
+             (+ (VEC_Y v1) (VEC_Y v2))
+             (+ (VEC_Z v1) (VEC_Z v2))
+
+# Global Environmental Vectors
+GRAVITY_VEC   := VECTOR3D 0 0 (-1)
+UP_VEC        := VECTOR3D 0 0 1
+FORWARD_VEC   := VECTOR3D 0 1 0
+RIGHT_VEC     := VECTOR3D 1 0 0
+
+# Vector Dot Product (Cos Theta Projection)
+DOT_PRODUCT   := λv1 v2.
+    + (* (VEC_X v1) (VEC_X v2))
+      (+ (* (VEC_Y v1) (VEC_Y v2))
+         (* (VEC_Z v1) (VEC_Z v2)))
+
+# Vector Parallelity / Alignment Check
+IS_PARALLEL   := λv1 v2. EQ_NUM (DOT_PRODUCT v1 v2) 1
+IS_OPPOSITE   := λv1 v2. EQ_NUM (DOT_PRODUCT v1 v2) (-1)

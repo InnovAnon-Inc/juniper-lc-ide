@@ -1,0 +1,32 @@
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+
+# State Tuple: PAIR environment_state (PAIR agent_body_state temporal_clock)
+MK_STATE      := λenv body clock. pair env (pair body clock)
+GET_ENV       := λs. 1st s
+GET_BODY      := λs. 1st (2nd s)
+GET_CLOCK     := λs. 2nd (2nd s)
+
+# SOP Action Step: λprecondition effect_fn postcondition state cont.
+MK_ACTION     := λpre_cond effect post_cond state cont.
+    if (pre_cond state)
+       (λnext_state. 
+           if (post_cond next_state)
+              (cont next_state)
+              (PRINT "SOP Postcondition Failure"))
+       (effect state)
+       (PRINT "SOP Precondition Failure")
+
+# Sequential Composition (SEQ step1 step2)
+SEQ           := λact1 act2 state cont.
+    act1 state (λs_intermediate. act2 s_intermediate cont)
+
+# Parallel Composition (PAR step1 step2)
+PAR           := λact1 act2 state cont.
+    act1 state (λs1. act2 s1 cont)
+
+# Repetition / Loop Operator (WHILE predicate action)
+WHILE         := λpred act state cont.
+    if (pred state)
+       (act state (λs_next. WHILE pred act s_next cont))
+       (cont state)
