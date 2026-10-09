@@ -35,15 +35,27 @@ def run_interpreter(filepath: str) -> Tuple[bool, str]:
 #    cmd = ["opencode", "run", "--prompt", prompt]
 #    res = subprocess.run(cmd, capture_output=True, text=True)
 #    return res.stdout.strip()
+#def invoke_opencode(prompt: str) -> str:
+#    """Executes OpenCode CLI non-interactively."""
+#    cmd = ["opencode", "run", "--prompt", prompt]
+#    res = subprocess.run(cmd, capture_output=True, text=True)
+#    out = res.stdout.strip()
+#    if not out and res.stderr:
+#        print(f"⚠️ OpenCode CLI stderr:\n{res.stderr}")
+#    return out
 def invoke_opencode(prompt: str) -> str:
     """Executes OpenCode CLI non-interactively."""
-    cmd = ["opencode", "run", "--prompt", prompt]
+    # Pass prompt as a positional argument to 'opencode run'
+    # Use --auto if you want OpenCode to execute terminal commands non-interactively
+    cmd = ["opencode", "run", "--auto", prompt]
+    
     res = subprocess.run(cmd, capture_output=True, text=True)
     out = res.stdout.strip()
+    
     if not out and res.stderr:
         print(f"⚠️ OpenCode CLI stderr:\n{res.stderr}")
+        
     return out
-
 
 def parse_module_symbols(filepath: str) -> Set[str]:
     """Dynamically parses all defined symbols in a file."""
