@@ -1,0 +1,20 @@
+# Wall tile laying, masonry, carpentry, glass storage SOPs
+
+# State Tuple: PAIR surface_state (PAIR tile_inventory time_step)
+MK_CRAFT_STATE := λsurface inventory t. pair surface (pair inventory t)
+
+# Preconditions
+SURFACE_IS_PREPPED := λstate. EQ_NUM (1st (1st state)) 1 # Surface cleaned & mortared
+HAS_TILES          := λstate. > (1st (2nd state)) 0
+
+# Actions
+APPLY_MORTAR       := λstate. MK_CRAFT_STATE (pair 1 (2nd (1st state))) (2nd state) (+ (2nd (2nd state)) 1)
+LAY_TILE           := λstate. MK_CRAFT_STATE (pair (1st (1st state)) (+ (2nd (1st state)) 1))
+                                              (pair (- (1st (2nd state)) 1) (2nd (2nd state)))
+                                              (+ (2nd (2nd state)) 1)
+
+# SOP Monad Step for Tile Installation
+SOP_LAY_SINGLE_TILE := 
+    MK_ACTION SURFACE_IS_PREPPED 
+              LAY_TILE 
+              (λs. > (2nd (1st s)) 0)

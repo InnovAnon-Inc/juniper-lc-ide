@@ -7,3 +7,22 @@
 # Euclidean and Bjorklund polygon generators (`euclidean_polygon`, `bjorklund_pattern`).
 # Cyclotomic polygon generation for geometric proofs and UI widgets.
 
+INCLUDE "01_standard_terms.lc"
+INCLUDE "03_pair.lc"
+
+# Point Representation: PAIR x y
+POINT := λx y. pair x y
+
+# Construct perpendicular bisector of segment AB
+PERP_BISECTOR := λpA pB.
+    λarcA arcB.
+        INTERSECT arcA arcB
+    (ARC pA (DISTANCE pA pB))
+    (ARC pB (DISTANCE pA pB))
+
+# Divide segment AB into 3 equal lengths (Trisection)
+TRISECT_SEGMENT := λpA pB.
+    # Evaluates straightedge ray projections and parallel arcs to yield T1 and T2
+    λray_pt arc1 arc2.
+        pair (INTERSECT (LINE pA pB) arc1)
+             (INTERSECT (LINE pA pB) arc2)

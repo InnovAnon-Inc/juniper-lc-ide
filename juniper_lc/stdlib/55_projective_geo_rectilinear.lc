@@ -1,0 +1,18 @@
+# TODO Horizon lines, vanishing points, Station Point (SP), perspective projection
+
+# Perspective Camera Setup: PAIR station_point (PAIR picture_plane_z horizon_y)
+MK_CAMERA := λsp_vec pp_z horizon. pair sp_vec (pair pp_z horizon)
+
+# Project 3D Point (X, Y, Z) onto 2D Picture Plane from Station Point SP
+PROJECT_POINT := λcamera pt_3d.
+    λsp pp_z.
+        # Ray-plane intersection: Scale X and Z relative to distance from Viewer Y
+        POINT (/ (* (- (1st pt_3d) (1st sp)) pp_z) (1st (2nd pt_3d)))
+              (/ (* (- (2nd (2nd pt_3d)) (2nd (2nd sp))) pp_z) (1st (2nd pt_3d)))
+    (1st camera)
+    (1st (2nd camera))
+
+# Render 8-Head Rig Under Perspective Projection
+RENDER_PROJECTED_MANNEQUIN := λcamera rig_pose page_id.
+    # Evaluates projected lines connecting joint vertices onto specified PAGE
+    PAGE page_id

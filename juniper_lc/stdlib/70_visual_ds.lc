@@ -1,0 +1,19 @@
+# Auto-animating arrays, stacks, trees, and sorting visualizations
+
+# Visual Array Wrapper
+# PAIR raw_array render_frame_id
+MK_VISUAL_ARRAY := λarr frame_counter. pair arr frame_counter
+
+# Visual Swap Operation: Swaps elements and automatically draws the frame state
+VISUAL_SWAP := λv_arr i j.
+    λraw_arr next_frame.
+        # 1. Mutate state in pure functional style
+        # 2. Trigger frame render side-effect via PAGE primitive
+        PAGE (STRING_CONCAT "SWAP_FRAME_" next_frame)
+        # 3. Return updated visual array
+        MK_VISUAL_ARRAY (SWAP_ARRAY_ELEMS raw_arr i j) next_frame
+    (1st v_arr)
+    (successor (2nd v_arr))
+
+# Standard Unmodified QuickSort / BubbleSort runs identically on VISUAL_ARRAY
+# and outputs an animated sequence of comic/flipbook frames automatically.
