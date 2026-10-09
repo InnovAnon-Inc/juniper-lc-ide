@@ -30,11 +30,19 @@ def run_interpreter(filepath: str) -> Tuple[bool, str]:
     return (res.returncode == 0), f"STDOUT:\n{res.stdout}\nSTDERR:\n{res.stderr}"
 
 
+#def invoke_opencode(prompt: str) -> str:
+#    """Executes OpenCode CLI non-interactively."""
+#    cmd = ["opencode", "run", "--prompt", prompt]
+#    res = subprocess.run(cmd, capture_output=True, text=True)
+#    return res.stdout.strip()
 def invoke_opencode(prompt: str) -> str:
     """Executes OpenCode CLI non-interactively."""
     cmd = ["opencode", "run", "--prompt", prompt]
     res = subprocess.run(cmd, capture_output=True, text=True)
-    return res.stdout.strip()
+    out = res.stdout.strip()
+    if not out and res.stderr:
+        print(f"⚠️ OpenCode CLI stderr:\n{res.stderr}")
+    return out
 
 
 def parse_module_symbols(filepath: str) -> Set[str]:
@@ -76,6 +84,84 @@ def scan_stdlib() -> Dict[str, Dict]:
     return inventory
 
 
+#def meta_planner_phase(inventory: Dict) -> Dict:
+#    """Tier 1: High-Level Planner determines if modules need creation, reorganization, or expansion."""
+#    summary = {
+#        k: {"symbols_count": len(v["symbols"]), "valid": v["valid"]}
+#        for k, v in inventory.items()
+#    }
+#
+#    prompt = f"""
+#You are the Chief Architect of the Pure Lambda Calculus Standard Library.
+#
+#REFERENCE TAXONOMY:
+#{TAXONOMY_REFERENCE}
+#
+#CURRENT STDLIB MODULE INVENTORY:
+#{json.dumps(summary, indent=2)}
+#
+#INSTRUCTIONS:
+#Analyze the inventory against the reference taxonomy. Determine the SINGLE HIGHEST PRIORITY target file to work on next.
+#If a new file is required, specify its filename.
+#Return EXACTLY a JSON object (no markdown, no extra text):
+#
+#{{
+#  "target_file": "04_church.lc",
+#  "architectural_goal": "Implement division and modulo arithmetic for Church numerals."
+#}}
+#"""
+#    response = invoke_opencode(prompt)
+#    clean_json = response.strip().strip("`").replace("json\n", "")
+#    return json.loads(clean_json)
+#
+#
+#def module_architect_phase(target_file: str, inventory: Dict) -> Dict:
+#    """Tier 2: Middle Management creates a specific contract for a single term."""
+#    filepath = os.path.join(STDLIB_DIR, target_file)
+#    existing_code = (
+#        inventory.get(target_file, {}).get("code", "# Module Initialized\n")
+#    )
+#    logs = inventory.get(target_file, {}).get("logs", "No evaluation logs.")
+#
+#    prompt = f"""
+#You are the Lead Module Engineer for `{target_file}` in the Lambda Calculus Standard Library.
+#
+#FILE CONTENT:
+#---
+#{existing_code}
+#---
+#
+#EVALUATION STATUS:
+#---
+#{logs}
+#---
+#
+#INSTRUCTIONS:
+#Identify the SINGLE NEXT term, function, or proof needed in this file.
+#Generate an implementation contract for a single symbol.
+#Return EXACTLY a JSON object:
+#
+#{{
+#  "symbol": "DIV_NUM",
+#  "instruction": "Define DIV_NUM for Church numerals using repeated subtraction.",
+#  "required_assertions": [
+#    "ASSERT_EQ (DIV_NUM 6 2), 3",
+#    "ASSERT_EQ (DIV_NUM 7 3), 2"
+#  ]
+#}}
+#"""
+#    response = invoke_opencode(prompt)
+#    clean_json = response.strip().strip("`").replace("json\n", "")
+#    return json.loads(clean_json)
+import re
+
+def extract_json(text: str) -> dict:
+    """Extracts the first valid JSON object from LLM response text using regex."""
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if not match:
+        raise ValueError(f"No JSON object found in LLM response:\n{text}")
+    return json.loads(match.group(0))
+
 def meta_planner_phase(inventory: Dict) -> Dict:
     """Tier 1: High-Level Planner determines if modules need creation, reorganization, or expansion."""
     summary = {
@@ -95,17 +181,25 @@ CURRENT STDLIB MODULE INVENTORY:
 INSTRUCTIONS:
 Analyze the inventory against the reference taxonomy. Determine the SINGLE HIGHEST PRIORITY target file to work on next.
 If a new file is required, specify its filename.
-Return EXACTLY a JSON object (no markdown, no extra text):
+Return ONLY a valid JSON object matching this schema:
 
 {{
   "target_file": "04_church.lc",
   "architectural_goal": "Implement division and modulo arithmetic for Church numerals."
 }}
 """
-    response = invoke_opencode(prompt)
-    clean_json = response.strip().strip("`").replace("json\n", "")
-    return json.loads(clean_json)
+    response_text = invoke_opencode(prompt)
 
+    try:
+        return extract_json(response_text)
+    except Exception as e:
+        print(f"  ⚠️ Meta-planner JSON extraction failed: {e}")
+        print(f"  Raw OpenCode output was:\n{response_text}\n")
+        # Fallback to the first invalid file or default foundation
+        for fname, data in inventory.items():
+            if not data["valid"]:
+                return {"target_file": fname, "architectural_goal": "Fix broken module assertions or syntax."}
+        return {"target_file": "01_standard_terms.lc", "architectural_goal": "Expand core foundational logic."}
 
 def module_architect_phase(target_file: str, inventory: Dict) -> Dict:
     """Tier 2: Middle Management creates a specific contract for a single term."""
@@ -131,20 +225,24 @@ EVALUATION STATUS:
 INSTRUCTIONS:
 Identify the SINGLE NEXT term, function, or proof needed in this file.
 Generate an implementation contract for a single symbol.
-Return EXACTLY a JSON object:
+Return ONLY a valid JSON object:
 
 {{
   "symbol": "DIV_NUM",
   "instruction": "Define DIV_NUM for Church numerals using repeated subtraction.",
   "required_assertions": [
-    "ASSERT_EQ (DIV_NUM 6 2), 3",
-    "ASSERT_EQ (DIV_NUM 7 3), 2"
+    "ASSERT_EQ (DIV_NUM 6 2), 3"
   ]
 }}
 """
-    response = invoke_opencode(prompt)
-    clean_json = response.strip().strip("`").replace("json\n", "")
-    return json.loads(clean_json)
+    response_text = invoke_opencode(prompt)
+
+    try:
+        return extract_json(response_text)
+    except Exception as e:
+        print(f"  ⚠️ Module architect JSON extraction failed: {e}")
+        print(f"  Raw OpenCode output was:\n{response_text}\n")
+        raise e
 
 
 def micro_worker_phase(target_file: str, task: Dict) -> bool:

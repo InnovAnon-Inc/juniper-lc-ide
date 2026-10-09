@@ -32,7 +32,8 @@ test = [
 ]
 
 [project.scripts]
-lc = "juniper_lc.lc:main"
+lc    = "juniper_lc.lc:main"
+lcbot = "juniper_lc.robot:main"
 
 [tool.setuptools]
 include-package-data = true
