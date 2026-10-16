@@ -26,3 +26,233 @@ TRISECT_SEGMENT := λpA pB.
     λray_pt arc1 arc2.
         pair (INTERSECT (LINE pA pB) arc1)
              (INTERSECT (LINE pA pB) arc2)
+
+
+
+
+
+
+
+
+
+
+
+
+#! /usr/bin/env lc
+
+##
+# 51_geometry_draw.lc - Constructive Geometric Arithmetic via Thales & Compass/Straightedge
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+
+# =====================================================================
+# 1. Geometric Segment Arithmetic (Length Operations)
+# =====================================================================
+
+# Segment representation: PAIR pointA pointB
+SEGMENT := pair
+seg_start := 1st
+seg_end := 2nd
+
+# 1.1 Geometric Segment Addition: 
+# Extends segment s1 by copying the length of s2 along the line using a compass arc.
+geo_add_segments := λs1 s2. \
+  let end_s1 (seg_end s1) \
+  let len_s2 (distance (seg_start s2) (seg_end s2)) \
+  let translated_end (INTERSECT (LINE (seg_start s1) end_s1) (ARC end_s1 len_s2)) \
+  SEGMENT (seg_start s1) translated_end
+
+# 1.2 Geometric Segment Subtraction:
+# Arcs backward from the end of s1 using the length of s2.
+geo_sub_segments := λs1 s2. \
+  let end_s1 (seg_end s1) \
+  let len_s2 (distance (seg_start s2) (seg_end s2)) \
+  let subtracted_end (INTERSECT (LINE (seg_start s1) end_s1) (ARC end_s1 len_s2)) \
+  SEGMENT (seg_start s1) subtracted_end
+
+
+# =====================================================================
+# 2. Thales' Theorem / Intercept Theorem (Multiplication & Division)
+# =====================================================================
+
+# 2.1 Geometric Division / Proportion (A / B given Unit 1):
+# Using Thales' theorem: Given angle at vertex O, ray 1 has Unit 1 and B; 
+# ray 2 has A and the unknown X. Connecting Unit 1 to A, and drawing a parallel 
+# through B yields X.
+geo_divide_segments := λunit_seg divisor_seg dividend_seg. \
+  let vertex (seg_start unit_seg) \
+  let ray1_b (seg_end divisor_seg) \
+  let ray2_a (seg_end dividend_seg) \
+  # Construct intersecting rays and parallel transfer via straightedge/compass
+  let cross_line (LINE ray1_b ray2_a) \
+  let parallel_ray (LINE vertex ray1_b) \
+  let result_pt (INTERSECT cross_line parallel_ray) \
+  SEGMENT vertex result_pt
+
+# 2.2 Geometric Multiplication (A * B given Unit 1):
+# Inverts the Thales configuration: (1 / A) = (B / X) -> X = A * B
+geo_multiply_segments := λunit_seg segA segB. \
+  geo_divide_segments unit_seg segB segA
+
+
+# =====================================================================
+# 3. Geometric Vector Products (Dot & Cross Products)
+# =====================================================================
+
+# Vector representation from origin: PAIR x y
+VEC := pair
+vx := 1st
+vy := 2nd
+
+# 3.1 Geometric Dot Product:
+# Project vector V2 orthogonally onto V1. The dot product is the length 
+# of the projection scaled by the length of V1.
+geo_dot_product := λv1 v2. \
+  let origin (POINT 0 0) \
+  let tip1 (VEC (vx v1) (vy v1)) \
+  let tip2 (VEC (vx v2) (vy v2)) \
+  # Drop perpendicular from tip2 onto line through origin and tip1
+  let perp_line (LINE tip2 (INTERSECT (ARC tip2 1) (perp_bisector origin tip1))) \
+  let proj_pt (INTERSECT (LINE origin tip1) perp_line) \
+  # Result magnitude is distance(origin, proj_pt) with sign from dot rule
+  distance origin proj_pt
+
+# 3.2 Geometric Cross Product (2D Area of Parallelogram):
+# Constructed by completing the parallelogram spanned by V1 and V2, 
+# where the cross product magnitude equals the geometric area.
+geo_cross_product := λv1 v2. \
+  let origin (POINT 0 0) \
+  let tip1 (VEC (vx v1) (vy v1)) \
+  let tip2 (VEC (vx v2) (vy v2)) \
+  let p3 (INTERSECT (ARC tip1 (distance origin tip2)) (ARC tip2 (distance origin tip1))) \
+  # Area calculated via geometric height (perpendicular distance) * base length
+  let base_len (distance origin tip1) \
+  let height (distance tip2 (INTERSECT (LINE origin tip1) (LINE tip2 (INTERSECT (ARC tip2 1) (perp_bisector origin tip1))))) \
+  * base_len height
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#! /usr/bin/env lc
+
+##
+# 51_geometry_draw.lc - Euclidean Constructions, Vector Math, and Spirals
+##
+
+INCLUDE "01_standard_terms.lc"
+INCLUDE "02_fol.lc"
+INCLUDE "03_pair.lc"
+INCLUDE "04_church.lc"
+INCLUDE "05_map_reduce.lc"
+
+# =====================================================================
+# 1. Point & Vector Primitives (Cartesian Coordinate Pairs)
+# =====================================================================
+POINT         := pair
+x_coord       := 1st
+y_coord       := 2nd
+
+# Vector Addition & Scaling (Proportional sizing across inches/centimeters)
+# NOTE use geometric/greek definitions
+#vec_add       := λv1 v2. POINT (+ (x_coord v1) (x_coord v2)) (+ (y_coord v1) (y_coord v2))
+#vec_sub       := λv1 v2. POINT (- (x_coord v1) (x_coord v2)) (- (y_coord v1) (y_coord v2))
+
+# Dot Product & Cross Product (2D)
+# NOTE use geometric/greek definitions
+#dot_product   := λv1 v2. + (* (x_coord v1) (x_coord v2)) (* (y_coord v1) (y_coord v2))
+#cross_product := λv1 v2. - (* (x_coord v1) (y_coord v2)) (* (y_coord v1) (x_coord v2))
+
+# =====================================================================
+# 2. Straightedge & Compass Classical Operations
+# =====================================================================
+
+# 2.1 Copy Line Segment: Replicates length from AB onto ray starting at C
+copy_segment  := λpA pB pC. \
+  INTERSECT (LINE pC (vec_add pC (vec_sub pB pA))) (ARC pC (distance pA pB))
+
+# 2.2 Perpendicular Bisector & Perpendicular Line Through Point
+# Constructs circles of equal radius from A and B; their intersection gives the bisector line.
+perp_bisector := λpA pB. \
+  LINE (INTERSECT (ARC pA pB) (ARC pB pA)) \
+       (INTERSECT (ARC pB pA) (ARC pA pB))
+
+# 2.3 Parallel Line Through Point P to Line AB
+parallel_line := λpA pB pP. \
+  LINE pP (vec_add pP (vec_sub pB pA))
+
+# =====================================================================
+# 3. Division of Segments & Arcs (Thales' Theorem / Intercept Theorem)
+# =====================================================================
+
+# Divide segment AB into n equal parts using auxiliary angle construction
+DIV_SEG_REC := λself segment n. \
+  if (=0 n) \
+    nil \
+    (cons (INTERSECT (LINE (1st segment) (2nd segment)) (ARC (1st segment) n)) \
+          (self segment (predecessor n)))
+
+divide_segment := Y DIV_SEG_REC
+
+# =====================================================================
+# 4. Advanced Geometric Transformations: Circle Inversion
+# =====================================================================
+# Inverts point P across circle with center C and radius R:
+# OP * OP' = R^2 along the ray from C through P.
+circle_inversion := λcenter radius_sq pP. \
+  # Projects vector scaled by inversion factor (R^2 / distance^2)
+  vec_add center pP # Placeholder for radial projection math
+
+# =====================================================================
+# 5. Generative Spirals & Pretty Designs for Physical Notebooks
+# =====================================================================
+
+# 5.1 Archimedean Spiral Generator (r = a + b*theta)
+ARCHIMEDEAN_REC := λself center a b theta. \
+  if (> theta 100) \
+    nil \
+    (cons (ARC center (+ a (* b theta))) \
+          (self center a b (successor theta)))
+
+archimedean_spiral := Y ARCHIMEDEAN_REC
+
+# 5.2 Logarithmic / Fibonacci Spiral Generator (r = a * e^(b*theta))
+# Uses regular cyclical n-gons (n=3 to 30) expanding radially to form golden spiral tiles
+GOLDEN_SPIRAL_REC := λself center scale theta. \
+  if (> theta 30) \
+    nil \
+    (cons (LINE center (arc_point center scale theta)) \
+          (self center (* scale 1.618) (successor theta)))
+
+fibonacci_spiral := Y GOLDEN_SPIRAL_REC
